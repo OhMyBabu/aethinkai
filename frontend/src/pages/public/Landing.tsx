@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Boxes } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { SignalNexus } from "@/components/landing/SignalNexus";
 import {
@@ -71,7 +71,13 @@ export default function LandingPage() {
                 >
                   Get API Key
                 </Button>
-                <Button variant="secondary" size="lg" className="cta-landing-soft max-[899px]:w-full" onClick={() => document.getElementById("models")?.scrollIntoView({ behavior: "smooth" })}>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="cta-landing-soft max-[899px]:w-full"
+                  leadingIcon={<Boxes size={15} />}
+                  onClick={() => document.getElementById("models")?.scrollIntoView({ behavior: "smooth" })}
+                >
                   Explore Models
                 </Button>
               </div>

@@ -274,35 +274,58 @@ html[data-reduced-motion="true"] .lift:hover { transform: none; }
 }
 
 /* ------------------------------------------------------------------ */
-/*  Landing CTAs — same language as the header "Sign in", dialled down */
+/*  Landing CTAs — alive, but never louder than the product            */
 /* ------------------------------------------------------------------ */
 .cta-landing {
   position: relative;
   isolation: isolate;
   overflow: hidden;
   color: #18191b;
-  border: 1px solid rgba(231, 137, 60, 0.34);
-  background: linear-gradient(180deg, #e7893c 0%, #e7893c 58%, #9c542f 100%);
+  border: 1px solid rgba(240, 154, 85, 0.5);
+  background: linear-gradient(100deg, #e7893c 0%, #f3a05a 26%, #e7893c 52%, #b9622f 78%, #e7893c 100%);
+  background-size: 220% 100%;
   box-shadow:
-    inset 0 1px 0 rgba(250, 248, 244, 0.24),
-    0 5px 14px -12px rgba(231, 137, 60, 0.55);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    filter 0.2s ease;
+    inset 0 1px 0 rgba(250, 248, 244, 0.3),
+    inset 0 -1px 0 rgba(24, 25, 27, 0.18),
+    0 6px 18px -12px rgba(231, 137, 60, 0.6);
+  animation:
+    cta-gradient 9s ease-in-out infinite,
+    cta-breathe 4.8s ease-in-out infinite;
+  transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+@keyframes cta-gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* glow lives in filter: it can spill outside the clipped button, and it never
+   fights the hover box-shadow */
+@keyframes cta-breathe {
+  0%, 100% {
+    filter: drop-shadow(0 4px 10px rgba(231, 137, 60, 0.16))
+            brightness(1);
+  }
+  50% {
+    filter: drop-shadow(0 8px 20px rgba(231, 137, 60, 0.42))
+            brightness(1.04);
+  }
 }
 
 .cta-landing:hover {
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.012);
+  filter: drop-shadow(0 10px 24px rgba(231, 137, 60, 0.5)) brightness(1.06);
+  animation-play-state: paused;
   box-shadow:
-    inset 0 1px 0 rgba(250, 248, 244, 0.3),
-    0 9px 20px -16px rgba(231, 137, 60, 0.62);
+    inset 0 1px 0 rgba(250, 248, 244, 0.34),
+    0 12px 26px -14px rgba(231, 137, 60, 0.7);
 }
 
 .cta-landing:active {
   transform: translateY(0) scale(0.996);
 }
 
+/* one slow autonomous sheen, only on the primary */
 .cta-landing::after {
   content: "";
   position: absolute;
@@ -310,30 +333,52 @@ html[data-reduced-motion="true"] .lift:hover { transform: none; }
   pointer-events: none;
   background: linear-gradient(
     104deg,
-    transparent 36%,
-    rgba(250, 248, 244, 0.2) 49%,
-    transparent 63%
+    transparent 38%,
+    rgba(250, 248, 244, 0.26) 50%,
+    transparent 62%
   );
-  transform: translateX(-130%);
-  transition: transform 0.8s ease;
+  transform: translateX(-140%);
+  animation: cta-sheen 7.5s ease-in-out infinite;
 }
 
-.cta-landing:hover::after {
-  transform: translateX(130%);
+@keyframes cta-sheen {
+  0%, 55% { transform: translateX(-140%); }
+  85%, 100% { transform: translateX(140%); }
 }
 
-/* quiet sibling for secondary / ghost buttons: motion + a faint sweep only */
+.cta-landing svg {
+  transition: transform 0.24s ease;
+}
+.cta-landing:hover svg {
+  transform: translateX(2px);
+}
+
+/* secondary — dark, raised, with an accent edge on hover */
 .cta-landing-soft {
   position: relative;
   overflow: hidden;
+  background-image: linear-gradient(
+    180deg,
+    rgba(250, 248, 244, 0.06) 0%,
+    rgba(250, 248, 244, 0.015) 55%,
+    rgba(0, 0, 0, 0.06) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.09),
+    0 1px 2px rgba(0, 0, 0, 0.45);
   transition:
     transform 0.2s ease,
     border-color 0.2s ease,
+    box-shadow 0.2s ease,
     background-color 0.2s ease;
 }
 
 .cta-landing-soft:hover {
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.006);
+  border-color: rgba(231, 137, 60, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.12),
+    0 10px 24px -18px rgba(231, 137, 60, 0.55);
 }
 
 .cta-landing-soft:active {
@@ -348,23 +393,38 @@ html[data-reduced-motion="true"] .lift:hover { transform: none; }
   background: linear-gradient(
     104deg,
     transparent 38%,
-    rgba(231, 137, 60, 0.14) 50%,
+    rgba(231, 137, 60, 0.16) 50%,
     transparent 62%
   );
-  transform: translateX(-130%);
+  transform: translateX(-140%);
   transition: transform 0.85s ease;
 }
 
 .cta-landing-soft:hover::after {
-  transform: translateX(130%);
+  transform: translateX(140%);
+}
+
+.cta-landing-soft svg {
+  transition: transform 0.24s ease, color 0.24s ease;
+}
+.cta-landing-soft:hover svg {
+  transform: translateX(2px);
+  color: #e7893c;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cta-landing,
   .cta-landing-soft,
   .cta-landing::after,
-  .cta-landing-soft::after {
+  .cta-landing-soft::after,
+  .cta-landing svg,
+  .cta-landing-soft svg {
+    animation: none !important;
     transition: none !important;
     transform: none !important;
+  }
+  .cta-landing:hover,
+  .cta-landing-soft:hover {
+    filter: none;
   }
 }
