@@ -84,6 +84,31 @@ payment id, inside a transaction that locks the order row.
 
 ## 5. Pitfalls seen in production
 
+- **A fresh clone cannot build or run: check for missing files first.** `gateway/requirements.txt`,
+  `bot/requirements.txt`, `src/data/store.tsx` and `src/data/fixtures.ts` were referenced but absent —
+  twelve components import `useStore` and `StoreProvider`, so `tsc -b` fails with "Cannot find module
+  '@/data/store'" and the SPA never builds. Run `tsc -b` and a bare `python -c 'import app.main'` before
+  trusting the handoff note.
+- **`UPSTREAM_KEY` is promised by the docs and ignored by the client.** `app/upstream.py` only sent
+  `x-9r-peer-token` (loopback). A remote relay answers `401 API key required` — send
+  `Authorization: Bearer $UPSTREAM_KEY` when it is set, keep the peer header for a local 9Router, and
+  read `UPSTREAM_BASE_URL` (the doc example's `UPSTREAM_BASE` name is not what `config.py` reads).
+- **`upstream.list_models()` returns ~1.2k models in ~7 s, and every panel calls it.** Without a cache
+  the admin Overview waits 7 s before it can paint and reads as "dashboard broken"; wrap it in a
+  short TTL cache (`UPSTREAM_MODELS_TTL`, 60 s) — `/api/admin/models` drops to 40 ms.
+- **Model ids are `<provider>/<model>` now, not `mk/...`.** Any `regexp_replace(model_id, '^mk/', '')`
+  either leaks `mr/claude-fable-5` to the buyer or fails a per-model assertion — join `model_prices`
+  and return `coalesce(public_id, split_part(model_id,'/',2))` instead.
+- **`nginx` cannot serve `root /root/...`** (home dir is `drwx------`, workers run as `www-data` →
+  403/404 with an empty error log). Build to `/var/www/aethink` and point the vhost there; `deploy.sh`
+  does the rsync + reload.
+- **Seed a balance and you must seed its ledger row.** The admin summary reports `ledger_diff_micro`,
+  and every SQL-seeded wallet without an `opening` entry makes it non-zero from day one — write the
+  `ledger_entries` row in the same pass (`kind='opening'`, `balance_after` = new balance).
+- **Test files carry stale operator credentials.** `tests/e2e_access.py` hardcoded the previous box's
+  admin password and died with `401` on a fresh install; read `AETHINK_ADMIN_PASSWORD` or parse
+  `gateway/.admin` (written by `seed_admin.py`) instead, and never commit a real password.
+
 - `pkill -f "uvicorn app.main"` kills your own shell — use the bracket form `pkill -f "[u]vicorn app.main"`.
 - FastAPI wraps `HTTPException` detail; the client reads `body.error ?? body.detail`.
 - Telegram `editMessageText` returns `400 message is not modified` on a double tap — treat as no-op.
