@@ -201,7 +201,7 @@ function DocsPanel({ onClose }: { onClose: () => void }) {
       style={FLOATING_STYLE}
       className={cn(
         FLOATING,
-        "w-[min(720px,calc(100vw-32px))] max-h-[min(480px,calc(100dvh-100px))] overflow-y-auto",
+        "w-[min(820px,calc(100vw-32px))] max-h-[calc(100dvh-96px)] overflow-x-hidden overflow-y-auto",
       )}
     >
       <div className="flex items-start justify-between gap-3 border-b border-ash/12 px-4 py-3.5 sm:px-5">
@@ -230,7 +230,7 @@ function DocsPanel({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      <div className="grid min-w-0 gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="grid min-w-0 gap-5 p-4 sm:gap-6 sm:p-5 lg:grid-cols-[minmax(0,1.38fr)_minmax(0,1fr)]">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             {(Object.keys(snippets) as Array<keyof typeof snippets>).map((key) => (
@@ -307,7 +307,7 @@ function DocsPanel({ onClose }: { onClose: () => void }) {
             <p className="flex items-center gap-1.5 text-[10.5px] font-medium uppercase tracking-[0.16em] text-dim">
               <Terminal size={11} className="text-flame" aria-hidden /> Authentication
             </p>
-            <code className="mt-1.5 block overflow-x-auto whitespace-nowrap font-mono text-[11px] text-warm/85">
+            <code className="mt-1.5 block max-w-full whitespace-normal font-mono text-[11px] text-warm/85 [overflow-wrap:anywhere]">
               Authorization: Bearer $AETHINK_API_KEY
             </code>
             <p className="mt-1 text-[11px] leading-4 text-dim">
@@ -424,25 +424,33 @@ function StatusPanel({ onClose }: { onClose: () => void }) {
 
       <div className="mt-3">
         <div className="flex items-baseline justify-between text-[10.5px]">
-          <span className="text-ash">Top models</span>
-          <span className="tabular-nums text-dim">
-            last 24h · {series.length} of {status?.models_active ?? models.length}
-          </span>
+          <span className="text-ash">Top models by requests</span>
+          <span className="tabular-nums text-dim">Last 24h</span>
         </div>
         {series.length > 0 ? (
-          <div className="mt-2 flex h-11 items-end gap-1.5">
-            {series.map((row) => (
-              <div key={row.model_id} className="flex h-full min-w-0 flex-1 flex-col justify-end" title={`${row.model_id} · ${row.requests} req`}>
-                <motion.span
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: `${Math.max(10, (row.requests / peak) * 100)}%`, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 26 }}
-                  className="w-full rounded-sm bg-gradient-to-t from-flame/25 to-flame/75"
-                />
-                <span className="mt-1 truncate text-[8.5px] leading-none text-dim">{row.model_id.split("-")[0]}</span>
-              </div>
-            ))}
-          </div>
+          <ul className="mt-2 space-y-2">
+            {series.slice(0, 3).map((row) => {
+              const share = Math.round((row.requests / Math.max(1, peak)) * 100);
+              return (
+                <li key={row.model_id} className="min-w-0">
+                  <div className="flex items-baseline justify-between gap-2 text-[10.5px]">
+                    <span className="min-w-0 truncate text-warm/85" title={row.model_id}>
+                      {row.model_id}
+                    </span>
+                    <span className="shrink-0 tabular-nums text-dim">{row.requests} req</span>
+                  </div>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-warm/[0.07]">
+                    <motion.span
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.max(4, share)}%` }}
+                      transition={{ type: "spring", stiffness: 240, damping: 28 }}
+                      className="block h-full rounded-full bg-flame/70"
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         ) : (
           <p className="mt-2 text-[11px] text-dim">No requests recorded in the last 24 hours.</p>
         )}
@@ -629,7 +637,7 @@ export function SiteHeader() {
             onClick={() => navigate(dashboardHref)}
             whileTap={{ scale: 0.985 }}
             transition={{ duration: 0.12 }}
-            className="nav-signin hidden h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-[#E7893C] px-4 text-[13px] font-semibold text-[#18191B] transition-colors duration-200 hover:bg-[#F09A55] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7893C]/50 sm:inline-flex"
+            className="nav-signin signin-halo hidden h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-[#E7893C] px-4 text-[13px] font-semibold text-[#18191B] transition-colors duration-200 hover:bg-[#F09A55] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7893C]/50 sm:inline-flex"
           >
             <span className="flex items-center gap-1.5">
               {role ? "Open dashboard" : "Sign in"}
