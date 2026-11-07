@@ -493,7 +493,9 @@ export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 6);
+    // 20px, not 6: the header must blend into the grid at the very top and only
+    // become a glass bar once the page has actually moved.
+    const onScroll = () => setScrolled(window.scrollY > 20);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -516,10 +518,11 @@ export function SiteHeader() {
   return (
     <header
       ref={headerRef}
-      style={{ borderBottomColor: scrolled ? "rgba(58,59,61,0.7)" : "#2A2B2E" }}
       className={cn(
-        "safe-t sticky top-0 z-40 border-b backdrop-blur-xl transition-[background-color,border-color] duration-200",
-        scrolled ? "bg-[#18191B]/96 shadow-[0_10px_30px_-24px_rgba(0,0,0,0.9)]" : "bg-[#18191B]/88",
+        "site-header safe-t sticky top-0 z-40 border-b transition-[background-color,border-color,backdrop-filter,box-shadow] duration-300",
+        scrolled
+          ? "site-header--scrolled border-[#2A2B2E]/80 bg-[#18191B]/75 shadow-[0_10px_30px_-26px_rgba(0,0,0,0.9)] backdrop-blur-[16px]"
+          : "border-transparent bg-transparent backdrop-blur-0",
       )}
     >
       <div className="mx-auto flex h-[72px] max-w-[1320px] items-center gap-4 px-4 sm:px-6">
@@ -571,7 +574,7 @@ export function SiteHeader() {
             onClick={() => navigate(dashboardHref)}
             whileTap={{ scale: 0.985 }}
             transition={{ duration: 0.12 }}
-            className="hidden h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-[#E7893C] px-4 text-[13px] font-semibold text-[#18191B] transition-colors duration-200 hover:bg-[#F09A55] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7893C]/50 sm:inline-flex"
+            className="nav-signin hidden h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-[#E7893C] px-4 text-[13px] font-semibold text-[#18191B] transition-colors duration-200 hover:bg-[#F09A55] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7893C]/50 sm:inline-flex"
           >
             <span className="flex items-center gap-1.5">
               {role ? "Open dashboard" : "Sign in"}
