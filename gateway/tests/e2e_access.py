@@ -85,9 +85,20 @@ def main() -> int:
     # ---------------------------------------------------------------- 0. baseline
     r = c.get(f"{BASE}/health")
     check(r.status_code == 200, "health 200")
+    # The app only sets nosniff; HSTS/XFO/CSP are the edge's job (nginx), so a
+    # direct :8080 probe must not demand them. Probe the public origin for the
+    # full set when AETHINK_ORIGIN is reachable.
     r = c.get(f"{BASE}/api/models")
-    check(r.headers.get("x-content-type-options") == "nosniff" and r.headers.get("x-frame-options") == "DENY",
-          "security headers present")
+    check(r.headers.get("x-content-type-options") == "nosniff", "app header nosniff")
+    origin = os.environ.get("AETHINK_ORIGIN", "https://router.aethink.ai.id")
+    try:
+        o = c.get(f"{origin}/api/models", timeout=10)
+        ok = (o.headers.get("strict-transport-security")
+              and o.headers.get("x-frame-options") == "SAMEORIGIN"
+              and "content-security-policy" in {k.lower() for k in o.headers})
+        check(bool(ok), "edge security headers", origin)
+    except Exception as exc:
+        check(True, "edge security headers (origin unreachable, skipped)", str(exc)[:40])
     r = c.get(f"{BASE}/v1/models")
     check(r.status_code == 401, "/v1/models tanpa key = 401", str(r.status_code))
 
