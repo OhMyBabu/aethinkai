@@ -194,6 +194,13 @@ function DocsPanel({ onClose }: { onClose: () => void }) {
             <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-flame">
               <BookOpen size={12} aria-hidden /> Documentation
             </p>
+            <Link
+              to="/panduan"
+              onClick={onClose}
+              className="inline-flex h-8 items-center gap-1 rounded-lg border border-flame/35 px-2.5 text-[11.5px] text-flame transition hover:bg-flame/10"
+            >
+              Panduan lengkap <ArrowUpRight size={11} />
+            </Link>
             <button
               type="button"
               onClick={onClose}
@@ -323,7 +330,7 @@ function useBars(seed: number) {
 function StatusPanel({ onClose }: { onClose: () => void }) {
   const bars = useBars(3);
   const { status, models } = useLandingData();
-  const ok = status ? status.errors_24h === 0 : true;
+  const ok = status ? status.status === "operational" : true;
   const services = [
     { name: "Gateway API", latency: status?.p95_latency_ms || null, uptime: status ? `${status.success_rate}%` : "—" },
     { name: "Model katalog", latency: models.length, uptime: `${status?.models_active ?? models.length} live` },
@@ -354,6 +361,13 @@ function StatusPanel({ onClose }: { onClose: () => void }) {
               : "Gateway unreachable from here"}
           </p>
         </div>
+        <Link
+          to="/status"
+          onClick={onClose}
+          className="mb-3 inline-flex h-8 items-center gap-1 rounded-lg border border-flame/35 px-2.5 text-[11.5px] text-flame transition hover:bg-flame/10"
+        >
+          Halaman status <ArrowUpRight size={11} />
+        </Link>
         <button
           type="button"
           onClick={onClose}

@@ -227,6 +227,22 @@ async def public_status():
     recent_error_pct = 0.0 if r_total == 0 else round(r_bad / r_total * 100, 2)
     healthy = r_total < 10 or recent_error_pct <= 5.0
 
+    per_model = await db.pool().fetch(
+        """SELECT model_id,
+                  count(*) AS requests,
+                  coalesce(sum(tokens_in + tokens_out), 0) AS tokens,
+                  count(*) FILTER (WHERE status <> 'ok') AS errors,
+                  percentile_cont(0.95) WITHIN GROUP (ORDER BY latency_ms)
+                    FILTER (WHERE latency_ms > 0) AS p95_ms
+             FROM usage_events
+            WHERE created_at > now() - interval '24 hours'
+              -- only names we actually sell: an internal route id must never reach the public page
+              AND model_id IN (SELECT public_id FROM model_prices WHERE public_id IS NOT NULL)
+            GROUP BY model_id
+            ORDER BY requests DESC
+            LIMIT 20"""
+    )
+
     return {
         "status": "operational" if healthy else "degraded",
         "window_minutes": 15,
@@ -242,6 +258,12 @@ async def public_status():
         "errors_24h": errors_24h,
         "p95_latency_ms": int(row["p95_ms"] or 0),
         "success_rate": success_rate,
+        "models": [
+            {"model_id": r["model_id"], "requests": int(r["requests"]),
+             "tokens": int(r["tokens"]), "errors": int(r["errors"]),
+             "p95_latency_ms": int(r["p95_ms"]) if r["p95_ms"] else None}
+            for r in per_model
+        ],
     }
 
 
@@ -433,6 +455,18 @@ async def models(_key: dict = Depends(require_key)):
 async def chat_completions(request: Request, key: dict = Depends(require_key)):
     # ---- per-key RPM (sliding 60s window); 429 tells the client exactly when to retry
     limit = int(key.get("rpm_limit") or 60)
+    # Two layers: per-key (the plan the buyer paid for) and a box-wide ceiling so one
+    # campaign cannot saturate the gateway for everyone. The per-key limit is the one
+    # customers are promised in the docs; the global one is capacity protection.
+    global_cap = int(os.environ.get("AETHINK_GLOBAL_RPM", "1200"))
+    g_allowed, _, g_reset = rpm_window.allow("global", global_cap, 60)
+    if not g_allowed:
+        raise HTTPException(
+            429,
+            {"error": {"message": "Gateway sedang penuh, coba beberapa detik lagi",
+                       "code": "gateway_busy"}},
+            headers={"Retry-After": str(max(1, int(g_reset)))})
+
     allowed, remaining, reset = rpm_window.allow(f"key:{key['id']}", limit)
     rate_headers = {
         "X-RateLimit-Limit": str(limit),
@@ -546,7 +580,11 @@ async def chat_completions(request: Request, key: dict = Depends(require_key)):
     client_ip, client_ua = _client(request)
     event: dict[str, Any] = {
         "id": db.new_id(), "request_id": request_id, "user_id": key["user_id"], "key_id": key["id"],
-        "model_id": upstream_model, "price_in_idr": price["price_in_idr"], "price_out_idr": price["price_out_idr"],
+        # model_id is what the buyer asked for (public name); served_model is the route
+        # that actually answered. Recording the route here leaked mr/... into buyer
+        # usage pages and broke per-model stats.
+        "model_id": price.get("public_id") or upstream_model, "served_model": upstream_model,
+        "price_in_idr": price["price_in_idr"], "price_out_idr": price["price_out_idr"],
         "stream": stream, "client_ip": client_ip, "client_ua": client_ua,
     }
 

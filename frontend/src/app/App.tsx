@@ -17,6 +17,8 @@ import PayPage from "@/pages/public/Pay";
 import PortalPage from "@/pages/public/Portal";
 import MiniAppPage from "@/pages/tg/MiniApp";
 import NotFoundPage from "@/pages/public/NotFound";
+import DocsPage from "@/pages/public/Docs";
+import StatusPage from "@/pages/public/Status";
 import UserOverviewPage from "@/pages/user/Overview";
 import UserModelsPage from "@/pages/user/Models";
 import UserApiKeysPage from "@/pages/user/ApiKeys";
@@ -80,6 +82,9 @@ export default function App() {
         <ScrollToTop />
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/panduan" element={<DocsPage />} />
+          <Route path="/guide" element={<DocsPage />} />
+          <Route path="/status" element={<StatusPage />} />
           <Route path="/login" element={<LoginTelegramPage />} />
           <Route path="/admin/login" element={<LoginPage />} />
           <Route path="/signup" element={<Navigate to="/login" replace />} />

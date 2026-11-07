@@ -604,7 +604,12 @@ def confirm_link(code: str, user: dict) -> None:
 # ---------------------------------------------------------------- order flow
 def create_order(user: dict, sku: str, msg_id: int | None = None) -> tuple[str, dict] | None:
     pkg = PKG[sku]
-    order_id = f"TG{user['id']}-{int(time.time())}"
+    # invoice ids are issued by the gateway so every order looks the same:
+    # AETH-YYYYMMDD-XXXX
+    status, ref = post_internal("/api/internal/order-id", {})
+    order_id = ref.get("order_id") if status == 200 else ""
+    if not order_id:
+        return None
     status, data = post_internal("/api/internal/order", {
         "order_id": order_id,
         "tg_id": user["id"],

@@ -88,6 +88,26 @@ def _new_key() -> tuple[str, str, str]:
     return raw, raw[:16], hashlib.sha256(raw.encode()).hexdigest()
 
 
+# Invoice ids are human-checkable: AETH-YYYYMMDD-XXXX (4 chars, no I/O/0/1 confusion).
+ORDER_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def new_order_ref(prefix: str = "AETH") -> str:
+    day = datetime.now(timezone.utc).strftime("%Y%m%d")
+    tail = "".join(secrets.choice(ORDER_ALPHABET) for _ in range(4))
+    return f"{prefix}-{day}-{tail}"
+
+
+async def unique_order_ref(prefix: str = "AETH") -> str:
+    """AETH-20261107-7K2Q, retried against the orders primary key."""
+    for _ in range(8):
+        ref = new_order_ref(prefix)
+        taken = await db.pool().fetchval("SELECT 1 FROM orders WHERE id = $1", ref)
+        if not taken:
+            return ref
+    raise _bad("order_ref_failed", "Gagal membuat nomor invoice, coba lagi", 503)
+
+
 def _client_ip(request: Request) -> str:
     h = request.headers
     return (
@@ -673,7 +693,7 @@ async def portal_order(body: OrderReq, row: dict = Depends(portal_identity)):
     if not buyer_id:
         raise _bad("telegram_required", "Hubungkan Telegram dulu untuk membeli", 403)
 
-    order_id = f"WEB{buyer_id[:8]}-{int(time.time())}"
+    order_id = await unique_order_ref()
     credits = pkg["idr"] * 1_000_000
     await db.pool().execute(
         """INSERT INTO orders(id, buyer_id, sku, credits_micro, price_idr, payment_ref, status, rpm_limit)
@@ -695,6 +715,60 @@ async def portal_order(body: OrderReq, row: dict = Depends(portal_identity)):
             "method": "manual",
             "note": "Bayar ke admin (transfer/QRIS), lalu tekan 'Saya sudah bayar' di bot atau tunggu admin konfirmasi.",
         },
+    }
+
+
+@portal.get("/orders/{order_id}/receipt")
+async def order_receipt(order_id: str, row: dict = Depends(portal_identity)):
+    """One order, fully explained: what was bought, what it cost, what it left behind."""
+    order = await db.pool().fetchrow(
+        """SELECT o.id, o.sku, o.credits_micro, o.price_idr, o.status, o.payment_ref,
+                  o.rpm_limit, o.created_at, o.granted_at, o.buyer_id,
+                  b.tg_id, b.username, b.name AS buyer_name
+             FROM orders o LEFT JOIN buyers b ON b.id = o.buyer_id
+            WHERE o.id = $1""", order_id)
+    if order is None:
+        raise _bad("not_found", "Invoice tidak ada", 404)
+    if row.get("buyer_id") and order["buyer_id"] != row["buyer_id"]:
+        raise _bad("not_found", "Invoice tidak ada", 404)
+
+    pkg = PACKAGE_BY_SKU.get(order["sku"]) or {}
+    owner = await db.pool().fetchval(
+        "SELECT user_id FROM api_keys WHERE buyer_id = $1 ORDER BY created_at DESC LIMIT 1",
+        order["buyer_id"])
+    balance = await db.balance_micro(owner) if owner else 0
+
+    # what this order actually consumed, so a receipt is not just a price tag
+    usage = await db.pool().fetchrow(
+        """SELECT count(*) AS requests,
+                  coalesce(sum(tokens_in),0) AS tokens_in,
+                  coalesce(sum(tokens_out),0) AS tokens_out,
+                  coalesce(sum(cost_micro),0) AS cost_micro
+             FROM usage_events
+            WHERE ($1::text IS NULL OR user_id = $1) AND created_at >= $2
+              AND ($3::timestamptz IS NULL OR created_at <= $3)""",
+        owner, order["created_at"], order["granted_at"])
+
+    return {
+        "invoice_id": order["id"],
+        "issued_at": order["created_at"].isoformat(),
+        "paid_at": order["granted_at"].isoformat() if order["granted_at"] else None,
+        "status": order["status"],
+        "buyer": {"tg_id": order["tg_id"], "username": order["username"], "name": order["buyer_name"]},
+        "package": {"sku": order["sku"], "name": pkg.get("name") or order["sku"],
+                    "rpm_limit": order["rpm_limit"]},
+        "amount": {"price_idr": order["price_idr"], "credits_micro": order["credits_micro"],
+                   "credits_idr": order["credits_micro"] / 1_000_000},
+        "payment_ref": order["payment_ref"],
+        "balance_micro": balance,
+        "usage_since_issue": {
+            "requests": int(usage["requests"] or 0),
+            "tokens_in": int(usage["tokens_in"] or 0),
+            "tokens_out": int(usage["tokens_out"] or 0),
+            "cost_micro": int(usage["cost_micro"] or 0),
+        },
+        "note": "Saldo tersimpan di akun, bukan di key. Invoice ini bukti pembayaran; "
+                "key tetap sama selama tidak dirotasi.",
     }
 
 
@@ -1087,6 +1161,13 @@ class OrderIn(BaseModel):
     rpm_limit: int = Field(default=60, ge=1, le=100000)
     payment_ref: str | None = None
     telegram_msg_id: int | None = None
+
+
+@internal.post("/order-id")
+async def internal_order_id(request: Request):
+    """The bot cannot invent invoice numbers: ask the gateway, which owns the format."""
+    await _internal_payload(request, None)
+    return {"order_id": await unique_order_ref(), "prefix": "AETH"}
 
 
 @internal.post("/order")

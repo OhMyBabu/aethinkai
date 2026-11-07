@@ -21,6 +21,16 @@ export interface ApiModel {
 
 export interface LandingStatus {
   status: "operational" | "degraded";
+  window_minutes?: number;
+  window_requests?: number;
+  window_error_pct?: number;
+  models?: Array<{
+    model_id: string;
+    requests: number;
+    tokens: number;
+    errors: number;
+    p95_latency_ms: number | null;
+  }>;
   db: boolean;
   uptime_seconds: number;
   models_active: number;

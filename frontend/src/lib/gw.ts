@@ -126,6 +126,7 @@ export async function myUsage(days = 7) {
 }
 export type PublicModel = {
   id: string;
+  status?: "on" | "maintenance" | "off";
   display_name: string;
   provider: string;
   context_length: number;

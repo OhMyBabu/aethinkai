@@ -239,8 +239,9 @@ def main() -> int:
     # the bot cannot DM a synthetic tg id, so plant the code the way the bot would
     buyer_id = c.get(f"{BASE}/api/portal/me", headers=H).json()["buyer"]["id"]
     subprocess.run(["psql", db_url(), "-q", "-c",
+                    f"delete from key_rotation_codes where buyer_id = '{buyer_id}'; "
                     "insert into key_rotation_codes(id,buyer_id,code,expires_at) "
-                    f"values ('rotcode_e2e','{buyer_id}','424242', now() + interval '5 minutes')"],
+                    f"values ('rotcode_{buyer_id}','{buyer_id}','424242', now() + interval '5 minutes')"],
                    check=False)
     r = c.post(f"{BASE}/api/portal/keys/rotate/confirm", headers=H, json={"code": "000000"})
     check(r.status_code == 401, "kode rotasi salah = 401", str(r.status_code))

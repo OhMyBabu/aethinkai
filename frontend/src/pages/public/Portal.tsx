@@ -71,6 +71,8 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
   const [orders, setOrders] = useState<PortalOrder[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [receipt, setReceipt] = useState<Record<string, unknown> | null>(null);
+  const [receiptBusy, setReceiptBusy] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try { setPackages(await fetchPackages()); } catch { /* keep empty */ }
@@ -136,17 +138,86 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
       {orders.length ? (
         <div className="mt-3 divide-y divide-[#2A2B2E] rounded-lg border border-[#3A3B3D]">
           {orders.slice(0, 5).map((o) => (
-            <div key={o.id} className="flex items-center justify-between px-3 py-2">
+            <button
+              key={o.id}
+              type="button"
+              onClick={async () => {
+                setReceiptBusy(o.id);
+                try {
+                  const res = await fetch(`/api/portal/orders/${encodeURIComponent(o.id)}/receipt`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                  });
+                  const body = await res.json();
+                  if (!res.ok) throw new Error(body?.error?.message || "Gagal memuat invoice");
+                  setReceipt(body);
+                } catch (err) {
+                  setNotice(err instanceof Error ? err.message : "Gagal memuat invoice");
+                } finally {
+                  setReceiptBusy(null);
+                }
+              }}
+              className="flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-[#22242a]"
+            >
               <div className="min-w-0">
                 <p className="truncate font-mono text-[11px] text-[#FAF8F4]">{o.id}</p>
-                <p className="text-[10.5px] text-[#85888B]">{o.sku} · {idr(o.price_idr * 1_000_000)}</p>
+                <p className="text-[10.5px] text-[#85888B]">
+                  {o.sku} · {idr(o.price_idr * 1_000_000)}
+                  {receiptBusy === o.id ? " · memuat…" : " · lihat invoice"}
+                </p>
               </div>
               <span className={cn("shrink-0 rounded-md px-2 py-0.5 text-[10.5px]",
                 o.status === "granted" ? "bg-[#E7893C]/12 text-[#E7893C]" : "bg-[#FAF8F4]/6 text-[#85888B]")}>
                 {o.status}
               </span>
-            </div>
+            </button>
           ))}
+        </div>
+      ) : null}
+      {receipt ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 px-4"
+          onClick={() => setReceipt(null)}
+        >
+          <div
+            className="w-full max-w-[440px] rounded-xl border border-[#3A3B3D] bg-[#1B1C1F] p-5"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[10.5px] uppercase tracking-[0.14em] text-[#85888B]">Invoice</p>
+                <p className="mt-1 font-mono text-[14px] text-[#FAF8F4]">{String(receipt.invoice_id)}</p>
+              </div>
+              <button type="button" onClick={() => setReceipt(null)} className="text-[11.5px] text-[#85888B] hover:text-[#FAF8F4]">
+                tutup
+              </button>
+            </div>
+            <div className="mt-4 space-y-1.5 text-[12px]">
+              {(() => {
+                const pkg = receipt.package as { sku?: string; name?: string; rpm_limit?: number } | undefined;
+                const amount = receipt.amount as { price_idr?: number; credits_idr?: number } | undefined;
+                const used = receipt.usage_since_issue as { requests?: number; tokens_in?: number; tokens_out?: number } | undefined;
+                const rows: Array<[string, string]> = [
+                  ["Paket", `${pkg?.name ?? pkg?.sku ?? "—"} · ${pkg?.rpm_limit ?? "—"} rpm`],
+                  ["Dibayar", `Rp ${Number(amount?.price_idr ?? 0).toLocaleString("id-ID")}`],
+                  ["Kredit masuk", `Rp ${Number(amount?.credits_idr ?? 0).toLocaleString("id-ID")}`],
+                  ["Status", String(receipt.status)],
+                  ["Terbit", when(String(receipt.issued_at))],
+                  ["Dibayar", receipt.paid_at ? when(String(receipt.paid_at)) : "—"],
+                  ["Saldo sekarang", idr(Number(receipt.balance_micro ?? 0))],
+                  ["Pemakaian sejak invoice", `${used?.requests ?? 0} req · ${(used?.tokens_in ?? 0) + (used?.tokens_out ?? 0)} token`],
+                ];
+                return rows.map(([k, v]) => (
+                  <div key={k} className="flex items-center justify-between gap-3 border-b border-[#23252A] pb-1.5 last:border-0">
+                    <span className="text-[#85888B]">{k}</span>
+                    <span className="text-right font-mono text-[11.5px] text-[#FAF8F4]">{v}</span>
+                  </div>
+                ));
+              })()}
+            </div>
+            <p className="mt-3 text-[10.5px] leading-5 text-[#6f6a63]">{String(receipt.note ?? "")}</p>
+          </div>
         </div>
       ) : null}
     </section>
