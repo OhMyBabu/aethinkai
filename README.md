@@ -63,10 +63,12 @@ Perintah harian:
 | How does auth work? | `gateway/app/auth.py`, `gateway/app/portal.py` (`portal_identity`, `_verify_init_data`) |
 | How does the bot keep one panel? | `bot/bot.py` (`show_home`, `edit`, `handle_callback`) |
 | What did the client ask for? | `docs/AETHINKAI_TELEGRAM_BOT_UI_PRD_HERMES.md` |
+| Who logs in where | `docs/ACCESS.md` |
 | Current DB shape | `docs/schema.sql` (snapshot, 19 tabel) |
 | Secrets contract | `docs/SECRETS.md`, `docs/env.gateway.example`, `docs/env.bot.example` |
 | Harga & margin | `gateway/scripts/price_audit.py`, `audit/PRICING-AUDIT.md` |
-| Tests | `gateway/tests/e2e_access.py`, `gateway/tests/e2e_link.py`, `bot/tests/e2e_bot.py` |
+| Tests | `gateway/tests/e2e_access.py`, `gateway/tests/e2e_link.py`, `bot/tests/e2e_bot.py`, `gateway/tests/adversarial.py` |
+| Books don't balance | `gateway/scripts/ledger_audit.py` (`--fix` posts an adjustment row) |
 
 ## Verification (wajib sebelum bilang "live")
 
@@ -74,6 +76,7 @@ Perintah harian:
 cd gateway && ./.venv/bin/python tests/e2e_access.py   # 35/35
 cd gateway && ./.venv/bin/python tests/e2e_link.py     # 32/32
 cd bot     && ./.venv/bin/python tests/e2e_bot.py      # 12/12
+./gateway/.venv/bin/python gateway/tests/adversarial.py # 20/20 — money + authz attacks
 cd frontend && npx tsc -b && npm run build             # 0 error
 ./scripts/healthcheck.sh                               # HEALTHY
 ```

@@ -99,7 +99,7 @@ async def resolve_model(alias: str) -> dict[str, Any] | None:
         SELECT model_id, public_id, display_name,
                price_in_idr, price_out_idr, price_cached_idr
         FROM model_prices
-        WHERE (public_id = $1 OR model_id = $1) AND active
+        WHERE (public_id = $1 OR (public_id IS NULL AND model_id = $1)) AND active
         ORDER BY (public_id = $1) DESC
         LIMIT 1
         """,
@@ -108,10 +108,32 @@ async def resolve_model(alias: str) -> dict[str, Any] | None:
     return dict(row) if row else None
 
 
-async def create_hold(user_id: str, key_id: str, amount_micro: int, ttl_seconds: int) -> str:
+async def create_hold(user_id: str, key_id: str, amount_micro: int, ttl_seconds: int) -> str | None:
+    """Debit the wallet and park the money in a hold.
+
+    Returns None when the wallet cannot cover the hold — the caller answers 402.
+    The debit is guarded in SQL (`balance_micro >= amount`) instead of relying on
+    the `balances_balance_micro_check` constraint: two parallel requests both pass
+    an application-level balance check, and the loser used to raise a
+    CheckViolation (HTTP 500) *after* the model had already been called.
+    """
+    amount_micro = int(amount_micro)
+    if amount_micro < 0:
+        raise ValueError(f"negative hold amount: {amount_micro}")
     hold_id = new_id()
     async with pool().acquire() as conn:
         async with conn.transaction():
+            debited = await conn.fetchval(
+                """
+                UPDATE balances SET balance_micro = balance_micro - $2, updated_at = now()
+                WHERE user_id = $1 AND balance_micro >= $2
+                RETURNING balance_micro
+                """,
+                user_id,
+                amount_micro,
+            )
+            if debited is None:
+                return None
             await conn.execute(
                 """
                 INSERT INTO holds(id, user_id, key_id, amount_micro, state, expires_at)
@@ -123,23 +145,29 @@ async def create_hold(user_id: str, key_id: str, amount_micro: int, ttl_seconds:
                 amount_micro,
                 str(ttl_seconds),
             )
-            await conn.execute(
-                """
-                UPDATE balances SET balance_micro = balance_micro - $2, updated_at = now()
-                WHERE user_id = $1
-                """,
-                user_id,
-                amount_micro,
-            )
     return hold_id
 
 
 async def settle_hold(hold_id: str, user_id: str, charged_micro: int, ref: str, note: str = "") -> int:
-    """Release the hold and charge the real amount. Returns the new balance."""
+    """Release the hold and charge the real amount. Returns the new balance.
+
+    The real cost can exceed the estimate that was held (long completion, cache miss).
+    Charging it blindly pushed the wallet negative and the DB check turned a served
+    request into a 500. So the charge is clamped to what the wallet can actually
+    cover; the shortfall is recorded on the ledger note (`underpaid=N`) instead of
+    being silently swallowed or billed into the void.
+    """
     async with pool().acquire() as conn:
         async with conn.transaction():
             row = await conn.fetchrow("SELECT amount_micro FROM holds WHERE id = $1 FOR UPDATE", hold_id)
             held = int(row["amount_micro"]) if row else 0
+            balance = await conn.fetchval(
+                "SELECT balance_micro FROM balances WHERE user_id = $1", user_id
+            )
+            available = int(balance or 0) + held        # hold already left the wallet
+            if charged_micro > available:
+                note = f"{note} underpaid={charged_micro - available}".strip()
+                charged_micro = max(0, available)
             refund = held - charged_micro
             await conn.execute(
                 "UPDATE holds SET state = 'settled' WHERE id = $1", hold_id
@@ -168,16 +196,29 @@ async def settle_hold(hold_id: str, user_id: str, charged_micro: int, ref: str, 
 
 
 async def release_hold(hold_id: str, user_id: str) -> None:
+    """Give a hold back after a failed request — and say so in the ledger.
+
+    Refunding the wallet without a ledger row breaks Σbalance == Σledger, which is
+    the one invariant the operator uses to trust the books.
+    """
     async with pool().acquire() as conn:
         async with conn.transaction():
-            row = await conn.fetchrow("SELECT amount_micro FROM holds WHERE id = $1", hold_id)
+            row = await conn.fetchrow(
+                "SELECT amount_micro FROM holds WHERE id = $1 AND state = 'held' FOR UPDATE", hold_id
+            )
             if row is None:
                 return
             await conn.execute("UPDATE holds SET state = 'released' WHERE id = $1", hold_id)
-            await conn.execute(
-                "UPDATE balances SET balance_micro = balance_micro + $2, updated_at = now() WHERE user_id = $1",
+            balance = await conn.fetchval(
+                "UPDATE balances SET balance_micro = balance_micro + $2, updated_at = now() "
+                "WHERE user_id = $1 RETURNING balance_micro",
                 user_id,
                 int(row["amount_micro"]),
+            )
+            await conn.execute(
+                """INSERT INTO ledger_entries(id, user_id, kind, amount_micro, balance_after, ref, note)
+                   VALUES ($1, $2, 'hold_release', $3, $4, $5, 'released hold')""",
+                new_id(), user_id, int(row["amount_micro"]), balance, hold_id,
             )
 
 

@@ -49,7 +49,7 @@ use=$(df --output=pcent / | tail -1 | tr -dc '0-9')
 
 diff=$(PGPASSWORD="$(grep -oP '(?<=aethink:)[^@]+' /root/.secrets/aethink-db.env)" \
        psql "postgresql://aethink:$(grep -oP '(?<=aethink:)[^@]+' /root/.secrets/aethink-db.env)@127.0.0.1:5432/aethink" -tAc \
-       "SELECT (SELECT coalesce(sum(balance_micro),0) FROM balances) - (SELECT coalesce(sum(amount_micro),0) FROM ledger_entries);" 2>/dev/null || echo "?")
+       "SELECT (SELECT coalesce(sum(balance_micro),0) FROM balances) + (SELECT coalesce(sum(amount_micro),0) FROM holds WHERE state='held') - (SELECT coalesce(sum(amount_micro),0) FROM ledger_entries);" 2>/dev/null || echo "?")
 [ "$diff" = "0" ] && add "ledger=balanced" || add "ledger=DRIFT($diff)" fail
 
 if [ "$QUIET" = "--quiet" ]; then

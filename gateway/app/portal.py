@@ -27,6 +27,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+import asyncpg
 import jwt
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -827,34 +828,65 @@ async def internal_grant(request: Request):
     """Bot-only: mint a key straight away (used when the store already knows the payment is settled)."""
     body = await _internal_payload(request, GrantIn)
     ip = _client_ip(request)
-    async with db.pool().acquire() as con:
-        async with con.transaction():
-            existing = await con.fetchrow(
-                "SELECT id, status, key_id FROM orders WHERE id = $1 FOR UPDATE", body.order_id
-            )
-            if existing and existing["status"] == "granted":
-                key = await con.fetchrow("SELECT id, prefix FROM api_keys WHERE id = $1", existing["key_id"])
-                return {
-                    "order_id": body.order_id,
-                    "already_granted": True,
-                    "key": None,
-                    "key_prefix": key["prefix"] if key else None,
-                    "message": "Order ini sudah pernah di-grant. Pakai /rotate di bot untuk key baru.",
-                }
+    payment_ref = body.payment_ref or body.order_id
+    try:
+        async with db.pool().acquire() as con:
+            async with con.transaction():
+                # Serialize retries for one order *before* the existence check: a row
+                # lock locks nothing when the row does not exist yet, and that is how
+                # five parallel bot retries used to end in a UniqueViolation → 500.
+                await con.execute("SELECT pg_advisory_xact_lock(hashtext($1))", body.order_id)
+                existing = await con.fetchrow(
+                    "SELECT id, status, key_id FROM orders WHERE id = $1 FOR UPDATE", body.order_id
+                )
+                if existing and existing["status"] == "granted":
+                    key = await con.fetchrow(
+                        "SELECT id, prefix FROM api_keys WHERE id = $1", existing["key_id"]
+                    )
+                    return {
+                        "order_id": body.order_id,
+                        "already_granted": True,
+                        "key": None,
+                        "key_prefix": key["prefix"] if key else None,
+                        "message": "Order ini sudah pernah di-grant. Pakai /rotate di bot untuk key baru.",
+                    }
 
-            buyer_id = await _ensure_buyer(con, body.tg_id, body.username, body.name)
-            user_id = await _ensure_user(con, body.tg_id, body.sku, body.name)
-            key_id, raw_key, prefix = await _mint_key(con, user_id, buyer_id, body.sku, body.rpm_limit)
-            await con.execute(
-                """INSERT INTO orders(id, buyer_id, sku, credits_micro, price_idr, payment_ref,
-                                      status, key_id, telegram_msg_id, granted_at)
-                   VALUES ($1,$2,$3,$4,$5,$6,'granted',$7,$8,now())
-                   ON CONFLICT (id) DO UPDATE
-                     SET status='granted', key_id=EXCLUDED.key_id, granted_at=now()""",
-                body.order_id, buyer_id, body.sku, body.credits_micro, body.price_idr,
-                body.payment_ref or body.order_id, key_id, body.telegram_msg_id,
+                buyer_id = await _ensure_buyer(con, body.tg_id, body.username, body.name)
+                user_id = await _ensure_user(con, body.tg_id, body.sku, body.name)
+                key_id, raw_key, prefix = await _mint_key(con, user_id, buyer_id, body.sku, body.rpm_limit)
+                await con.execute(
+                    """INSERT INTO orders(id, buyer_id, sku, credits_micro, price_idr, payment_ref,
+                                          status, key_id, telegram_msg_id, granted_at)
+                       VALUES ($1,$2,$3,$4,$5,$6,'granted',$7,$8,now())
+                       ON CONFLICT (id) DO UPDATE
+                         SET status='granted', key_id=EXCLUDED.key_id, granted_at=now()""",
+                    body.order_id, buyer_id, body.sku, body.credits_micro, body.price_idr,
+                    payment_ref, key_id, body.telegram_msg_id,
+                )
+                bal = await _credit(con, user_id, body.credits_micro, body.order_id,
+                                    f"telegram {body.sku}")
+    except asyncpg.UniqueViolationError:
+        # Same payment settled twice under two order ids (double tap, bot retry with a
+        # new id). The money was already credited to the first order — answer with the
+        # order that owns the payment instead of a 500 the bot would read as "failed".
+        async with db.pool().acquire() as con:
+            row = await con.fetchrow(
+                """SELECT o.id, o.status, o.key_id, k.prefix
+                     FROM orders o LEFT JOIN api_keys k ON k.id = o.key_id
+                    WHERE o.payment_ref = $1""",
+                payment_ref,
             )
-            bal = await _credit(con, user_id, body.credits_micro, body.order_id, f"telegram {body.sku}")
+        if row is None:
+            raise _bad("conflict", "Order atau payment_ref bentrok", 409)
+        await db.log_audit(f"bot:{body.tg_id}", "internal.grant.duplicate", row["id"],
+                           {"payment_ref": payment_ref, "ip": ip})
+        return {
+            "order_id": row["id"],
+            "already_granted": row["status"] == "granted",
+            "key": None,
+            "key_prefix": row["prefix"],
+            "message": "payment_ref ini sudah dipakai order lain; tidak ada kredit kedua.",
+        }
 
     await db.log_audit(f"bot:{body.tg_id}", "internal.grant", body.order_id,
                        {"sku": body.sku, "credits_micro": body.credits_micro, "ip": ip})
@@ -878,18 +910,35 @@ class OrderIn(BaseModel):
 async def internal_order(request: Request):
     """Create a pending order (payment not settled yet). Idempotent on order_id."""
     body = await _internal_payload(request, OrderIn)
-    async with db.pool().acquire() as con:
-        async with con.transaction():
-            buyer_id = await _ensure_buyer(con, body.tg_id, body.username, body.name)
-            await con.execute(
-                """INSERT INTO orders(id, buyer_id, sku, credits_micro, price_idr, payment_ref, status, telegram_msg_id)
-                   VALUES ($1,$2,$3,$4,$5,$6,'pending',$7)
-                   ON CONFLICT (id) DO UPDATE
-                     SET telegram_msg_id = coalesce(EXCLUDED.telegram_msg_id, orders.telegram_msg_id)""",
-                body.order_id, buyer_id, body.sku, body.credits_micro, body.price_idr,
-                body.payment_ref or body.order_id, body.telegram_msg_id,
+    payment_ref = body.payment_ref or body.order_id
+    try:
+        async with db.pool().acquire() as con:
+            async with con.transaction():
+                # Same reasoning as /grant: serialize before the row exists.
+                await con.execute("SELECT pg_advisory_xact_lock(hashtext($1))", body.order_id)
+                buyer_id = await _ensure_buyer(con, body.tg_id, body.username, body.name)
+                await con.execute(
+                    """INSERT INTO orders(id, buyer_id, sku, credits_micro, price_idr, payment_ref,
+                                          status, telegram_msg_id)
+                       VALUES ($1,$2,$3,$4,$5,$6,'pending',$7)
+                       ON CONFLICT (id) DO UPDATE
+                         SET telegram_msg_id = coalesce(EXCLUDED.telegram_msg_id, orders.telegram_msg_id)""",
+                    body.order_id, buyer_id, body.sku, body.credits_micro, body.price_idr,
+                    payment_ref, body.telegram_msg_id,
+                )
+                row = await con.fetchrow(
+                    "SELECT id, status, sku FROM orders WHERE id = $1", body.order_id
+                )
+    except asyncpg.UniqueViolationError:
+        async with db.pool().acquire() as con:
+            row = await con.fetchrow(
+                "SELECT o.id, o.status, o.sku, o.buyer_id FROM orders o WHERE o.payment_ref = $1",
+                payment_ref,
             )
-            row = await con.fetchrow("SELECT id, status, sku FROM orders WHERE id = $1", body.order_id)
+        if row is None:
+            raise _bad("conflict", "Order atau payment_ref bentrok", 409)
+        return {"order_id": row["id"], "status": row["status"], "sku": row["sku"],
+                "buyer_id": row["buyer_id"], "duplicate_payment_ref": True}
     return {"order_id": row["id"], "status": row["status"], "sku": row["sku"], "buyer_id": buyer_id}
 
 

@@ -368,6 +368,21 @@ async def chat_completions(request: Request, key: dict = Depends(require_key)):
     if not model_id:
         raise HTTPException(400, {"error": {"message": "Missing model", "code": "missing_model"}})
 
+    # Validate the shape before anything dereferences it: `messages: "x"` used to
+    # reach `m.get("content")` and turn a client mistake into a 500.
+    messages = payload.get("messages")
+    if not isinstance(messages, list) or not messages or any(not isinstance(m, dict) for m in messages):
+        raise HTTPException(400, {"error": {"message": "messages harus array of object",
+                                            "code": "invalid_messages"}})
+    for field in ("max_tokens", "max_completion_tokens"):
+        raw = payload.get(field)
+        if raw is None:
+            continue
+        if not isinstance(raw, int) or isinstance(raw, bool) or raw < 1:
+            raise HTTPException(400, {"error": {"message": f"{field} harus integer >= 1",
+                                                "code": "invalid_max_tokens"}})
+        payload[field] = min(raw, 65536)   # a 1e9 budget is not a request, it is a hold bomb
+
     route = await db.resolve_model(model_id)
     if route is None or (route["price_in_idr"] == 0 and route["price_out_idr"] == 0):
         raise HTTPException(403, {"error": {"message": f"Model not enabled: {model_id}", "code": "model_not_allowed"}})
@@ -396,8 +411,16 @@ async def chat_completions(request: Request, key: dict = Depends(require_key)):
     max_tokens = int(payload.get("max_tokens") or payload.get("max_completion_tokens") or 1024)
     prompt_tokens_guess = int(sum(len(str(m.get("content") or "")) for m in payload.get("messages", [])) / 4) + 8
 
-    hold_amount = 0 if grant else min(estimate_hold(price, prompt_tokens_guess, max_tokens), balance)
-    hold_id = None if grant else await db.create_hold(key["user_id"], key["id"], hold_amount, HOLD_TTL_SECONDS)
+    # Never let a negative hold through: a negative balance (from a bug or a manual
+    # edit) would turn `min(estimate, balance)` into a negative debit, i.e. free money.
+    hold_amount = 0 if grant else max(0, min(estimate_hold(price, prompt_tokens_guess, max_tokens), balance))
+    hold_id = None
+    if not grant:
+        hold_id = await db.create_hold(key["user_id"], key["id"], hold_amount, HOLD_TTL_SECONDS)
+        if hold_id is None:
+            # guarded debit lost the race with another request: wallet is already spent
+            raise HTTPException(402, {"error": {"message": "Insufficient balance",
+                                                "code": "insufficient_credits"}})
 
     started = time.perf_counter()
     client_ip, client_ua = _client(request)
