@@ -703,6 +703,7 @@ export type GwAccessKey = {
   name: string;
   label: string | null;
   rpm_limit: number;
+  rpm_override?: boolean;
   status: "active" | "suspended" | "revoked";
   last_used_at: string | null;
   created_at: string;

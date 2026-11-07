@@ -1041,7 +1041,7 @@ async def _ensure_user(con, tg_id: int, sku: str, name: str | None) -> str:
 async def _active_key(con, user_id: str):
     """The single live key of a wallet (see migrations/003_one_key_per_user.sql)."""
     return await con.fetchrow(
-        """SELECT id, prefix, rpm_limit, label FROM api_keys
+        """SELECT id, prefix, rpm_limit, rpm_override, label FROM api_keys
             WHERE user_id = $1 AND revoked_at IS NULL AND status = 'active'
             ORDER BY created_at DESC LIMIT 1""",
         user_id,
@@ -1061,7 +1061,9 @@ async def _key_for_grant(con, user_id: str, buyer_id: str, label: str,
     if row is not None:
         # RPM belongs to the account and never drops: a Pro purchase after a Starter
         # purchase raises the existing key instead of minting a second credential.
-        if int(rpm or 0) > int(row["rpm_limit"] or 0):
+        # Exception: an admin hand-tuned this key (rpm_override) — purchases must not
+        # undo a deliberate exception.
+        if not row["rpm_override"] and int(rpm or 0) > int(row["rpm_limit"] or 0):
             await con.execute("UPDATE api_keys SET rpm_limit = $2 WHERE id = $1", row["id"], int(rpm))
         await con.execute(
             """UPDATE buyers SET plan_rpm = GREATEST(plan_rpm, $2) WHERE id = $1""",
@@ -1595,7 +1597,7 @@ async def admin_keys(status: str = "", q: str = "", limit: int = 200, _: dict = 
     limit = max(1, min(limit, 500))
     rows = await db.pool().fetch(
         """
-        SELECT k.id, k.prefix, k.name, k.label, k.rpm_limit, k.status, k.last_used_at, k.created_at,
+        SELECT k.id, k.prefix, k.name, k.label, k.rpm_limit, k.rpm_override, k.status, k.last_used_at, k.created_at,
                k.revoked_at, k.buyer_id, b.tg_id, b.username, b.name AS buyer_name, u.email, u.id AS user_id,
                coalesce((SELECT sum(cost_micro) FROM usage_events e WHERE e.key_id = k.id),0) AS spend_micro,
                coalesce((SELECT count(*) FROM usage_events e WHERE e.key_id = k.id),0) AS requests
@@ -1627,6 +1629,7 @@ async def admin_patch_key(key_id: str, body: KeyPatch, admin: dict = Depends(aut
     sets, args = [], [key_id]
     if body.rpm_limit is not None:
         args.append(body.rpm_limit); sets.append(f"rpm_limit = ${len(args)}")
+        sets.append("rpm_override = true")
     if body.status is not None:
         args.append(body.status); sets.append(f"status = ${len(args)}")
         if body.status == "active":
@@ -1638,7 +1641,7 @@ async def admin_patch_key(key_id: str, body: KeyPatch, admin: dict = Depends(aut
     await db.pool().execute(f"UPDATE api_keys SET {', '.join(sets)} WHERE id = $1", *args)
     await db.log_audit(admin["email"], "admin.key_patch", key_id, body.dict(exclude_none=True))
     fresh = await db.pool().fetchrow(
-        "SELECT id, prefix, rpm_limit, status, label FROM api_keys WHERE id = $1", key_id
+        "SELECT id, prefix, rpm_limit, rpm_override, status, label FROM api_keys WHERE id = $1", key_id
     )
     return {"key": dict(fresh)}
 

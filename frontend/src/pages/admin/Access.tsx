@@ -277,6 +277,14 @@ export default function AccessPage() {
                         }}
                         className="h-7 w-[70px] rounded-md border border-ash/25 bg-[#141518] px-2 text-[11.5px] tabular-nums text-warm focus:border-flame/50 focus:outline-none"
                       />
+                      {k.rpm_override ? (
+                        <span
+                          className="ml-1 rounded-md bg-flame/12 px-1.5 py-0.5 text-[9.5px] text-flame"
+                          title="RPM di-set manual oleh admin — pembelian paket tidak menimpanya"
+                        >
+                          custom
+                        </span>
+                      ) : null}
                     </td>
                     <td className="px-4 py-2.5">
                       <span className={cn("rounded-md px-2 py-0.5 text-[10.5px]",

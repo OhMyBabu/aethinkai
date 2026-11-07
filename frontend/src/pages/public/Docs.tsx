@@ -235,7 +235,7 @@ curl -X POST ${BASE}/api/portal/session \\
           <Section title="Rate limit: RPM per key, plus pagar kapasitas" id="limits">
             <p>
               RPM <strong>flat 60/menit per key</strong> (per akun Telegram) — sama untuk paket mana pun, bukan per model,
-              bukan per IP. Mau lebih tinggi? Itu perubahan kebijakan gateway, bukan fitur paket.
+              bukan per IP. Kalau butuh lebih, ajukan ke admin: pengecualian di-set per akun dan tidak ditimpa pembelian paket.
               Di atas itu ada satu pagar global untuk kapasitas box: kalau gateway penuh, balasannya{" "}
               <code className="font-mono text-[12px]">429 gateway_busy</code> dan bukan limit paket kamu.
             </p>
