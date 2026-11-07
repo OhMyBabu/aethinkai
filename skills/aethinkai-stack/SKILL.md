@@ -98,7 +98,30 @@ on `401 bad_init_data`. Then set `PORTAL_URL` and `AETHINK_MINIAPP_URL` to the H
 and prove it with `getMe`, `getWebhookInfo` (`url: ''`, `pending_update_count: 0` = long polling healthy),
 the `[bot] online as @… test_mode=False` log line, and a signed-`initData` probe (below).
 
-## 5. Pitfalls seen in production
+## 6. Money integrity — the four ways this stack could leak credit
+
+Every one of these was found by `gateway/tests/adversarial.py`, not by the happy-path suite:
+
+1. **Hold debit without a guard.** `UPDATE balances SET balance = balance - hold` lets two
+   parallel requests both pass an application-level balance check; the loser violates
+   `balances_balance_micro_check` → 500 *after* the model was already billed. Always
+   `WHERE balance_micro >= $2 RETURNING balance_micro` and treat `None` as 402.
+2. **Settle above the estimate.** Real cost (reasoning tokens, cache miss) can exceed the
+   hold; charging it blindly drives the wallet negative. Clamp the charge to
+   `balance + held` and write the shortfall into the ledger note (`underpaid=N`).
+3. **Refund without a ledger row.** `release_hold`/expiry must post a `hold_release`
+   entry, otherwise Σbalance drifts. The correct invariant is
+   **Σbalance + Σ(open holds) == Σledger** — a hold leaves the wallet when created but is
+   only posted at settle, so the naive form reports drift on every in-flight request.
+4. **Idempotency on a row that does not exist yet.** `SELECT ... FOR UPDATE` locks nothing
+   for a new order id; five parallel retries hit the PK and 500. Take
+   `pg_advisory_xact_lock(hashtext(order_id))` first, and turn a `UniqueViolationError` on
+   `payment_ref` into `already_granted` instead of an error the bot reports as failure.
+
+Also: a negative hold amount mints free credit (`min(estimate, negative_balance)`), and a
+customer calling the internal route (`mr/glm-5.3`) must resolve only via `public_id`.
+
+## 7. Pitfalls seen in production
 
 - **Edge headers and app headers duplicate with different values.** nginx sets
   `X-Frame-Options: SAMEORIGIN`, the FastAPI middleware set `DENY`; proxied responses carried
