@@ -1,0 +1,97 @@
+import { useEffect, useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { Topbar } from "@/components/layout/Topbar";
+import { useToast } from "@/components/common/Toast";
+import { useStore } from "@/data/store";
+import { me } from "@/lib/gw";
+import type { Role } from "@/types";
+
+const titles: Record<string, string> = {
+  "/app/overview": "Overview",
+  "/app/models": "AI Models",
+  "/app/api-keys": "API Keys",
+  "/app/usage": "Usage & Logs",
+  "/app/billing": "Credits & Billing",
+  "/app/settings": "Settings",
+  "/admin/overview": "Admin Overview",
+  "/admin/access": "Access & Keys",
+  "/admin/users": "Users",
+  "/admin/models": "Model Catalog",
+  "/admin/pricing": "Packages & Pricing",
+  "/admin/api-keys": "Customer API Keys",
+  "/admin/monitor": "Key Monitor",
+  "/admin/model-live": "Model Monitor",
+  "/admin/bansos": "Bansos",
+  "/admin/fallbacks": "Model Fallback",
+  "/admin/usage": "Usage Analytics",
+  "/admin/settings": "Admin Settings",
+};
+
+export function AppShell({ role }: { role: Role }) {
+  const [navOpen, setNavOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [balance, setBalance] = useState<number | null>(null);
+  const { state, currentUser, logout } = useStore();
+  const { toast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setNavOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    let cancelled = false;
+    me()
+      .then((data) => {
+        if (!cancelled) setBalance(data.balance_idr);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname]);
+
+  const user = currentUser ?? state.users[0];
+
+  return (
+    <div className="flex min-h-screen bg-charcoal">
+      <Sidebar
+        role={role}
+        open={navOpen}
+        onClose={() => setNavOpen(false)}
+        credits={balance ?? 0}
+        userName={user.name}
+        email={user.email}
+        plan={role === "admin" ? "Admin" : user.plan}
+        onSwitchRole={() => {
+          logout();
+          navigate("/login");
+        }}
+      />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <Topbar
+          onOpenNav={() => setNavOpen(true)}
+          title={titles[location.pathname] ?? "AethinkAI"}
+          role={role}
+          query={query}
+          onQuery={setQuery}
+          onNotify={() => toast("You're all caught up", { description: "No new alerts for this workspace.", variant: "info" })}
+        />
+        <main className="safe-b relative min-w-0 flex-1 px-4 py-5 pb-16 sm:px-6 sm:py-8">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(60%_100%_at_50%_0%,rgba(231,137,60,0.07),transparent_70%)]"
+          />
+          <div key={location.pathname} className="page-enter mx-auto w-full max-w-[1240px]">
+            <Outlet />
+          </div>
+        </main>
+        <footer className="border-t border-ash/10 px-6 py-4 text-[11px] text-dim">
+          AethinkAI Gateway · api.aethink.ai · v0.1.0
+        </footer>
+      </div>
+    </div>
+  );
+}

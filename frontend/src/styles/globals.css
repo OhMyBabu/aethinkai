@@ -1,0 +1,362 @@
+@import "tailwindcss";
+
+@theme {
+  --color-charcoal: #18191b;
+  --color-charcoal-soft: #1d1e21;
+  --color-warm: #faf8f4;
+  --color-ash: #85888b;
+  --color-burnt: #9c542f;
+  --color-flame: #e7893c;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-card: 18px;
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* {
+  border-color: color-mix(in srgb, var(--color-ash) 18%, transparent);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-charcoal);
+  color: var(--color-warm);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-flame) 32%, transparent);
+  color: var(--color-warm);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-flame);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* thin, quiet scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-ash) 45%, transparent) transparent;
+}
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-ash) 40%, transparent);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* Tailwind v4 preflight leaves buttons on `cursor: default` — restore the hand. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  summary,
+  label[for],
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+@layer utilities {
+  .surface {
+    background-color: color-mix(in srgb, var(--color-charcoal-soft) 88%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-ash) 16%, transparent);
+    border-radius: var(--radius-card);
+  }
+  .surface-raised {
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-warm) 4%, transparent),
+      transparent 55%
+    );
+  }
+  .hairline { border-color: color-mix(in srgb, var(--color-ash) 16%, transparent); }
+  .text-soft { color: color-mix(in srgb, var(--color-ash) 92%, var(--color-warm)); }
+  .text-dim { color: color-mix(in srgb, var(--color-ash) 78%, transparent); }
+  .glow-ring { box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-flame) 22%, transparent); }
+  .grid-noise {
+    background-image:
+      radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--color-ash) 22%, transparent) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* Motion primitives. Duration band 180-350ms per spec. */
+.page-enter {
+  animation: pageIn 240ms var(--ease-out-soft) both;
+}
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.overlay-enter { animation: fadeIn 200ms ease-out both; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.panel-enter { animation: panelIn 240ms var(--ease-out-soft) both; }
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.995); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.lift {
+  transition: transform 220ms var(--ease-out-soft),
+    border-color 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
+}
+.lift:hover { transform: translateY(-2px); }
+
+.signal-dot {
+  animation: drift 14s linear infinite;
+  transform-origin: center;
+}
+@keyframes drift {
+  from { offset-distance: 0%; }
+  to { offset-distance: 100%; }
+}
+
+.wave-dot { animation: wavePulse 9s ease-in-out infinite; }
+@keyframes wavePulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.9; }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-ash) 10%, transparent) 0%,
+    color-mix(in srgb, var(--color-ash) 22%, transparent) 50%,
+    color-mix(in srgb, var(--color-ash) 10%, transparent) 100%
+  );
+  background-size: 220% 100%;
+  animation: shimmerMove 1.6s ease-in-out infinite;
+}
+@keyframes shimmerMove {
+  from { background-position: 120% 0; }
+  to { background-position: -120% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Explicit user preference from Settings > Reduced motion */
+html[data-reduced-motion="true"] {
+  scroll-behavior: auto;
+}
+html[data-reduced-motion="true"] *,
+html[data-reduced-motion="true"] *::before,
+html[data-reduced-motion="true"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+html[data-reduced-motion="true"] .lift:hover { transform: none; }
+
+/* Signal-Nexus ambient lane flow (disabled by the reduced-motion block above). */
+@keyframes nexus-flow {
+  to {
+    stroke-dashoffset: -180;
+  }
+}
+
+.nexus-dash {
+  stroke-dasharray: 5 15;
+  animation: nexus-flow 7s linear infinite;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Mobile-native baseline                                             */
+/* ------------------------------------------------------------------ */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-padding-top: 4.5rem;
+  }
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  @media (max-width: 899px) {
+    /* 16px inputs stop iOS Safari from zooming the viewport on focus */
+    input,
+    textarea,
+    select {
+      /* !important: beats the per-component text-[13.5px] utilities; without it
+         iOS Safari zooms the layout on focus */
+      font-size: 16px !important;
+    }
+
+    button,
+    a,
+    [role="button"],
+    summary {
+      touch-action: manipulation;
+    }
+
+    .tap-44 {
+      min-height: 44px;
+    }
+  }
+}
+
+.safe-b {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.safe-t {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Landing aurora — transform-only drift, frozen for reduced motion. */
+@keyframes aurora-drift-a {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(2.5%, -2%, 0) scale(1.06); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes aurora-drift-b {
+  0%   { transform: translate3d(0, 0, 0) scale(1.04); }
+  50%  { transform: translate3d(-2%, 2.5%, 0) scale(1); }
+  100% { transform: translate3d(0, 0, 0) scale(1.04); }
+}
+
+.aurora-a {
+  animation: aurora-drift-a 34s ease-in-out infinite;
+  will-change: transform;
+}
+
+.aurora-b {
+  animation: aurora-drift-b 46s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-a,
+  .aurora-b {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Landing CTAs — same language as the header "Sign in", dialled down */
+/* ------------------------------------------------------------------ */
+.cta-landing {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #18191b;
+  border: 1px solid rgba(231, 137, 60, 0.34);
+  background: linear-gradient(180deg, #e7893c 0%, #e7893c 58%, #9c542f 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.24),
+    0 5px 14px -12px rgba(231, 137, 60, 0.55);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.cta-landing:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.3),
+    0 9px 20px -16px rgba(231, 137, 60, 0.62);
+}
+
+.cta-landing:active {
+  transform: translateY(0) scale(0.996);
+}
+
+.cta-landing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    104deg,
+    transparent 36%,
+    rgba(250, 248, 244, 0.2) 49%,
+    transparent 63%
+  );
+  transform: translateX(-130%);
+  transition: transform 0.8s ease;
+}
+
+.cta-landing:hover::after {
+  transform: translateX(130%);
+}
+
+/* quiet sibling for secondary / ghost buttons: motion + a faint sweep only */
+.cta-landing-soft {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.cta-landing-soft:hover {
+  transform: translateY(-1px);
+}
+
+.cta-landing-soft:active {
+  transform: translateY(0) scale(0.996);
+}
+
+.cta-landing-soft::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    104deg,
+    transparent 38%,
+    rgba(231, 137, 60, 0.14) 50%,
+    transparent 62%
+  );
+  transform: translateX(-130%);
+  transition: transform 0.85s ease;
+}
+
+.cta-landing-soft:hover::after {
+  transform: translateX(130%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta-landing,
+  .cta-landing-soft,
+  .cta-landing::after,
+  .cta-landing-soft::after {
+    transition: none !important;
+    transform: none !important;
+  }
+}

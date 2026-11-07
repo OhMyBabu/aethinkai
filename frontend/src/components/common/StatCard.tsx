@@ -1,0 +1,69 @@
+import type { LucideIcon } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { cn } from "@/lib/cn";
+import { useCountUp } from "@/hooks/useCountUp";
+
+interface StatCardProps {
+  label: string;
+  value: number;
+  delta?: number;
+  deltaLabel?: string;
+  format?: (value: number) => string;
+  hint?: string;
+  icon?: LucideIcon;
+  className?: string;
+}
+
+export function StatCard({
+  label,
+  value,
+  delta,
+  deltaLabel = "vs previous period",
+  format,
+  hint,
+  icon: Icon,
+  className,
+}: StatCardProps) {
+  const animated = useCountUp(value);
+  const positive = (delta ?? 0) >= 0;
+  const Arrow = positive ? ArrowUpRight : ArrowDownRight;
+
+  return (
+    <div className={cn("surface lift group relative overflow-hidden p-4 sm:p-5", className)}>
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-flame/40 to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-100"
+      />
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-ash">{label}</p>
+        {Icon ? (
+          <span className="grid size-9 place-items-center rounded-xl border border-flame/20 bg-gradient-to-br from-flame/15 to-transparent text-flame/90 transition-transform duration-300 group-hover:-translate-y-0.5">
+            <Icon size={15} aria-hidden />
+          </span>
+        ) : null}
+      </div>
+      <p className="mt-3 font-sans text-[21px] font-semibold leading-none tracking-[-0.025em] text-warm tabular-nums sm:text-[27px]">
+        {format ? format(animated) : animated.toLocaleString("en-US")}
+      </p>
+      <div className="mt-3 flex items-center gap-2 text-[12px]">
+        {typeof delta === "number" ? (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium",
+              positive ? "bg-flame/12 text-flame" : "bg-burnt/20 text-[#d9a184]",
+            )}
+          >
+            <Arrow size={12} aria-hidden />
+            {Math.abs(delta).toFixed(1)}%
+          </span>
+        ) : null}
+        <span className="text-ash">{deltaLabel}</span>
+      </div>
+      {hint ? <p className="mt-2 text-[11px] leading-4 text-dim">{hint}</p> : null}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-burnt/0 via-flame/45 to-burnt/0 opacity-70"
+      />
+    </div>
+  );
+}

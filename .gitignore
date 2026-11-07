@@ -1,0 +1,19 @@
+# Runtime data, generated files, secrets
+node_modules/
+.venv/
+dist/
+__pycache__/
+*.pyc
+*.log
+
+# Credentials — never committed. See docs/SECRETS.md for names/paths.
+.env
+.env.*
+*.env
+.admin
+.devkey
+data/
+*.bak-*
+
+# OS noise
+.DS_Store
