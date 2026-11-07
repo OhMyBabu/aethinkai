@@ -12,6 +12,7 @@ import hashlib
 import hmac
 import json
 import os
+import subprocess
 import sys
 import time
 import uuid
@@ -20,6 +21,16 @@ from pathlib import Path
 import httpx
 
 BASE = os.environ.get("GW", "http://127.0.0.1:8080")
+
+
+def db_url() -> str:
+    """DATABASE_URL for fixtures/tests is read from the same secrets file the services use."""
+    path = os.environ.get("AETHINK_DB_ENV", "/root/.secrets/aethink-db.env")
+    with open(path, "r", encoding="utf-8") as fh:
+        for line in fh:
+            if line.startswith("DATABASE_URL="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return os.environ.get("DATABASE_URL", "")
 SECRET = open(os.environ.get("AETHINK_INTERNAL_FILE", "/root/.secrets/aethink-internal")).read().strip()
 
 
@@ -219,11 +230,31 @@ def main() -> int:
           "429 body rate_limited + Retry-After", r.headers.get("retry-after", ""))
     c.patch(f"{BASE}/api/admin/access/keys/{mine['id']}", headers=AH, json={"rpm_limit": 60})
 
-    # ---------------------------------------------------------------- 8. rotate
+    # ---------------------------------------------------------------- 8. rotate (web needs bot proof)
     r = c.post(f"{BASE}/api/portal/keys/rotate", headers=H)
+    code = (r.json().get("error") or {}).get("code")
+    check(r.status_code == 403 and code == "verification_required",
+          "rotate tanpa verifikasi bot = 403", f"{r.status_code} {code}")
+
+    # the bot cannot DM a synthetic tg id, so plant the code the way the bot would
+    buyer_id = c.get(f"{BASE}/api/portal/me", headers=H).json()["buyer"]["id"]
+    subprocess.run(["psql", db_url(), "-q", "-c",
+                    "insert into key_rotation_codes(id,buyer_id,code,expires_at) "
+                    f"values ('rotcode_e2e','{buyer_id}','424242', now() + interval '5 minutes')"],
+                   check=False)
+    r = c.post(f"{BASE}/api/portal/keys/rotate/confirm", headers=H, json={"code": "000000"})
+    check(r.status_code == 401, "kode rotasi salah = 401", str(r.status_code))
+    r = c.post(f"{BASE}/api/portal/keys/rotate/confirm", headers=H, json={"code": "424242"})
     ok = r.status_code == 200
-    newkey = r.json().get("api_key", "") if ok else ""
-    check(ok and newkey.startswith("sk-aeth_") and newkey != key, "portal rotate -> key baru")
+    data = r.json() if ok else {}
+    newkey = data.get("api_key", "")
+    check(ok and newkey.startswith("sk-aeth_") and newkey != key, "rotate dengan kode bot -> key baru",
+          str(r.status_code))
+    H2 = {"Authorization": f"Bearer {data.get('token', '')}"}
+    check(c.get(f"{BASE}/api/portal/me", headers=H2).status_code == 200,
+          "sesi baru ikut dikembalikan (tidak logout)")
+    r = c.post(f"{BASE}/api/portal/keys/rotate/confirm", headers=H2, json={"code": "424242"})
+    check(r.status_code == 409, "kode rotasi tidak bisa dipakai ulang", str(r.status_code))
     r = chat(c, key, "old-key")
     check(r.status_code == 401, "key lama mati setelah rotate", str(r.status_code))
     r = c.get(f"{BASE}/api/portal/me", headers=H)

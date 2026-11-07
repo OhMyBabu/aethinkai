@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { catalogStream } from "@/lib/gw";
 import type { AIModel, ModelCategory, Provider } from "@/types";
 import { SEED_MODELS } from "@/data/fixtures";
 
@@ -114,6 +115,8 @@ export function useLandingData(): LandingData {
     };
 
     void pull();
+    // realtime: the gateway pushes on every admin change; polling stays as a net
+    const offStream = catalogStream(() => void pull());
     // admin edits must show up without a reload: poll + refresh on focus
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible") void pull();
@@ -122,6 +125,7 @@ export function useLandingData(): LandingData {
     window.addEventListener("focus", onFocus);
     return () => {
       alive = false;
+      offStream();
       window.clearInterval(timer);
       window.removeEventListener("focus", onFocus);
     };

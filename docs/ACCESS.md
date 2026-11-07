@@ -88,12 +88,43 @@ OpenRouter/Groq dll), route model (`mr/...`, `ky/...`), kuota, dan biaya per mod
 - Rotasi token: BotFather → `/revoke` → tulis token baru ke `aethink-bot.env` +
   `AETHINK_BOT_TOKEN` di `aethink-db.env` → `systemctl restart aethink-bot`.
 
-## 5. Ringkas
+## 5. Satu key per akun, rotasi dengan bukti Telegram
+
+Model bisnisnya prepaid pay-as-you-go, jadi **kredensial = akun**, bukan = pembelian:
+
+- Pembelian pertama mencetak satu key. Pembelian berikutnya hanya menambah saldo —
+  `_key_for_grant()` memakai key hidup yang sama (`key_reused: true`, `key: null`).
+- Saldo menempel di wallet (`users`/`balances`), bukan di key. Key habis kuota/rotasi →
+  saldo utuh, riwayat `usage_events` utuh.
+- Satu key aktif per akun dipaksa di DB: partial unique index
+  `api_keys_one_active_per_user`.
+
+Rotasi key (`POST /api/portal/keys/rotate`) punya dua pintu:
+
+| Pintu | Bukti identitas | Alur |
+|---|---|---|
+| Bot | chat itu sendiri | ketik `/rotate` → key baru dikirim sekali di chat |
+| Web (sesi key) | kode dari bot | `POST /keys/rotate/request` → kode 6 digit ke chat bot (5 menit, 5 percobaan) → `POST /keys/rotate/confirm {code}` |
+| Mini App | initData Telegram tervalidasi | `POST /keys/rotate` langsung (sesi `kind=buyer`) |
+| Admin | sesi admin | `POST /api/admin/access/keys/{id}/rotate` |
+
+`/keys/rotate` dengan sesi web biasa **ditolak** (`verification_required`) — token
+browser bukan bukti orangnya. Respons rotasi menyertakan sesi baru untuk key baru,
+supaya buyer tidak ter-logout setelah rotasi.
+
+## 6. Katalog realtime
+
+`GET /api/stream` (SSE) mengirim `event: catalog` setiap `model_prices` berubah
+(harga, nama, status on/gangguan/off, limit hasil refresh route). Landing dan dashboard
+berlangganan channel ini, jadi tab yang sudah terbuka ikut berubah tanpa reload —
+tidak perlu login Telegram ulang. Polling 15–20 s tetap ada sebagai jaring pengaman.
+
+## 7. Ringkas
 
 | Pintu | URL/host | Kredensial di |
 |---|---|---|
 | SSH | `ubuntu@129.226.219.219` | password kamu / key |
 | Admin panel | `https://router.aethink.ai.id/admin/login` | `gateway/.admin` |
-| 9Router | `http://43.173.36.225:20128/login` | env box relay |
+| 9Router (lokal) | `https://router.aethink.ai.id:8443/login` | `/root/.secrets/9router.env` + basic auth `bang` |
 | Bot | `@AethinkBot` | `/root/.secrets/aethink-bot.env` |
 | API publik | `https://router.aethink.ai.id/v1` | `sk-aet_...` per pembeli |

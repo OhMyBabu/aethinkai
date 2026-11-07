@@ -28,6 +28,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import asyncpg
+import httpx
 import jwt
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -459,23 +460,133 @@ async def portal_requests(limit: int = 50, offset: int = 0, row: dict = Depends(
     return {"limit": limit, "offset": offset, "requests": out}
 
 
-@portal.post("/keys/rotate")
-async def portal_rotate(row: dict = Depends(portal_identity)):
-    """Replace the current key. Returns the new secret exactly once."""
-    if not row.get("key_id"):
-        raise _bad("no_key", "Belum punya API key — selesaikan pembelian dulu", 409)
+async def _rotate_now(row: dict[str, Any]) -> dict[str, Any]:
+    """Revoke the wallet's live key and mint exactly one replacement.
+
+    The balance lives on the wallet (users/balances), never on the key, so rotation
+    is a credential swap: credits, orders and usage history survive it.
+    """
     raw, prefix, digest = _new_key()
+    new_id = db.new_id()
     async with db.pool().acquire() as con:
         async with con.transaction():
             await con.execute("UPDATE api_keys SET revoked_at = now(), status = 'revoked' WHERE id = $1", row["key_id"])
             await con.execute(
                 """INSERT INTO api_keys(id, user_id, buyer_id, prefix, hash, name, label, rpm_limit, status)
                    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active')""",
-                db.new_id(), row["user_id"], row.get("buyer_id"), prefix, digest,
+                new_id, row["user_id"], row.get("buyer_id"), prefix, digest,
                 row.get("label") or row.get("name") or "rotated", row.get("label"), row.get("rpm_limit", 60),
             )
     await db.log_audit(row.get("prefix") or row.get("buyer_id") or "portal", "portal.rotate", row["key_id"], {})
-    return {"api_key": raw, "prefix": prefix, "warning": "Key lama langsung mati. Simpan key baru sekarang."}
+    # The old session is bound to the revoked key; hand back a session for the new one
+    # so rotating does not log the buyer out of the portal.
+    token, exp = _issue_portal_token(new_id, row.get("buyer_id"), row["user_id"])
+    return {"api_key": raw, "prefix": prefix, "token": token, "expires_at": exp,
+            "warning": "Key lama langsung mati. Saldo tidak berubah. Simpan key baru sekarang."}
+
+
+@portal.post("/keys/rotate")
+async def portal_rotate(row: dict = Depends(portal_identity)):
+    """A browser token is not proof of identity — the Telegram account is.
+
+    A session minted from Telegram initData (Mini App) or from the bot link flow is
+    already Telegram-verified, so it may rotate directly. A session opened with an
+    API key on the web is only a token: it needs a code delivered by the bot.
+    """
+    if row.get("kind") == "buyer":
+        return await _rotate_now(row)
+    raise _bad(
+        "verification_required",
+        "Rotasi lewat web wajib verifikasi Telegram: minta kode dulu, atau ketik /rotate di bot.",
+        403,
+    )
+
+
+class RotateConfirmIn(BaseModel):
+    code: str = Field(min_length=4, max_length=8)
+
+
+@portal.post("/keys/rotate/request")
+async def rotate_request(request: Request, row: dict = Depends(portal_identity)):
+    if not row.get("key_id"):
+        raise _bad("no_key", "Belum punya API key — selesaikan pembelian dulu", 409)
+    buyer_id = row.get("buyer_id")
+    if not buyer_id:
+        raise _bad("telegram_required", "Hubungkan Telegram dulu", 403)
+    tg_id = await db.pool().fetchval("SELECT tg_id FROM buyers WHERE id = $1", buyer_id)
+    if not tg_id:
+        raise _bad("telegram_required", "Hubungkan Telegram dulu", 403)
+
+    ip = _client_ip(request)
+    allowed, retry, _ = rpm_window.allow(f"rotrq:{ip}", 5, 900)
+    if not allowed:
+        raise HTTPException(429, {"error": {
+            "message": f"Terlalu banyak permintaan kode. Coba lagi dalam {max(1, retry // 60)} menit.",
+            "code": "rate_limited"}})
+
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    async with db.pool().acquire() as con:
+        async with con.transaction():
+            await con.execute(
+                "UPDATE key_rotation_codes SET used_at = now() WHERE buyer_id = $1 AND used_at IS NULL",
+                buyer_id)
+            await con.execute(
+                """INSERT INTO key_rotation_codes(id, buyer_id, user_id, code, expires_at)
+                   VALUES ($1,$2,$3,$4, now() + interval '5 minutes')""",
+                db.new_id(), buyer_id, row.get("user_id"), code)
+
+    if not await _notify_rotation_code(int(tg_id), code):
+        # never leave a live code the buyer cannot read
+        await db.pool().execute(
+            "UPDATE key_rotation_codes SET used_at = now() WHERE buyer_id = $1 AND used_at IS NULL",
+            buyer_id)
+        raise _bad("telegram_delivery_failed",
+                   "Bot gagal mengirim kode. Coba /rotate langsung di chat bot.", 502)
+    return {"sent": True, "expires_in": 300,
+            "hint": "Kode dikirim ke chat bot Aethink kamu. Berlaku 5 menit."}
+
+
+@portal.post("/keys/rotate/confirm")
+async def rotate_confirm(body: RotateConfirmIn, row: dict = Depends(portal_identity)):
+    if not row.get("key_id"):
+        raise _bad("no_key", "Belum punya API key — selesaikan pembelian dulu", 409)
+    rec = await db.pool().fetchrow(
+        """SELECT id, code, attempts, expires_at FROM key_rotation_codes
+            WHERE buyer_id = $1 AND used_at IS NULL
+            ORDER BY created_at DESC LIMIT 1""",
+        row.get("buyer_id"))
+    if rec is None:
+        raise _bad("no_request", "Minta kode dulu sebelum rotasi.", 409)
+    if rec["expires_at"] <= datetime.now(timezone.utc):
+        raise _bad("code_expired", "Kode kedaluwarsa. Minta kode baru.", 410)
+    if rec["attempts"] >= 5:
+        raise _bad("too_many_attempts", "Terlalu banyak percobaan. Minta kode baru.", 429)
+    if not hmac.compare_digest(rec["code"], body.code.strip()):
+        await db.pool().execute(
+            "UPDATE key_rotation_codes SET attempts = attempts + 1 WHERE id = $1", rec["id"])
+        raise _bad("wrong_code", "Kode salah.", 401)
+
+    await db.pool().execute(
+        "UPDATE key_rotation_codes SET used_at = now() WHERE id = $1", rec["id"])
+    return await _rotate_now(row)
+
+
+async def _notify_rotation_code(tg_id: int, code: str) -> bool:
+    token = _bot_token()
+    if not token:
+        return False
+    text = ("<b>Verifikasi rotasi API key</b>\n\n"
+            f"Kode: <code>{code}</code>\n\n"
+            "Berlaku 5 menit. Abaikan pesan ini kalau bukan kamu yang meminta.")
+    try:
+        async with httpx.AsyncClient(timeout=15) as c:
+            r = await c.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                             json={"chat_id": tg_id, "text": text, "parse_mode": "HTML",
+                                   "disable_web_page_preview": True})
+            return r.status_code == 200
+    except Exception as exc:
+        print(f"[rotate] telegram delivery failed: {exc}", flush=True)
+        return False
 
 
 # ------------------------------------------------------------------ telegram linking (web -> bot)

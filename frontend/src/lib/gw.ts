@@ -134,6 +134,22 @@ export type PublicModel = {
   pricing_idr_per_1m: { input: number; output: number; cached_input: number };
 };
 
+/**
+ * Live catalogue channel. The gateway emits `catalog` when a price, name, state or
+ * route limit changes, so open tabs update without a reload or a re-login.
+ */
+export function catalogStream(onChange: () => void): () => void {
+  if (typeof window === "undefined" || typeof EventSource === "undefined") return () => {};
+  let es: EventSource | null = null;
+  try {
+    es = new EventSource("/api/stream");
+    es.addEventListener("catalog", () => onChange());
+  } catch {
+    return () => {};
+  }
+  return () => es?.close();
+}
+
 export async function publicModels() {
   return request<{ object: string; data: PublicModel[]; count: number }>("/api/models", {}, false);
 }

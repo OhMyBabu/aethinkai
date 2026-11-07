@@ -180,6 +180,9 @@ export default function PortalPage() {
   const [requests, setRequests] = useState<Reqs | null>(null);
   const [days, setDays] = useState(30);
   const [fresh, setFresh] = useState<string | null>(null);
+  const [rotStep, setRotStep] = useState<"idle" | "sent">("idle");
+  const [rotCode, setRotCode] = useState("");
+  const [rotMsg, setRotMsg] = useState("");
   const [copied, setCopied] = useState(false);
 
   const logout = useCallback(() => {
@@ -235,17 +238,51 @@ export default function PortalPage() {
     }
   };
 
+  // Rotation from a browser needs proof it is the same human: the bot sends a code
+  // to the linked Telegram account, and the code is what authorises the swap.
   const rotate = async () => {
     if (!token) return;
     setBusy(true);
+    setError(null);
     try {
-      const res = await fetch("/api/portal/keys/rotate", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch("/api/portal/keys/rotate/request", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const body = await res.json();
-      if (!res.ok) throw new Error(body?.error?.message || "Gagal rotasi");
-      setFresh(body.api_key);
-      logout();
+      if (!res.ok) throw new Error(body?.error?.message || "Gagal minta kode");
+      setRotCode("");
+      setRotStep("sent");
+      setRotMsg(body.hint || "Kode dikirim ke chat bot Aethink.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal rotasi");
+      setError(err instanceof Error ? err.message : "Gagal minta kode");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmRotate = async () => {
+    if (!token || rotCode.trim().length < 4) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/portal/keys/rotate/confirm", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ code: rotCode.trim() }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body?.error?.message || "Kode tidak diterima");
+      if (body.token) {
+        sessionStorage.setItem(TOKEN_KEY, body.token);
+        setToken(body.token);
+      }
+      setFresh(body.api_key);
+      setRotStep("idle");
+      setRotCode("");
+      setRotMsg("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kode tidak diterima");
     } finally {
       setBusy(false);
     }
@@ -441,14 +478,50 @@ export default function PortalPage() {
               ))}
             </div>
             <div className="border-t border-[#2A2B2E] p-4">
-              <button
-                type="button"
-                onClick={() => void rotate()}
-                className="flex h-9 items-center gap-1.5 rounded-lg border border-[#3A3B3D] px-3 text-[12.5px] text-[#FAF8F4]/85 transition hover:bg-[#292B2E]"
-              >
-                <RefreshCw size={12} /> Rotasi key
-              </button>
-              <p className="mt-2 text-[11px] text-[#85888B]">Rotasi mematikan key lama seketika dan menampilkan key baru satu kali.</p>
+              {rotStep === "idle" ? (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void rotate()}
+                  className="flex h-9 items-center gap-1.5 rounded-lg border border-[#3A3B3D] px-3 text-[12.5px] text-[#FAF8F4]/85 transition hover:bg-[#292B2E] disabled:opacity-50"
+                >
+                  <RefreshCw size={12} /> Rotasi key
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-[11.5px] text-[#E7893C]">{rotMsg}</p>
+                  <div className="flex gap-2">
+                    <input
+                      value={rotCode}
+                      onChange={(event) => setRotCode(event.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+                      onKeyDown={(event) => event.key === "Enter" && void confirmRotate()}
+                      placeholder="kode dari bot"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      className="h-9 w-32 rounded-lg border border-[#3A3B3D] bg-[#141518] px-2 text-center font-mono text-[13px] tracking-[0.2em] text-[#FAF8F4] focus:border-[#E7893C] focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      disabled={busy || rotCode.trim().length < 4}
+                      onClick={() => void confirmRotate()}
+                      className="h-9 rounded-lg bg-[#E7893C] px-3 text-[12.5px] font-medium text-[#141518] disabled:opacity-50"
+                    >
+                      {busy ? "Memproses…" : "Konfirmasi"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setRotStep("idle"); setRotCode(""); setRotMsg(""); }}
+                      className="h-9 rounded-lg border border-[#3A3B3D] px-3 text-[12.5px] text-[#85888B]"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                </div>
+              )}
+              <p className="mt-2 text-[11px] text-[#85888B]">
+                Rotasi mematikan key lama seketika, saldo tetap, dan key baru ditampilkan satu kali.
+                Kode verifikasi dikirim ke chat bot — atau ketik /rotate di bot.
+              </p>
             </div>
           </section>
         </div>

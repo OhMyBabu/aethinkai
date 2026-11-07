@@ -5,6 +5,7 @@ cost_micro == tokens * price_idr_per_1M  (exact integer, see README).
 """
 
 import asyncio
+import json
 import os
 import time
 import uuid
@@ -285,6 +286,43 @@ def _upstream_chain(payload: dict[str, Any], routes: list[str], extra: list[str]
             seen.add(name)
             out.append({**payload, "model": name})
     return out
+
+
+@app.get("/api/stream")
+async def catalog_stream(request: Request):
+    """Server-sent catalogue changes so an open tab never needs a reload.
+
+    Version = newest row touch in model_prices. Cheap enough to check every two
+    seconds and it covers every path that can change the shop: price, name, state,
+    limits refresh after a route edit.
+    """
+    async def events():
+        last: float | None = None
+        ticks = 0
+        yield "retry: 3000\n\n"
+        while True:
+            if await request.is_disconnected():
+                break
+            try:
+                version = await db.pool().fetchval(
+                    """SELECT COALESCE(EXTRACT(EPOCH FROM max(updated_at)), 0)::float8
+                         FROM model_prices""")
+            except Exception:
+                version = None
+            if version is not None and version != last:
+                first = last is None
+                last = version
+                event = "hello" if first else "catalog"
+                yield f"event: {event}\ndata: {json.dumps({'version': version})}\n\n"
+            ticks += 1
+            if ticks % 10 == 0:
+                yield ": ping\n\n"
+            await asyncio.sleep(2)
+
+    return StreamingResponse(events(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-store",
+                                      "X-Accel-Buffering": "no",
+                                      "Connection": "keep-alive"})
 
 
 @app.get("/api/models")

@@ -9,7 +9,7 @@ import { Button } from "@/components/common/Button";
 import { Drawer } from "@/components/common/Drawer";
 import { Modal } from "@/components/common/Modal";
 import { EmptyState } from "@/components/common/EmptyState";
-import { publicModels } from "@/lib/gw";
+import { catalogStream, publicModels } from "@/lib/gw";
 import type { AIModel, ModelCategory } from "@/types";
 import { formatCompact, formatIDR } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -102,6 +102,7 @@ export default function UserModelsPage() {
     };
 
     pull(true);
+    const offStream = catalogStream(() => pull(false));
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible") pull(false);
     }, 20_000);
@@ -110,6 +111,7 @@ export default function UserModelsPage() {
 
     return () => {
       cancelled = true;
+      offStream();
       window.clearInterval(timer);
       window.removeEventListener("focus", onFocus);
     };
