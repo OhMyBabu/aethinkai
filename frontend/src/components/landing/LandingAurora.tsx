@@ -41,14 +41,6 @@ export function LandingAurora() {
         }}
       />
 
-      {/* a whisper of accent behind the routing diagram */}
-      <div
-        className="absolute right-[2%] top-[4%] h-[560px] w-[600px] rounded-full opacity-60 blur-[160px]"
-        style={{
-          background: "radial-gradient(closest-side, rgba(231,137,60,0.06), transparent 78%)",
-        }}
-      />
-
       {/* film grain, very quiet */}
       <div
         className="absolute inset-0 opacity-[0.03] mix-blend-soft-light"
@@ -61,6 +53,16 @@ export function LandingAurora() {
 
       {/* vignette — pure black edge, nothing more */}
       <div className="absolute inset-0 bg-[radial-gradient(125%_100%_at_50%_-6%,transparent_38%,rgba(0,0,0,0.4)_84%,rgba(0,0,0,0.62)_100%)]" />
+
+      {/* the spot — painted after the vignette on purpose: the corner falloff was
+          eating it. Warm ember behind the diagram, the only colour the air gets. */}
+      <div
+        className="absolute right-[-6%] top-[-10%] h-[640px] w-[720px] rounded-full blur-[120px]"
+        style={{
+          background:
+            "radial-gradient(closest-side, rgba(231,137,60,0.40), rgba(156,84,47,0.15) 46%, transparent 78%)",
+        }}
+      />
     </div>
   );
 }
