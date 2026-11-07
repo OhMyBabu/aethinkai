@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Boxes, Loader2, Pencil, RefreshCw, Save, Search, X } from "lucide-react";
+import { Boxes, GitBranch, Loader2, Pencil, RefreshCw, Save, Search, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/common/Card";
 import { Button } from "@/components/common/Button";
 import { useToast } from "@/components/common/Toast";
-import { adminModels, savePrice, type GwModel } from "@/lib/gw";
+import { adminModels, adminRoutes, savePrice, type GwModel, type GwRoute } from "@/lib/gw";
 import { formatIDR } from "@/lib/format";
 
 function Toggle({ on, label, onChange }: { on: boolean; label: string; onChange: (next: boolean) => void }) {
@@ -32,7 +33,7 @@ function Toggle({ on, label, onChange }: { on: boolean; label: string; onChange:
   );
 }
 
-function ModelRow({ model, onSaved }: { model: GwModel; onSaved: () => void }) {
+function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute[]; onSaved: () => void }) {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -96,6 +97,16 @@ function ModelRow({ model, onSaved }: { model: GwModel; onSaved: () => void }) {
           <>
             <div className="truncate text-[13px] font-medium text-warm">{model.display_name}</div>
             <div className="truncate font-mono text-[10.5px] text-ash">{model.model_id}</div>
+            <Link
+              to={`/admin/routing?model=${encodeURIComponent(model.model_id)}`}
+              className="mt-1 inline-flex items-center gap-1 rounded-md border border-ash/20 px-1.5 py-0.5 text-[10px] text-ash transition hover:border-flame/40 hover:text-flame"
+              title="Atur provider yang melayani model ini"
+            >
+              <GitBranch size={9} aria-hidden />
+              {routes && routes.length
+                ? `${routes[0].upstream_model}${routes.length > 1 ? ` +${routes.length - 1}` : ""}`
+                : "belum ada route"}
+            </Link>
           </>
         )}
       </td>
@@ -195,6 +206,7 @@ function ModelRow({ model, onSaved }: { model: GwModel; onSaved: () => void }) {
 
 export default function AdminModelsPage() {
   const [models, setModels] = useState<GwModel[]>([]);
+  const [routesByModel, setRoutesByModel] = useState<Record<string, GwRoute[]>>({});
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [onlyPriced, setOnlyPriced] = useState(false);
@@ -204,8 +216,14 @@ export default function AdminModelsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await adminModels();
+      const [data, routesData] = await Promise.all([adminModels(), adminRoutes()]);
       setModels(data.models);
+      const map: Record<string, GwRoute[]> = {};
+      routesData.routes.forEach((route) => {
+        (map[route.model_id] ||= []).push(route);
+      });
+      Object.values(map).forEach((list) => list.sort((a, b) => a.priority - b.priority));
+      setRoutesByModel(map);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -231,8 +249,8 @@ export default function AdminModelsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Models & pricing"
-        description="Klik Edit pada satu model, atur harga dan status aktif, lalu Simpan sekali — keduanya tersimpan bersamaan."
+        title="Katalog & harga"
+        description="Ini yang dijual: nama publik, harga per 1M token, dan status tayang. Provider mana yang melayani tiap model diatur di halaman Routing — bukan di sini."
         breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Models" }]}
         actions={
           <Button variant="ghost" onClick={() => void load()} disabled={loading} leadingIcon={<RefreshCw size={14} />}>
@@ -285,7 +303,12 @@ export default function AdminModelsPage() {
             </thead>
             <tbody>
               {rows.map((m) => (
-                <ModelRow key={m.model_id} model={m} onSaved={() => void load()} />
+                <ModelRow
+                  key={m.model_id}
+                  model={m}
+                  routes={routesByModel[m.model_id]}
+                  onSaved={() => void load()}
+                />
               ))}
               {!loading && rows.length === 0 ? (
                 <tr>

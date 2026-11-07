@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ArrowDown, ArrowUp, GitBranch, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardHeader } from "@/components/common/Card";
@@ -38,7 +39,8 @@ type Group = {
 
 export default function AdminRoutingPage() {
   const [groups, setGroups] = useState<Group[]>([]);
-  const [query, setQuery] = useState("");
+  const [params] = useSearchParams();
+  const [query, setQuery] = useState(params.get("model") ?? "");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pickerFor, setPickerFor] = useState<Group | null>(null);
@@ -128,7 +130,7 @@ export default function AdminRoutingPage() {
       <PageHeader
         breadcrumb={[{ label: "Admin" }, { label: "Model Routing" }]}
         title="Model Routing"
-        description="Satu nama model untuk pembeli, banyak kemungkinan provider di belakangnya. Urutan route = urutan percobaan; kalau yang pertama mati, yang berikutnya ambil alih tanpa pembeli sadar."
+        description="Ini sisi belakang etalase: provider mana yang melayani tiap model. Urutan route = urutan percobaan; kalau yang pertama mati, yang berikutnya ambil alih tanpa pembeli sadar. Harga & status tayang ada di Katalog."
         actions={
           <div className="w-full max-w-[280px]">
             <SearchInput value={query} onChange={setQuery} placeholder="Cari model / provider…" />
