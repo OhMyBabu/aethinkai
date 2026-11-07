@@ -55,10 +55,10 @@ async function request<T>(path: string, init: RequestInit = {}, auth = true): Pr
   return body as T;
 }
 
-export async function login(email: string, password: string) {
+export async function login(email: string, password: string, totp?: string) {
   const data = await request<{ token: string; user: GwUser }>(
     "/api/auth/login",
-    { method: "POST", body: JSON.stringify({ email, password }) },
+    { method: "POST", body: JSON.stringify({ email, password, ...(totp ? { totp } : {}) }) },
     false,
   );
   setSession(data.token, data.user);

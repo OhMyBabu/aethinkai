@@ -17,6 +17,8 @@ export default function LoginPage() {
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [totp, setTotp] = useState("");
+  const [needsTotp, setNeedsTotp] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState(0);
 
@@ -43,12 +45,20 @@ export default function LoginPage() {
 
     setBusy(true);
     try {
-      const { user } = await gwLogin(cleanEmail, password);
+      const { user } = await gwLogin(cleanEmail, password, needsTotp ? totp.trim() : undefined);
       const fixtureId = user.role === "admin" ? "usr_admin" : "usr_001";
       signIn(fixtureId);
       const fallback = user.role === "admin" ? "/admin/overview" : "/app/overview";
       navigate(location.state?.next ?? fallback, { replace: true });
     } catch (err) {
+      const code = (err as Error & { code?: string }).code;
+      if (code === "totp_required" || code === "bad_totp") {
+        // password was accepted; the account has a second factor
+        setNeedsTotp(true);
+        setError(code === "bad_totp" ? "Kode authenticator salah atau sudah dipakai." : null);
+        setBusy(false);
+        return;
+      }
       const next = attempts + 1;
       setAttempts(next);
       if (next >= 5) {
@@ -117,6 +127,28 @@ export default function LoginPage() {
             </button>
           </span>
         </label>
+
+        {needsTotp ? (
+          <label className="block">
+            <span className="mb-1.5 block text-[12px] font-medium text-warm/85">
+              Kode authenticator
+            </span>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              value={totp}
+              onChange={(event) => setTotp(event.target.value.replace(/\D/g, ""))}
+              placeholder="123456"
+              autoFocus
+              className="h-11 w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 font-mono text-[15px] tracking-[0.3em] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
+            />
+            <span className="mt-1.5 block text-[11px] text-ash">
+              Password sudah benar — masukkan 6 digit dari aplikasi authenticator.
+            </span>
+          </label>
+        ) : null}
 
         {error ? (
           <p role="alert" className="flex items-start gap-2 rounded-lg border border-[#c4633a]/30 bg-[#c4633a]/10 px-3 py-2 text-[12px] text-[#e79c78]">

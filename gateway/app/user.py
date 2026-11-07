@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from . import auth, db
+from . import auth, db, totp
 from .ratelimit import auth_lock, signup as signup_window
 
 router = APIRouter(prefix="/api", tags=["user"])
@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api", tags=["user"])
 class LoginIn(BaseModel):
     email: str
     password: str
+    totp: str | None = None      # second factor, required when the account enrolled
 
 
 class KeyIn(BaseModel):
@@ -45,7 +46,8 @@ async def login(body: LoginIn, request: Request):
         )
 
     row = await db.pool().fetchrow(
-        "SELECT id, email, password_hash, role, status FROM users WHERE lower(email) = lower($1)",
+        """SELECT id, email, password_hash, role, status, totp_secret, totp_enabled, totp_last_step
+             FROM users WHERE lower(email) = lower($1)""",
         body.email.strip(),
     )
     if row is None or not auth.verify_password(body.password, row["password_hash"]):
@@ -66,6 +68,32 @@ async def login(body: LoginIn, request: Request):
         raise HTTPException(401, {"error": {"message": "Email atau password salah", "code": "invalid_credentials"}})
     if row["status"] != "active":
         raise HTTPException(403, {"error": {"message": "Akun tidak aktif", "code": "account_suspended"}})
+
+    # ---- second factor: checked only after the password is proven correct
+    if row["totp_enabled"] and row["totp_secret"]:
+        if not body.totp:
+            raise HTTPException(401, {"error": {"message": "Kode authenticator diperlukan",
+                                               "code": "totp_required"}})
+        counter = totp.verify(row["totp_secret"], body.totp)
+        if counter is None or (row["totp_last_step"] is not None and counter <= row["totp_last_step"]):
+            block = auth_lock.fail(900, *locks)
+            try:
+                await db.pool().execute(
+                    "INSERT INTO auth_failures(scope, ident, ip) VALUES ('admin_totp',$1,$2)",
+                    email[:60], ip,
+                )
+            except Exception:
+                pass
+            raise HTTPException(
+                401,
+                {"error": {"message": "Kode authenticator salah atau sudah dipakai",
+                           "code": "bad_totp"}},
+                headers={"Retry-After": str(block)} if block else None,
+            )
+        # burn this counter so a sniffed code cannot be replayed in its window
+        await db.pool().execute("UPDATE users SET totp_last_step = $2 WHERE id = $1",
+                                row["id"], counter)
+
     auth_lock.reset(*locks)
     token = auth.issue_token(str(row["id"]), row["role"])
     await db.log_audit(row["email"], "auth.login", str(row["id"]), None)
