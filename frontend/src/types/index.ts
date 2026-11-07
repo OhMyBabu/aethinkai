@@ -15,6 +15,8 @@ export interface AIModel {
   inputRate: number;
   outputRate: number;
   enabled: boolean;
+  /** on | maintenance — "gangguan" still shows in the catalogue, calls answer 503 */
+  availability?: "on" | "maintenance" | "off";
   popularity: number;
   capabilities: string[];
 }

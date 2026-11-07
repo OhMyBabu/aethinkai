@@ -293,9 +293,9 @@ async def public_models():
     rows = await db.pool().fetch(
         """
         SELECT model_id, public_id, provider_label, display_name,
-               price_in_idr, price_out_idr, price_cached_idr
+               price_in_idr, price_out_idr, price_cached_idr, availability
         FROM model_prices
-        WHERE active AND (price_in_idr > 0 OR price_out_idr > 0)
+        WHERE availability <> 'off' AND (price_in_idr > 0 OR price_out_idr > 0)
         ORDER BY model_id
         """
     )
@@ -317,6 +317,7 @@ async def public_models():
         slug = model_id.split("/")[-1]
         out.append({
             "id": p["public_id"] or slug,
+            "status": p["availability"],
             "display_name": pretty_name(model_id, p["display_name"]),
             "provider": p["provider_label"] or brand_of(slug) or "Aethink",
             "context_length": m.get("context_length") or caps.get("contextWindow") or 0,
@@ -337,9 +338,9 @@ async def models(_key: dict = Depends(require_key)):
     data = await upstream.list_models()
     rows = await db.pool().fetch(
         """SELECT model_id, public_id, provider_label, display_name,
-                  price_in_idr, price_out_idr, price_cached_idr
+                  price_in_idr, price_out_idr, price_cached_idr, availability
            FROM model_prices
-           WHERE active AND (price_in_idr > 0 OR price_out_idr > 0)"""
+           WHERE availability <> 'off' AND (price_in_idr > 0 OR price_out_idr > 0)"""
     )
     prices = {r["model_id"]: dict(r) for r in rows}
     visible = []
@@ -353,6 +354,7 @@ async def models(_key: dict = Depends(require_key)):
             "object": "model",
             "created": m.get("created"),
             "owned_by": "aethink",
+            "status": p["availability"],
             "name": pretty_name(str(m.get("id", "")), p["display_name"]),
             "provider": p["provider_label"] or brand_of(slug) or "Aethink",
             "context_length": m.get("context_length") or 0,
@@ -409,6 +411,15 @@ async def chat_completions(request: Request, key: dict = Depends(require_key)):
     route = await db.resolve_model(model_id)
     if route is None or (route["price_in_idr"] == 0 and route["price_out_idr"] == 0):
         raise HTTPException(403, {"error": {"message": f"Model not enabled: {model_id}", "code": "model_not_allowed"}})
+    availability = (route.get("availability") or "on").lower()
+    if availability == "off":
+        raise HTTPException(403, {"error": {"message": f"Model tidak dijual: {model_id}",
+                                            "code": "model_not_allowed"}})
+    if availability == "maintenance":
+        # gangguan: the catalogue still lists it, the endpoint refuses politely
+        raise HTTPException(503, {"error": {"message": f"Model sedang gangguan: {model_id}",
+                                            "code": "model_maintenance"}},
+                            headers={"Retry-After": "300"})
 
     # Provider-reported limits. Claiming "1M context" is fine only while the route
     # that serves it says 1M; both numbers come from /v1/models of the local router.

@@ -187,7 +187,11 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
                     <td className="px-4 py-3 text-right">
                       <span className="inline-flex items-center gap-1.5 text-[12px] text-flame sm:text-[11px]">
                         <span className="size-1.5 rounded-full bg-flame" aria-hidden />
-                        {model.enabled ? "online" : "off"}
+                        {(model.availability ?? "on") === "maintenance"
+                          ? "gangguan"
+                          : model.enabled
+                            ? "online"
+                            : "off"}
                       </span>
                     </td>
                   </tr>
@@ -215,7 +219,11 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
               </div>
               <span className="inline-flex shrink-0 items-center gap-1.5 pt-0.5 text-[12px] text-flame">
                 <span className="size-1.5 rounded-full bg-flame" aria-hidden />
-                {model.enabled ? "online" : "off"}
+                {(model.availability ?? "on") === "maintenance"
+                  ? "gangguan"
+                  : model.enabled
+                    ? "online"
+                    : "off"}
               </span>
             </div>
             <dl className="mt-3 grid grid-cols-3 gap-2 border-t border-ash/10 pt-2.5">

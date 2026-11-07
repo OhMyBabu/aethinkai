@@ -84,6 +84,9 @@ export type GwModel = {
   cost_usd_in: number | null;
   cost_usd_out: number | null;
   margin_in_pct: number | null;
+  availability?: "on" | "maintenance" | "off";
+  context_window?: number | null;
+  max_output?: number | null;
 };
 
 export async function adminModels() {
@@ -92,7 +95,15 @@ export async function adminModels() {
 
 export async function savePrice(
   modelId: string,
-  body: { price_in_idr: number; price_out_idr: number; price_cached_idr: number; active: boolean; display_name?: string },
+  body: {
+    price_in_idr: number;
+    price_out_idr: number;
+    price_cached_idr: number;
+    active: boolean;
+    display_name?: string;
+    public_id?: string;
+    availability?: "on" | "maintenance" | "off";
+  },
 ) {
   return request<{ model: GwModel }>(`/api/admin/models/${encodeURIComponent(modelId)}`, {
     method: "PUT",

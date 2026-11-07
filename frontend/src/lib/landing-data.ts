@@ -10,6 +10,7 @@ import { SEED_MODELS } from "@/data/fixtures";
 
 export interface ApiModel {
   id: string;
+  status?: "on" | "maintenance" | "off";
   display_name: string;
   provider: string;
   context_length: number;
@@ -71,7 +72,8 @@ export function toAIModel(model: ApiModel, index: number): AIModel {
     contextWindow: model.context_length,
     inputRate: input,
     outputRate: output,
-    enabled: true,
+    enabled: model.status !== "off",
+    availability: model.status ?? "on",
     popularity: Math.max(1, 100 - index * 7),
     capabilities: capabilityLabels(model),
   };

@@ -98,7 +98,7 @@ async def resolve_model(alias: str) -> dict[str, Any] | None:
         """
         SELECT mp.model_id, mp.public_id, mp.display_name,
                mp.price_in_idr, mp.price_out_idr, mp.price_cached_idr,
-               mp.context_window, mp.max_output, mp.fallback_enabled,
+               mp.context_window, mp.max_output, mp.fallback_enabled, mp.availability,
                ma.upstream_model AS local_model
         FROM model_prices mp
         LEFT JOIN model_aliases ma ON ma.model_id = mp.model_id

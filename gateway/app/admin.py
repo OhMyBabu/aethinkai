@@ -38,6 +38,8 @@ class PriceIn(BaseModel):
     display_name: str | None = None
     provider_label: str | None = None
     public_id: str | None = None
+    # on | maintenance | off — "hidden" and "broken" are different promises
+    availability: str | None = None
 
 
 class ImportIn(BaseModel):
@@ -65,7 +67,8 @@ async def list_models(include_upstream: bool = False, admin: dict = Depends(auth
     rows = await db.pool().fetch(
         """
         SELECT model_id, public_id, provider_label, display_name,
-               price_in_idr, price_out_idr, price_cached_idr, active, updated_at
+               price_in_idr, price_out_idr, price_cached_idr, active, availability,
+               context_window, max_output, updated_at
         FROM model_prices
         """
     )
@@ -106,6 +109,9 @@ async def list_models(include_upstream: bool = False, admin: dict = Depends(auth
             "provider_label": (p or {}).get("provider_label"),
             "display_name": (p or {}).get("display_name") or mid.split("/")[-1],
             "enabled": bool(p["active"]) if p else False,
+            "availability": (p or {}).get("availability") or "off",
+            "context_window": (p or {}).get("context_window"),
+            "max_output": (p or {}).get("max_output"),
             "priced": bool(p),
             "price_in_idr": p["price_in_idr"] if p else 0,
             "price_out_idr": p["price_out_idr"] if p else 0,
@@ -132,8 +138,8 @@ async def upsert_price(model_id: str, body: PriceIn, admin: dict = Depends(auth.
         """
         INSERT INTO model_prices(model_id, public_id, provider_label, display_name,
                                  price_in_idr, price_out_idr, price_cached_idr,
-                                 active, effective_at, updated_by, updated_at)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8, now(), $9, now())
+                                 active, availability, effective_at, updated_by, updated_at)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, now(), $10, now())
         ON CONFLICT (model_id) DO UPDATE SET
             public_id = coalesce(EXCLUDED.public_id, model_prices.public_id),
             provider_label = coalesce(EXCLUDED.provider_label, model_prices.provider_label),
@@ -142,15 +148,16 @@ async def upsert_price(model_id: str, body: PriceIn, admin: dict = Depends(auth.
             price_out_idr = EXCLUDED.price_out_idr,
             price_cached_idr = EXCLUDED.price_cached_idr,
             active = EXCLUDED.active,
+            availability = coalesce(EXCLUDED.availability, model_prices.availability),
             effective_at = now(),
             updated_by = EXCLUDED.updated_by,
             updated_at = now()
-        RETURNING model_id, public_id, provider_label, price_in_idr, price_out_idr,
-                  price_cached_idr, active
+        RETURNING model_id, public_id, provider_label, display_name, price_in_idr,
+                  price_out_idr, price_cached_idr, active, availability
         """,
         model_id, body.public_id, body.provider_label, body.display_name,
         body.price_in_idr, body.price_out_idr, body.price_cached_idr,
-        body.active, admin["email"],
+        body.active, body.availability or ("on" if body.active else "off"), admin["email"],
     )
     await db.log_audit(admin["email"], "price.upsert", model_id, body.model_dump())
     return {"model": dict(row)}

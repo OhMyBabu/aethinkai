@@ -656,6 +656,36 @@ class FallbackToggle(BaseModel):
     enabled: bool
 
 
+async def _refresh_limits(model_id: str) -> None:
+    """Limits follow the routing, not a hand-typed number.
+
+    After any route change, re-read what the router reports for the model's first
+    active route and store it, so the catalogue, the landing page and the request
+    guard all quote the same context window.
+    """
+    route = await db.pool().fetchval(
+        """SELECT upstream_model FROM model_routes
+            WHERE model_id = $1 AND active ORDER BY priority, created_at LIMIT 1""",
+        model_id)
+    if not route:
+        return
+    try:
+        data = (await upstream.list_models()).get("data", [])
+    except Exception:
+        return
+    meta = next((m for m in data if m.get("id") == route), None)
+    if not meta:
+        return
+    caps = meta.get("capabilities") or {}
+    ctx = meta.get("context_length") or caps.get("contextWindow")
+    out = meta.get("max_completion_tokens") or caps.get("maxOutput")
+    await db.pool().execute(
+        """UPDATE model_prices SET context_window = $2, max_output = $3,
+                  capabilities = $4::jsonb, limits_synced_at = now()
+            WHERE model_id = $1""",
+        model_id, ctx or None, out or None, json.dumps(caps))
+
+
 def _route_id() -> str:
     return "rt_" + uuid.uuid4().hex[:16]
 
@@ -713,9 +743,41 @@ async def add_route(body: NewRouteIn, admin: dict = Depends(auth.require_admin))
     except Exception:
         raise HTTPException(409, {"error": {"message": "Route itu sudah terdaftar untuk model ini",
                                             "code": "duplicate_route"}})
+    await _refresh_limits(body.model_id)
     await db.log_audit(admin["email"], "route.create", body.model_id,
                        {"upstream": body.upstream_model, "priority": body.priority})
     return {"route": dict(row)}
+
+
+
+@router.patch("/api/admin/routes/{route_id}")
+async def patch_route(route_id: str, body: RoutePatch, admin: dict = Depends(auth.require_admin)):
+    sets, args = [], [route_id]
+    for key, value in body.model_dump(exclude_none=True).items():
+        args.append(value)
+        sets.append(f"{key} = ${len(args)}")
+    if not sets:
+        raise HTTPException(400, {"error": {"message": "Nothing to update", "code": "empty_patch"}})
+    row = await db.pool().fetchrow(
+        f"UPDATE model_routes SET {', '.join(sets)} WHERE id = $1 RETURNING *", *args)
+    if row is None:
+        raise HTTPException(404, {"error": {"message": "Route tidak ada", "code": "not_found"}})
+    await _refresh_limits(row["model_id"])
+    await db.log_audit(admin["email"], "route.patch", row["model_id"],
+                       {"route": route_id, "changes": body.model_dump(exclude_none=True)})
+    return {"route": dict(row)}
+
+
+@router.delete("/api/admin/routes/{route_id}")
+async def delete_route(route_id: str, admin: dict = Depends(auth.require_admin)):
+    row = await db.pool().fetchrow(
+        "DELETE FROM model_routes WHERE id = $1 RETURNING model_id, upstream_model", route_id)
+    if row is None:
+        raise HTTPException(404, {"error": {"message": "Route tidak ada", "code": "not_found"}})
+    await _refresh_limits(row["model_id"])
+    await db.log_audit(admin["email"], "route.delete", row["model_id"],
+                       {"upstream": row["upstream_model"]})
+    return {"ok": True}
 
 
 @router.patch("/api/admin/model-fallback")
@@ -800,5 +862,6 @@ async def create_product(body: ProductIn, admin: dict = Depends(auth.require_adm
            VALUES ($1,$2,$3,$4,1,true,'created with product')
            ON CONFLICT (model_id, upstream_model) DO NOTHING""",
         _route_id(), body.upstream_model, body.upstream_model, label)
+    await _refresh_limits(body.upstream_model)
     await db.log_audit(admin["email"], "product.create", body.upstream_model, {"public_id": slug})
     return {"model": dict(row), "next": "isi harga lalu aktifkan di Katalog & Harga"}

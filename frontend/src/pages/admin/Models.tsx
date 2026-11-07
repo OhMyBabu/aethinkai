@@ -52,14 +52,16 @@ function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute
   const [priceOut, setPriceOut] = useState(String(model.price_out_idr));
   const [priceCached, setPriceCached] = useState(String(model.price_cached_idr));
   const [label, setLabel] = useState(model.display_name);
-  const [active, setActive] = useState(model.enabled);
+  const [publicId, setPublicId] = useState(model.public_id);
+  const [status, setStatus] = useState<"on" | "maintenance" | "off">(model.availability ?? (model.enabled ? "on" : "off"));
 
   const startEdit = () => {
     setPriceIn(String(model.price_in_idr));
     setPriceOut(String(model.price_out_idr));
     setPriceCached(String(model.price_cached_idr));
     setLabel(model.display_name);
-    setActive(model.enabled);
+    setPublicId(model.public_id);
+    setStatus(model.availability ?? (model.enabled ? "on" : "off"));
     setEditing(true);
   };
 
@@ -70,10 +72,12 @@ function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute
         price_in_idr: Math.max(0, Math.round(Number(priceIn) || 0)),
         price_out_idr: Math.max(0, Math.round(Number(priceOut) || 0)),
         price_cached_idr: Math.max(0, Math.round(Number(priceCached) || 0)),
-        active,
+        active: status !== "off",
+        availability: status,
         display_name: label.trim() || undefined,
+        public_id: publicId.trim() || undefined,
       });
-      toast("Tersimpan", { description: `${model.model_id} · ${active ? "aktif" : "mati"}`, variant: "success" });
+      toast("Tersimpan", { description: `${model.model_id} · ${status}`, variant: "success" });
       setEditing(false);
       onSaved();
     } catch (err) {
@@ -102,12 +106,23 @@ function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute
               aria-label={`Nama tampilan ${model.model_id}`}
               className="h-10 w-full rounded-lg border border-flame/45 bg-[#141518] px-2 text-[12.5px] text-warm focus:border-flame focus:outline-none"
             />
-            <div className="truncate font-mono text-[10px] text-ash/70">{model.model_id}</div>
+            <input
+              value={publicId}
+              onChange={(event) => setPublicId(event.target.value.replace(/[^a-zA-Z0-9._-]/g, ""))}
+              onKeyDown={(event) => event.key === "Enter" && void save()}
+              placeholder="id publik (dipakai buyer)"
+              aria-label={`ID publik ${model.model_id}`}
+              className="h-9 w-full rounded-lg border border-ash/30 bg-[#141518] px-2 font-mono text-[11px] text-warm focus:border-flame focus:outline-none"
+            />
+            <div className="truncate font-mono text-[10px] text-ash/70">
+              route: {model.model_id} · ctx {model.context_window ? `${Math.round(model.context_window / 1000)}K` : "—"} · out{" "}
+              {model.max_output ? `${Math.round(model.max_output / 1000)}K` : "—"}
+            </div>
           </div>
         ) : (
           <>
             <div className="truncate text-[13px] font-medium text-warm">{model.display_name}</div>
-            <div className="truncate font-mono text-[10.5px] text-ash">{model.model_id}</div>
+            <div className="truncate font-mono text-[10.5px] text-ash">{model.public_id || model.model_id}</div>
             <Link
               to={`/admin/routing?model=${encodeURIComponent(model.model_id)}`}
               className="mt-1 inline-flex items-center gap-1 rounded-md border border-ash/20 px-1.5 py-0.5 text-[10px] text-ash transition hover:border-flame/40 hover:text-flame"
@@ -177,14 +192,31 @@ function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute
 
       <td className="px-3 py-3">
         {editing ? (
-          <Toggle on={active} label={`Aktifkan ${model.display_name}`} onChange={setActive} />
+          <select
+            value={status}
+            onChange={(event) => setStatus(event.target.value as "on" | "maintenance" | "off")}
+            aria-label={`Status ${model.display_name}`}
+            className="h-10 rounded-lg border border-flame/45 bg-[#141518] px-2 text-[12px] text-warm focus:border-flame focus:outline-none"
+          >
+            <option value="on">On — dijual</option>
+            <option value="maintenance">Gangguan — tampil, tak bisa dipakai</option>
+            <option value="off">Off — hilang dari katalog</option>
+          </select>
         ) : (
           <span
             className={`inline-flex h-7 items-center rounded-full border px-2.5 text-[11px] ${
-              model.enabled ? "border-flame/45 bg-flame/10 text-warm" : "border-ash/25 text-ash"
+              (model.availability ?? (model.enabled ? "on" : "off")) === "on"
+                ? "border-flame/45 bg-flame/10 text-warm"
+                : (model.availability ?? "off") === "maintenance"
+                  ? "border-[#c4633a]/45 bg-[#c4633a]/10 text-[#e79c78]"
+                  : "border-ash/25 text-ash"
             }`}
           >
-            {model.enabled ? "Aktif" : "Mati"}
+            {(model.availability ?? (model.enabled ? "on" : "off")) === "on"
+              ? "On"
+              : (model.availability ?? "off") === "maintenance"
+                ? "Gangguan"
+                : "Off"}
           </span>
         )}
       </td>
