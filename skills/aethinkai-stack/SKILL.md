@@ -62,9 +62,12 @@ Never claim green without running them; these tests were the gate for every feat
 
 ## 4. Recipes
 
-**Add a model price** → insert into `model_prices` (`model_id` = `mk/<upstream id>`), set
-`active`; `/api/models`, the bot Models panel and the Mini App pick it up automatically
-(cached 5 min in the bot).
+**Add a model price** → insert into `model_prices` with BOTH ids: `model_id` = the real upstream
+route (`<provider>/<model>`, e.g. `mr/glm-5.3-flash`) and `public_id` = the customer-facing slug
+(`glm-5.3-flash`), plus `provider_label`/`display_name`. Then set `active`. `/api/models`, `/v1/models`,
+the bot Models panel and the Mini App pick it up automatically (cached 5 min in the bot). A row whose
+`model_id` is not in the upstream catalogue is skipped from the public list on purpose, and a row with
+no price is un-buyable — so verify with `curl -s localhost:8080/api/models | jq '.count'` after insert.
 
 **Change a package** → edit `PACKAGES` in `gateway/app/portal.py`; the bot fetches `/api/packages`
 at startup and caches it, the web store reads the same endpoint. Never hardcode prices in the bot.
@@ -82,7 +85,41 @@ stay consistent; session lives in `sessionStorage`, never `localStorage`.
 **Payment integration (not built)** → credit only from a server-verified event, idempotent per
 payment id, inside a transaction that locks the order row.
 
+**Audit prices** → `./.venv/bin/python scripts/price_audit.py --json audit.json`. It prints, per model, the
+USD/1M ceiling (`price_idr / USD_IDR` — the upstream cost at which that model stops making money), the
+out/in ratio, how many upstream routes exist and any `:free` route. Use the ceiling when the relay's price
+card is unreachable; deliver `audit/PRICING-AUDIT.md` with a market-reference column that names source and
+access date, never a single invented "modal".
+
+**Activate the bot** → the token must exist in TWO files: `BOT_TOKEN` in `/root/.secrets/aethink-bot.env`
+(the bot process) and `AETHINK_BOT_TOKEN` in `/root/.secrets/aethink-db.env` (the gateway verifying Mini App
+`initData`). Put it in the bot env only and the bot answers Telegram fine while every Mini App session dies
+on `401 bad_init_data`. Then set `PORTAL_URL` and `AETHINK_MINIAPP_URL` to the HTTPS origin, restart both,
+and prove it with `getMe`, `getWebhookInfo` (`url: ''`, `pending_update_count: 0` = long polling healthy),
+the `[bot] online as @… test_mode=False` log line, and a signed-`initData` probe (below).
+
 ## 5. Pitfalls seen in production
+
+- **Edge headers and app headers duplicate with different values.** nginx sets
+  `X-Frame-Options: SAMEORIGIN`, the FastAPI middleware set `DENY`; proxied responses carried
+  both and browsers pick one. nginx also DROPS the server-level `add_header` set inside any
+  `location` that declares its own, so `/api` silently lost XFO/CSP. Rule: nginx owns
+  HSTS/XFO/Referrer/Permissions/CSP on every location (re-declare per location), the app sets
+  only `X-Content-Type-Options` + API `Cache-Control`.
+- **A hardening pass must be measured, not asserted.** `curl` the endpoints after each change:
+  secret paths `/.git/config`, `/.env`, `/backup.sql` → 403; `/docs` → 404 at the edge AND on
+  :8080; burst `/api/auth/login` → 429 after the limit; forged `alg=none` JWT → 401;
+  `DELETE /api/models` → 405. `scripts/healthcheck.sh` folds services, TLS days, ufw, fail2ban
+  bans, disk and the ledger invariant into one verdict.
+- **SSH hardening without a key locks the operator out.** `PermitRootLogin prohibit-password`
+  with an empty `authorized_keys` ends the session for good. Keep password auth, add
+  `MaxAuthTries 3` + fail2ban, and only flip to key-only after the operator's public key is
+  installed and tested from a second session.
+- **fail2ban `backend = systemd` in `[DEFAULT]` kills the log-file jails.** With it, jails that
+  declare `logpath` never start (`UnknownJailException`). Set `backend = auto` in `[DEFAULT]`
+  and `backend = systemd` only on `[sshd]`.
+- **A test that reuses a fixed Telegram id is not idempotent.** The buyer wallet is cumulative,
+  so `saldo Rp5.000` passes once and fails on every rerun; mint a fresh `tg_id` per run.
 
 - **A fresh clone cannot build or run: check for missing files first.** `gateway/requirements.txt`,
   `bot/requirements.txt`, `src/data/store.tsx` and `src/data/fixtures.ts` were referenced but absent —
@@ -108,7 +145,30 @@ payment id, inside a transaction that locks the order row.
 - **Test files carry stale operator credentials.** `tests/e2e_access.py` hardcoded the previous box's
   admin password and died with `401` on a fresh install; read `AETHINK_ADMIN_PASSWORD` or parse
   `gateway/.admin` (written by `seed_admin.py`) instead, and never commit a real password.
+- **One slow or dead endpoint blanks a whole dashboard, so fan out with `settle()`.** `src/lib/async.ts`
+  exports `settle(promise)` / `failedCount(values)`; every dashboard effect does
+  `Promise.all([settle(a()), settle(b())] as const)` and applies each result behind `if (value)`, plus a
+  visible "N endpoint gagal dimuat" banner. Plain `Promise.all` without `.catch` leaves the page on the
+  loading state or on zeros, which reads as "no traffic" instead of "the call failed".
+- **A KPI card frozen at 0 while its hint shows the real number is the count-up hook, not the data.**
+  `useCountUp` must snap to the target when the tab is hidden / `prefers-reduced-motion` / no rAF, and
+  carry a `setTimeout(target, span + 150)` safety net; a tween that only advances on
+  `requestAnimationFrame` never finishes in a backgrounded tab or a headless check.
 
+- **After `certbot --redirect`, a smoke test against `http://127.0.0.1` proves nothing.** Port 80 answers
+  `301` only, and a probe with a mismatched `Host` gets nginx's default 404 — `deploy.sh` printed
+  `models ? model`. Point the smoke at the HTTPS origin (`AETHINK_ORIGIN`, default
+  `https://router.aethink.ai.id`) and keep `curl --retry 3 --retry-connrefused` plus a JSON `try/except`,
+  because the first few seconds after `systemctl restart` legitimately return an empty body.
+- **`margin 100%` on every request means cost never landed, not that the product is free to run.**
+  `usage_events.cost_usd` stays 0 while the relay price card answers `401` and its `usageHistory` SQLite is
+  on another box. `/api/admin/summary` now ships `cost_known` / `cost_tracked_requests` and returns
+  `margin_pct = null` in that state; the Overview renders "modal belum tercatat". Do not remove that guard
+  to make the dashboard look complete.
+- **A normalized `public_id` join is the only place a customer may see a model name.** Any portal query
+  that still does `regexp_replace(model_id, '^mk/', '')` leaks the live route prefix (`mr/…`, `cn/…`) and
+  breaks per-model assertions in `tests/e2e_access.py`. Return
+  `coalesce(mp.public_id, split_part(model_id, '/', 2))` via `LEFT JOIN model_prices`.
 - `pkill -f "uvicorn app.main"` kills your own shell — use the bracket form `pkill -f "[u]vicorn app.main"`.
 - FastAPI wraps `HTTPException` detail; the client reads `body.error ?? body.detail`.
 - Telegram `editMessageText` returns `400 message is not modified` on a double tap — treat as no-op.
@@ -122,9 +182,17 @@ payment id, inside a transaction that locks the order row.
 ## 6. Deploy checklist for the new server
 
 1. Postgres 16 + role/db; apply `docs/schema.sql` (fresh) or `002`/`003` (existing).
-2. Restore secrets from `docs/SECRETS.md` — never from git.
-3. `gateway/run.sh` under systemd/pm2; bot under pm2 with `BOT_ENV_FILE`.
-4. Build the frontend (`npm run build`) and serve `dist/` behind HTTPS; point the bot's
-   `PORTAL_URL` and `AETHINK_MINIAPP_URL` at that origin.
-5. Rotate `BOT_TOKEN`, `JWT_SECRET`, `INTERNAL_SECRET`; re-issue buyer keys if leaked.
-6. Run the three e2e suites against the new box before announcing.
+2. Restore secrets into `/root/.secrets/aethink-db.env` (mode 600) — `config.py` loads that file itself,
+   so seed scripts, tests and uvicorn all get the env without a shell wrapper. Fill `UPSTREAM_BASE_URL`
+   and, for a remote relay, `UPSTREAM_KEY`.
+3. Seed: `scripts/seed_admin.py` (writes `gateway/.admin`, mode 600) then `scripts/seed_dev.py` for a
+   local key. Prices next (`/admin/models` or the insert above) — an empty `model_prices` makes the whole
+   product look broken.
+4. Units ship in `deploy/systemd/` (`aethink-gateway`, `aethink-bot` with `BOT_ENV_FILE`), vhost in
+   `deploy/nginx/aethink.conf`. Build to `/var/www/aethink` (nginx cannot read `/root`), then
+   `nginx -t && systemctl reload nginx`.
+5. `./deploy.sh` does backend + frontend + smoke; use `./deploy.sh backend|frontend` for one side.
+6. TLS + domain: `certbot --nginx -d <domain> --redirect`, then set `AETHINK_MINIAPP_URL` and the bot's
+   `PORTAL_URL` to the HTTPS origin and restart both — a `web_app` button refuses an HTTP origin.
+7. Run the three e2e suites against the new box before announcing (35/35, 32/32, 12/12).
+8. Rotate `BOT_TOKEN`, `JWT_SECRET`, `INTERNAL_SECRET`; re-issue buyer keys if leaked.
