@@ -827,6 +827,12 @@ class ProductIn(BaseModel):
     public_id: str | None = None
     display_name: str | None = None
     provider_label: str | None = None
+    # variant: a second product (own name + price) sold from an existing product's
+    # routes. Same providers, different promise — 'DeepSeek Flash' vs 'DeepSeek Flash Pro'.
+    source_model_id: str | None = None
+    price_in_idr: int | None = Field(default=None, ge=0)
+    price_out_idr: int | None = Field(default=None, ge=0)
+    price_cached_idr: int | None = Field(default=None, ge=0)
 
 
 @router.post("/api/admin/products", status_code=201)
@@ -840,28 +846,64 @@ async def create_product(body: ProductIn, admin: dict = Depends(auth.require_adm
     if not slug:
         raise HTTPException(400, {"error": {"message": "Nama produk tidak valid",
                                             "code": "invalid_public_id"}})
+
+    source = None
+    if body.source_model_id:
+        source = await db.pool().fetchrow(
+            """SELECT model_id, public_id, provider_label, display_name, context_window,
+                      max_output, capabilities
+                 FROM model_prices WHERE model_id = $1""", body.source_model_id)
+        if source is None:
+            raise HTTPException(404, {"error": {"message": "Produk sumber tidak ada",
+                                                "code": "source_not_found"}})
+
+    # a variant lives under a synthetic id so it can share routes with its source
+    model_id = f"{body.source_model_id}#{slug}" if source else body.upstream_model
+
     clash = await db.pool().fetchrow(
         "SELECT model_id FROM model_prices WHERE public_id = $1 OR model_id = $2 LIMIT 1",
-        slug, body.upstream_model)
+        slug, model_id)
     if clash:
         raise HTTPException(409, {"error": {
-            "message": f"Model '{slug}' sudah ada sebagai produk ({clash['model_id']}). "
-                       f"Kalau ini provider lain untuk model yang sama, tambahkan sebagai "
-                       f"route di halaman Routing.",
+            "message": f"Nama '{slug}' sudah dipakai produk lain ({clash['model_id']}). "
+                       f"Pilih nama lain.",
             "code": "duplicate_product", "existing_model_id": clash["model_id"]}})
 
-    label = body.provider_label or body.upstream_model.split("/")[0].split(":")[0]
+    label = (body.provider_label or (source["provider_label"] if source else None)
+             or body.upstream_model.split("/")[0].split(":")[0])
     display = body.display_name or " ".join(p.capitalize() for p in slug.replace("_", "-").split("-"))
+    price_in = body.price_in_idr or 0
+    price_out = body.price_out_idr or 0
+    price_cached = body.price_cached_idr or 0
+    priced_now = price_in > 0 or price_out > 0
+
     row = await db.pool().fetchrow(
         """INSERT INTO model_prices(model_id, public_id, provider_label, display_name,
-                                    price_in_idr, price_out_idr, price_cached_idr, active)
-           VALUES ($1,$2,$3,$4,0,0,0,false) RETURNING *""",
-        body.upstream_model, slug, label, display)
-    await db.pool().execute(
-        """INSERT INTO model_routes(id, model_id, upstream_model, provider_label, priority, active, note)
-           VALUES ($1,$2,$3,$4,1,true,'created with product')
-           ON CONFLICT (model_id, upstream_model) DO NOTHING""",
-        _route_id(), body.upstream_model, body.upstream_model, label)
+                                    price_in_idr, price_out_idr, price_cached_idr, active,
+                                    availability, context_window, max_output, capabilities)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb) RETURNING *""",
+        model_id, slug, label, display,
+        price_in, price_out, price_cached, priced_now,
+        "on" if priced_now else "off",
+        source["context_window"] if source else None,
+        source["max_output"] if source else None,
+        json.dumps(source["capabilities"] or {}) if source else json.dumps({}))
+
+    if source:
+        await db.pool().execute(
+            """INSERT INTO model_routes(id, model_id, upstream_model, provider_label,
+                                        priority, active, note)
+               SELECT 'rt_' || md5($1 || r.upstream_model), $1, r.upstream_model,
+                      r.provider_label, r.priority, r.active, 'variant of ' || r.model_id
+                 FROM model_routes r WHERE r.model_id = $2
+               ON CONFLICT (model_id, upstream_model) DO NOTHING""",
+            model_id, body.source_model_id)
+    else:
+        await db.pool().execute(
+            """INSERT INTO model_routes(id, model_id, upstream_model, provider_label, priority, active, note)
+               VALUES ($1,$2,$3,$4,1,true,'created with product')
+               ON CONFLICT (model_id, upstream_model) DO NOTHING""",
+            _route_id(), model_id, body.upstream_model, label)
     await _refresh_limits(body.upstream_model)
     await db.log_audit(admin["email"], "product.create", body.upstream_model, {"public_id": slug})
     return {"model": dict(row), "next": "isi harga lalu aktifkan di Katalog & Harga"}

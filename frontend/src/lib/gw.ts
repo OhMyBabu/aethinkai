@@ -718,6 +718,10 @@ export async function createProduct(body: {
   public_id?: string | null;
   display_name?: string | null;
   provider_label?: string | null;
+  source_model_id?: string | null;
+  price_in_idr?: number;
+  price_out_idr?: number;
+  price_cached_idr?: number;
 }) {
   return request<{ model: GwModel; next: string }>("/api/admin/products", {
     method: "POST",

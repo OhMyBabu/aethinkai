@@ -254,6 +254,7 @@ export default function AdminModelsPage() {
   const [pickerQuery, setPickerQuery] = useState("");
   const [pickerRows, setPickerRows] = useState<GwRouterModel[]>([]);
   const [pickerBusy, setPickerBusy] = useState<string | null>(null);
+  const [variantName, setVariantName] = useState("");
   const [pickerError, setPickerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -293,13 +294,18 @@ export default function AdminModelsPage() {
     return () => clearTimeout(timer);
   }, [pickerOpen, pickerQuery]);
 
-  const addProduct = async (row: GwRouterModel) => {
+  const addProduct = async (row: GwRouterModel, sourceModelId?: string) => {
     setPickerBusy(row.id);
     setPickerError(null);
     try {
-      await createProduct({ upstream_model: row.id });
+      await createProduct({
+        upstream_model: row.id,
+        source_model_id: sourceModelId,
+        public_id: sourceModelId ? variantName.trim() || undefined : undefined,
+      });
       setPickerOpen(false);
       setPickerQuery("");
+      setVariantName("");
       await load();
     } catch (err) {
       setPickerError((err as Error).message);
@@ -415,6 +421,12 @@ export default function AdminModelsPage() {
       >
         <div className="space-y-3">
           <SearchInput value={pickerQuery} onChange={setPickerQuery} placeholder="cari model router…" />
+          <input
+            value={variantName}
+            onChange={(event) => setVariantName(event.target.value.replace(/[^a-zA-Z0-9._-]/g, ""))}
+            placeholder="nama produk baru (untuk varian dari model yang sudah dijual)"
+            className="h-10 w-full rounded-lg border border-ash/30 bg-[#141518] px-3 font-mono text-[12px] text-warm focus:border-flame focus:outline-none"
+          />
           {pickerError ? (
             <div className="rounded-lg border border-[#c4633a]/40 bg-[#c4633a]/10 px-3 py-2 text-[12px] text-[#e79c78]">
               {pickerError}
@@ -427,8 +439,8 @@ export default function AdminModelsPage() {
                 <button
                   key={row.id}
                   type="button"
-                  disabled={exists || pickerBusy === row.id}
-                  onClick={() => void addProduct(row)}
+                  disabled={(exists && !variantName.trim()) || pickerBusy === row.id}
+                  onClick={() => void addProduct(row, exists ? row.id : undefined)}
                   className="flex w-full items-center justify-between gap-3 rounded-lg border border-ash/15 px-3 py-2 text-left transition hover:border-flame/40 disabled:opacity-50"
                 >
                   <span className="min-w-0">
@@ -437,7 +449,9 @@ export default function AdminModelsPage() {
                       {row.provider} · ctx {row.context_window ?? "—"} · out {row.max_output ?? "—"}
                     </span>
                   </span>
-                  <span className="shrink-0 text-[10.5px] text-ash">{exists ? "sudah jadi produk" : "tambah"}</span>
+                  <span className="shrink-0 text-[10.5px] text-ash">
+                    {exists ? (variantName.trim() ? `varian "${variantName.trim()}"` : "isi nama untuk varian") : "tambah"}
+                  </span>
                 </button>
               );
             })}

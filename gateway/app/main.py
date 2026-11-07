@@ -290,38 +290,37 @@ def _upstream_chain(payload: dict[str, Any], routes: list[str], extra: list[str]
 @app.get("/api/models")
 async def public_models():
     """Catalogue visible to customers: only models the admin enabled and priced."""
+    # The catalogue is our own rows, not the router's advertisement: a product can
+    # point at the same upstream route as another product (a variant with a different
+    # name and price), and that must still appear here.
     rows = await db.pool().fetch(
         """
         SELECT model_id, public_id, provider_label, display_name,
-               price_in_idr, price_out_idr, price_cached_idr, availability
+               price_in_idr, price_out_idr, price_cached_idr, availability,
+               context_window, max_output, capabilities
         FROM model_prices
         WHERE availability <> 'off' AND (price_in_idr > 0 OR price_out_idr > 0)
         ORDER BY model_id
         """
     )
-    priced = {r["model_id"]: dict(r) for r in rows}
-    meta: dict[str, Any] = {}
-    try:
-        data = await upstream.list_models()
-        meta = {m["id"]: m for m in data.get("data", [])}
-    except Exception:
-        pass
 
     out = []
-    for model_id, p in priced.items():
-        if meta and model_id not in meta:
-            # priced but no longer routed upstream — never advertise it to customers
-            continue
-        m = meta.get(model_id, {})
-        caps = m.get("capabilities") or {}
-        slug = model_id.split("/")[-1]
+    for p in rows:
+        model_id = p["model_id"]
+        caps = p["capabilities"] or {}
+        if isinstance(caps, str):
+            try:
+                caps = json.loads(caps)
+            except Exception:
+                caps = {}
+        slug = model_id.split("/")[-1].split("#")[-1]
         out.append({
             "id": p["public_id"] or slug,
             "status": p["availability"],
             "display_name": pretty_name(model_id, p["display_name"]),
             "provider": p["provider_label"] or brand_of(slug) or "Aethink",
-            "context_length": m.get("context_length") or caps.get("contextWindow") or 0,
-            "max_completion_tokens": m.get("max_completion_tokens") or caps.get("maxOutput") or 0,
+            "context_length": p["context_window"] or caps.get("contextWindow") or 0,
+            "max_completion_tokens": p["max_output"] or caps.get("maxOutput") or 0,
             "capabilities": {k: v for k, v in caps.items() if isinstance(v, bool) and v},
             "pricing_idr_per_1m": {
                 "input": p["price_in_idr"],
@@ -335,29 +334,35 @@ async def public_models():
 @app.get("/v1/models")
 async def models(_key: dict = Depends(require_key)):
     """Only models the admin enabled and priced — a client never sees a route it cannot call."""
-    data = await upstream.list_models()
+    # Served from our rows so a product variant that shares an upstream route with
+    # another product is listed under its own name.
     rows = await db.pool().fetch(
         """SELECT model_id, public_id, provider_label, display_name,
-                  price_in_idr, price_out_idr, price_cached_idr, availability
+                  price_in_idr, price_out_idr, price_cached_idr, availability,
+                  context_window, max_output, capabilities, updated_at
            FROM model_prices
-           WHERE availability <> 'off' AND (price_in_idr > 0 OR price_out_idr > 0)"""
+           WHERE availability <> 'off' AND (price_in_idr > 0 OR price_out_idr > 0)
+           ORDER BY model_id"""
     )
-    prices = {r["model_id"]: dict(r) for r in rows}
     visible = []
-    for m in data.get("data", []):
-        p = prices.get(m.get("id"))
-        if not p:
-            continue
-        slug = str(m.get("id", "")).split("/")[-1]
+    for p in rows:
+        slug = p["model_id"].split("/")[-1].split("#")[-1]
+        caps = p["capabilities"] or {}
+        if isinstance(caps, str):
+            try:
+                caps = json.loads(caps)
+            except Exception:
+                caps = {}
         visible.append({
             "id": p["public_id"] or slug,          # Aethink model name, not the 9Router route
             "object": "model",
-            "created": m.get("created"),
+            "created": int(p["updated_at"].timestamp()) if p["updated_at"] else None,
             "owned_by": "aethink",
             "status": p["availability"],
-            "name": pretty_name(str(m.get("id", "")), p["display_name"]),
+            "name": pretty_name(p["model_id"], p["display_name"]),
             "provider": p["provider_label"] or brand_of(slug) or "Aethink",
-            "context_length": m.get("context_length") or 0,
+            "context_length": p["context_window"] or caps.get("contextWindow") or 0,
+            "max_completion_tokens": p["max_output"] or caps.get("maxOutput") or 0,
             "pricing_idr_per_1m": {
                 "input": p["price_in_idr"],
                 "output": p["price_out_idr"],
