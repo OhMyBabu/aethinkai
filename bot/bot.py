@@ -407,16 +407,46 @@ def packages_keyboard() -> list:
     return rows
 
 
-def invoice_text(order_id: str, pkg: dict) -> str:
-    return (
+def create_payment(order_id: str) -> dict | None:
+    """Ask the gateway for a QRIS code (WijayaPay). None = provider not configured."""
+    status, data = post_internal("/api/internal/pay/create", {"order_id": order_id})
+    if status != 200:
+        print(f"[pay] create {status} {data}", flush=True)
+        return None
+    return data
+
+
+def invoice_text(order_id: str, pkg: dict, pay: dict | None = None) -> str:
+    head = (
         f"🧾 <b>Order</b> <code>{order_id}</code>\n"
         f"Paket: <b>{pkg['name']}</b>\n"
         f"Kredit masuk: <b>{idr(pkg['idr'] * 1_000_000)}</b>\n"
-        f"Rate limit: <b>{pkg['rpm']} request/menit</b>\n\n"
-        "Status: <b>menunggu pembayaran</b>\n\n"
-        "Pembayaran manual: transfer/QRIS ke admin, lalu tekan <b>Saya sudah bayar</b>. "
-        "Admin konfirmasi, bot langsung kirim API key ke chat ini."
+        f"Rate limit: <b>{pkg['rpm']} request/menit</b>\n"
     )
+    if pay:
+        total = int(pay.get("total_bayar") or pkg["idr"])
+        fee = int(pay.get("fee_idr") or 0)
+        exp = (pay.get("expires_at") or "").replace("T", " ")[:16]
+        body = (f"\nBayar: <b>{idr(total * 1_000_000)}</b>"
+                + (f" <i>(termasuk biaya QRIS {idr(fee * 1_000_000)})</i>" if fee else "")
+                + f"\nBerlaku sampai: <b>{exp} WIB</b>\n\n"
+                "Scan QR, bayar sesuai nominal <b>tepat</b>, key dikirim otomatis ke chat ini.")
+        if pay.get("trx_reference"):
+            body += f"\nRef: <code>{pay['trx_reference']}</code>"
+        return head + body
+    return head + ("\nStatus: <b>menunggu pembayaran</b>\n\n"
+                   "Pembayaran manual: transfer/QRIS ke admin, lalu tekan <b>Saya sudah bayar</b>. "
+                   "Admin konfirmasi, bot langsung kirim API key ke chat ini.")
+
+
+def invoice_keyboard(order_id: str, pay: dict | None) -> list:
+    if pay and pay.get("qr_image"):
+        return [
+            [url_btn("💳 Buka QR", pay["qr_image"]), btn("🔄 Cek status", f"pay:{order_id}")],
+            [url_btn("🌐 Bayar di web", f"{portal_url()}/pay/{order_id}?t={pay.get('checkout_token', '')}")],
+            [btn("⬅️ Menu", "m:home")],
+        ]
+    return [[btn("✅ Saya sudah bayar", f"paid:{order_id}")], [btn("⬅️ Menu", "m:home")]]
 
 
 HELP_HOWTO = (
@@ -831,13 +861,41 @@ def handle_callback(cb: dict) -> None:
                               f"<b>{'lunas (test mode)' if ok else 'gagal grant'}</b>",
                  [[btn("⬅️ Menu", "m:home")]])
             return
-        edit(chat_id, mid, invoice_text(order_id, pkg),
-             [[btn("✅ Saya sudah bayar", f"paid:{order_id}")], [btn("⬅️ Menu", "m:home")]])
+        pay = create_payment(order_id)
+        edit(chat_id, mid, invoice_text(order_id, pkg, pay), invoice_keyboard(order_id, pay))
+        if pay:
+            return   # automated payment: no admin ping, the gateway grants on settle
         notify = (f"🧾 <b>Order baru</b> <code>{order_id}</code>\n"
                   f"@{cb.get('from', {}).get('username') or uid} · {pkg['name']} · {amount(pkg['idr'])}")
         for admin in ADMINS:
             if admin != uid:  # same-panel rule: never duplicate a message into the buyer's chat
                 send(admin, notify, [[btn("✅ Grant sekarang", f"g:{order_id}")]])
+        return
+
+    if data.startswith("pay:"):
+        order_id = data.split(":", 1)[1]
+        status, st = get_internal(f"/api/internal/pay/status/{order_id}", order_id)
+        if status != 200:
+            ack(cb_id, "Gagal cek status")
+            return
+        if st.get("status") == "granted":
+            ack(cb_id, "Lunas ✅")
+            pkg = PKG.get(st.get("sku", ""), {})
+            edit(chat_id, mid,
+                 f"✅ <b>Pembayaran diterima</b>\n\nOrder <code>{order_id}</code> · "
+                 f"{html.escape(pkg.get('name', st.get('sku', 'paket')))}\n\n"
+                 "API key sudah dikirim di chat ini (pesan terpisah). Kalau tidak ada, "
+                 "buka <b>Key Saya</b> → Rotasi.",
+                 [[btn("🔑 Key Saya", "m:keys"), btn("⬅️ Menu", "m:home")]])
+            return
+        ack(cb_id, "Belum masuk")
+        total = st.get("total_bayar")
+        edit(chat_id, mid,
+             f"⏳ <b>Belum ada pembayaran masuk</b>\n\nOrder <code>{order_id}</code>\n"
+             + (f"Nominal: <b>{idr(int(total) * 1_000_000)}</b>\n" if total else "")
+             + "Kalau sudah bayar, tunggu 10–30 detik lalu tekan <b>Cek status</b> lagi "
+               "(QRIS kadang butuh waktu konfirmasi).",
+             [[btn("🔄 Cek status", f"pay:{order_id}"), btn("⬅️ Menu", "m:home")]])
         return
 
     if data.startswith("paid:"):

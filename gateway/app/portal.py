@@ -565,10 +565,10 @@ async def portal_order(body: OrderReq, row: dict = Depends(portal_identity)):
     order_id = f"WEB{buyer_id[:8]}-{int(time.time())}"
     credits = pkg["idr"] * 1_000_000
     await db.pool().execute(
-        """INSERT INTO orders(id, buyer_id, sku, credits_micro, price_idr, payment_ref, status)
-           VALUES ($1,$2,$3,$4,$5,$1,'pending')
+        """INSERT INTO orders(id, buyer_id, sku, credits_micro, price_idr, payment_ref, status, rpm_limit)
+           VALUES ($1,$2,$3,$4,$5,$1,'pending',$6)
            ON CONFLICT (id) DO NOTHING""",
-        order_id, buyer_id, pkg["sku"], credits, pkg["idr"],
+        order_id, buyer_id, pkg["sku"], credits, pkg["idr"], pkg["rpm"],
     )
     await db.log_audit(f"buyer:{buyer_id}", "portal.order", order_id,
                        {"sku": pkg["sku"], "credits_micro": credits})
@@ -893,6 +893,48 @@ async def internal_grant(request: Request):
     return _grant_result(body.order_id, buyer_id, raw_key, prefix, bal, body.rpm_limit)
 
 
+async def grant_order(order_id: str) -> dict:
+    """Grant an order that has already been paid.
+
+    Called by the payment module (webhook / poll / reconciler) instead of the bot
+    endpoint: the buyer identity, package and price come from the `orders` row, so a
+    caller can never point a payment at someone else's credits.
+    """
+    async with db.pool().acquire() as con:
+        async with con.transaction():
+            await con.execute("SELECT pg_advisory_xact_lock(hashtext($1))", order_id)
+            order = await con.fetchrow(
+                """SELECT o.id, o.sku, o.credits_micro, o.price_idr, o.status, o.key_id,
+                          o.rpm_limit, o.buyer_id, b.tg_id, b.username, b.name
+                     FROM orders o JOIN buyers b ON b.id = o.buyer_id
+                    WHERE o.id = $1 FOR UPDATE OF o""",
+                order_id,
+            )
+            if order is None:
+                raise _bad("order_not_found", "Order tidak ada", 404)
+            if order["status"] == "granted":
+                key = await con.fetchrow(
+                    "SELECT prefix FROM api_keys WHERE id = $1", order["key_id"])
+                bal = await con.fetchval(
+                    "SELECT coalesce((SELECT balance_micro FROM balances WHERE user_id = "
+                    "(SELECT user_id FROM api_keys WHERE id = $1)), 0)", order["key_id"])
+                return {"order_id": order_id, "already_granted": True, "key": None,
+                        "key_prefix": key["prefix"] if key else None,
+                        "balance_micro": int(bal or 0), "rpm_limit": order["rpm_limit"]}
+
+            user_id = await _ensure_user(con, order["tg_id"], order["sku"], order["name"])
+            key_id, raw_key, prefix = await _mint_key(
+                con, user_id, order["buyer_id"], order["sku"], int(order["rpm_limit"] or 60))
+            await con.execute(
+                """UPDATE orders SET status='granted', key_id=$2, granted_at=now() WHERE id=$1""",
+                order_id, key_id,
+            )
+            bal = await _credit(con, user_id, int(order["credits_micro"]), order_id,
+                                f"paid {order['sku']}")
+    return {"order_id": order_id, "already_granted": False, "key": raw_key, "key_prefix": prefix,
+            "balance_micro": int(bal), "rpm_limit": int(order["rpm_limit"] or 60)}
+
+
 class OrderIn(BaseModel):
     order_id: str = Field(min_length=3, max_length=80)
     tg_id: int
@@ -919,12 +961,13 @@ async def internal_order(request: Request):
                 buyer_id = await _ensure_buyer(con, body.tg_id, body.username, body.name)
                 await con.execute(
                     """INSERT INTO orders(id, buyer_id, sku, credits_micro, price_idr, payment_ref,
-                                          status, telegram_msg_id)
-                       VALUES ($1,$2,$3,$4,$5,$6,'pending',$7)
+                                          status, telegram_msg_id, rpm_limit)
+                       VALUES ($1,$2,$3,$4,$5,$6,'pending',$7,$8)
                        ON CONFLICT (id) DO UPDATE
-                         SET telegram_msg_id = coalesce(EXCLUDED.telegram_msg_id, orders.telegram_msg_id)""",
+                         SET telegram_msg_id = coalesce(EXCLUDED.telegram_msg_id, orders.telegram_msg_id),
+                             rpm_limit = EXCLUDED.rpm_limit""",
                     body.order_id, buyer_id, body.sku, body.credits_micro, body.price_idr,
-                    payment_ref, body.telegram_msg_id,
+                    payment_ref, body.telegram_msg_id, body.rpm_limit,
                 )
                 row = await con.fetchrow(
                     "SELECT id, status, sku FROM orders WHERE id = $1", body.order_id

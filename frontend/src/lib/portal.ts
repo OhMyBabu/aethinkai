@@ -57,6 +57,46 @@ export async function placeOrder(token: string, sku: string) {
   return body as { order_id: string; name: string; price_idr: number; status: string };
 }
 
+export type PayPayload = {
+  order_id: string;
+  sku: string;
+  status: "pending" | "paid" | "expired" | "granted" | string;
+  provider: string | null;
+  amount_idr: number;
+  total_bayar: number;
+  fee_idr: number;
+  qr_string?: string | null;
+  qr_image?: string | null;
+  trx_reference?: string | null;
+  expires_at?: string | null;
+  tutorial?: string | null;
+  checkout_token: string;
+  pay_url: string;
+};
+
+/** Create (or reuse) the QRIS transaction for an order of the logged-in buyer. */
+export async function createPayment(token: string, orderId: string): Promise<PayPayload> {
+  const res = await fetch("/api/portal/pay/create", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ order_id: orderId }),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body?.error?.message ?? "Gagal membuat pembayaran");
+  return body as PayPayload;
+}
+
+/** Public status poll — the checkout token is the only credential needed. */
+export async function payStatus(orderId: string, checkoutToken: string): Promise<PayPayload> {
+  const res = await fetch(
+    `/api/pay/status?order_id=${encodeURIComponent(orderId)}&t=${encodeURIComponent(checkoutToken)}`,
+    { headers: { Accept: "application/json" } },
+  );
+  const body = await res.json();
+  if (!res.ok) throw new Error(body?.error?.message ?? "Gagal cek status pembayaran");
+  return body as PayPayload;
+}
+
 export type PortalOrder = {
   id: string;
   sku: string;

@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 import { Wordmark } from "@/components/layout/BrandLogo";
 import { TelegramConnect } from "@/components/portal/TelegramConnect";
-import { fetchOrders, fetchPackages, placeOrder, type Pkg, type PortalOrder } from "@/lib/portal";
+import { createPayment, fetchOrders, fetchPackages, placeOrder, type Pkg, type PortalOrder } from "@/lib/portal";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/cn";
 
 /**
@@ -65,6 +66,7 @@ const when = (iso: string | null) => {
 };
 
 function StorePanel({ token, onChanged }: { token: string; onChanged: () => void }) {
+  const navigate = useNavigate();
   const [packages, setPackages] = useState<Pkg[]>([]);
   const [orders, setOrders] = useState<PortalOrder[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -82,10 +84,18 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
     setNotice(null);
     try {
       const order = await placeOrder(token, sku);
-      setNotice(`Order ${order.order_id} dibuat (${idr(order.price_idr * 1_000_000)}). ` +
-        "Bayar ke admin, lalu key dikirim ke bot Telegram.");
+      setNotice(`Order ${order.order_id} dibuat — lanjut ke pembayaran QRIS…`);
       await refresh();
       onChanged();
+      try {
+        const pay = await createPayment(token, order.order_id);
+        navigate(`/pay/${order.order_id}?t=${encodeURIComponent(pay.checkout_token)}`);
+      } catch (err) {
+        // provider unavailable: fall back to the manual/admin flow, order stays pending
+        setNotice(`Order ${order.order_id} dibuat (${idr(order.price_idr * 1_000_000)}). ` +
+          "Pembayaran otomatis belum aktif — hubungi admin, key dikirim ke bot Telegram." +
+          (err instanceof Error ? ` (${err.message})` : ""));
+      }
     } catch (err) {
       setNotice(err instanceof Error ? err.message : "Gagal membuat order");
     } finally {

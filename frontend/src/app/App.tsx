@@ -13,6 +13,7 @@ import LandingPage from "@/pages/public/Landing";
 import LoginPage from "@/pages/public/Login";
 import LoginTelegramPage from "@/pages/public/LoginTelegram";
 import SignupPage from "@/pages/public/Signup";
+import PayPage from "@/pages/public/Pay";
 import PortalPage from "@/pages/public/Portal";
 import MiniAppPage from "@/pages/tg/MiniApp";
 import NotFoundPage from "@/pages/public/NotFound";
@@ -82,6 +83,7 @@ export default function App() {
           <Route path="/admin/login" element={<LoginPage />} />
           <Route path="/signup" element={<Navigate to="/login" replace />} />
           <Route path="/portal" element={<PortalPage />} />
+          <Route path="/pay/:orderId" element={<PayPage />} />
           <Route path="/tg" element={<MiniAppPage />} />
 
           <Route

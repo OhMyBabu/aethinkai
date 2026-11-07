@@ -18,7 +18,7 @@ from . import db, upstream
 from .admin import router as admin_router
 from .user import router as user_router
 from .live import router as live_router
-from . import extras, portal
+from . import extras, payments, portal
 from .ratelimit import rpm as rpm_window
 from .extras import router as extras_router
 from .config import HOLD_TTL_SECONDS, USD_IDR
@@ -28,10 +28,17 @@ from .config import HOLD_TTL_SECONDS, USD_IDR
 async def lifespan(app: FastAPI):
     await db.init_pool()
     janitor = asyncio.create_task(_hold_janitor())
+    # Reconciler polls the provider; it stays OFF unless the operator opts in
+    # (PAY_RECONCILE=1). Webhook + the bot's "Cek status" already cover the flow.
+    collector = None
+    if (os.environ.get("PAY_RECONCILE") or "").strip() in {"1", "true", "yes"}:
+        collector = asyncio.create_task(payments.reconciler(int(os.environ.get("PAY_RECONCILE_SECONDS", "300"))))
     try:
         yield
     finally:
         janitor.cancel()
+        if collector is not None:
+            collector.cancel()
         await db.close_pool()
 
 
@@ -68,6 +75,7 @@ app.include_router(portal.portal)
 app.include_router(portal.store)
 app.include_router(portal.internal)
 app.include_router(portal.admin_ops)
+app.include_router(payments.router)
 
 
 from fastapi.exceptions import HTTPException as _HTTPExc

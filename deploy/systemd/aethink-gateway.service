@@ -8,6 +8,7 @@ Type=simple
 User=root
 WorkingDirectory=/root/ops/aethinkai/gateway
 EnvironmentFile=/root/.secrets/aethink-db.env
+EnvironmentFile=-/root/.secrets/aethink-pay.env
 ExecStart=/root/ops/aethinkai/gateway/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8080 --log-level warning
 Restart=always
 RestartSec=3
