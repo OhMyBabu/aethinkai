@@ -179,6 +179,10 @@ const itemMotion = {
 function DocsPanel({ onClose }: { onClose: () => void }) {
   const [lang, setLang] = useState<keyof typeof snippets>("cURL");
   const [copied, setCopied] = useState(false);
+  const { models } = useLandingData();
+  const providerCount = new Set(models.map((model) => model.provider)).size;
+  const sampleModel = models[0]?.modelId ?? "deepseek-v4.1-flash";
+  const code = snippets[lang].replace(/deepseek-v4\.1-flash/g, sampleModel);
 
   return (
     <motion.div
@@ -212,7 +216,7 @@ function DocsPanel({ onClose }: { onClose: () => void }) {
           </div>
 
           <h3 className="mt-3 text-[19px] font-semibold tracking-[-0.02em] text-warm">
-            One base URL. Four providers. First request in a minute.
+            One base URL.{providerCount ? ` ${providerCount} providers.` : ""} First request in a minute.
           </h3>
 
           <div className="mt-4 flex items-center gap-1.5">
@@ -239,7 +243,7 @@ function DocsPanel({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={() => {
-                navigator.clipboard?.writeText(snippets[lang]).catch(() => undefined);
+                navigator.clipboard?.writeText(code).catch(() => undefined);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 1600);
               }}
@@ -260,7 +264,7 @@ function DocsPanel({ onClose }: { onClose: () => void }) {
                 transition={{ duration: 0.18 }}
                 className="max-h-[220px] w-full min-w-0 overflow-y-auto whitespace-pre-wrap break-words p-3.5 font-mono text-[11px] leading-5 text-warm/85"
               >
-                {snippets[lang]}
+                {code}
               </motion.pre>
             </AnimatePresence>
           </div>
@@ -357,7 +361,7 @@ function StatusPanel({ onClose }: { onClose: () => void }) {
           </p>
           <p className="mt-1 text-[10.5px] text-dim">
             {status
-              ? `Live · ${status.requests_24h} req / 24h · ${status.requests_7d} / 7d · ${status.success_rate}% success`
+              ? `Live · ${status.requests_24h} req / 24h · ${status.success_rate}% success · verdict last ${status.window_minutes ?? 15}m, min 10 req`
               : "Gateway unreachable from here"}
           </p>
         </div>

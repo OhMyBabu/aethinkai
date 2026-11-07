@@ -126,7 +126,7 @@ export function PopularModels({ models }: { models: AIModel[] }) {
 
 function ctxLabel(tokens: number): string {
   if (!tokens) return "";
-  if (tokens >= 1_000_000) {
+  if (tokens >= 999_500) {
     const m = Math.round((tokens / 1_000_000) * 10) / 10;
     return `${m % 1 === 0 ? m.toFixed(0) : m}M`;
   }

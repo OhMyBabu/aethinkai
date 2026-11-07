@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Check, Copy, Terminal } from "lucide-react";
-import { publicModels, type PublicModel } from "@/lib/gw";
+import { apiStream, publicModels, type PublicModel } from "@/lib/gw";
 import { fetchShop, type Pkg, type TopupPolicy } from "@/lib/portal";
 import { cn } from "@/lib/cn";
 
@@ -13,7 +13,10 @@ function idr(value: number): string {
 
 function ctxLabel(tokens: number): string {
   if (!tokens) return "—";
-  if (tokens >= 1_048_576) return "1M";
+  if (tokens >= 1_000_000) {
+    const m = Math.round((tokens / 1_000_000) * 10) / 10;
+    return `${m % 1 === 0 ? m.toFixed(0) : m}M`;
+  }
   if (tokens >= 1_000) return `${Math.round(tokens / 1000)}K`;
   return String(tokens);
 }
@@ -74,15 +77,26 @@ export default function DocsPage() {
     publicModels()
       .then((data) => alive && setModels(data.data))
       .catch((e) => alive && setErr(e instanceof Error ? e.message : "gagal memuat katalog"));
-    fetchShop()
-      .then((shop) => {
-        if (!alive) return;
-        setPackages(shop.packages);
-        setTopup(shop.topup);
-      })
-      .catch(() => undefined);
+    const pullShop = () => {
+      fetchShop()
+        .then((shop) => {
+          if (!alive) return;
+          setPackages(shop.packages);
+          setTopup(shop.topup);
+        })
+        .catch(() => undefined);
+    };
+    pullShop();
+    const pullModels = () => {
+      publicModels()
+        .then((data) => alive && setModels(data.data))
+        .catch(() => undefined);
+    };
+    // admin edits (price, package, status) reach the guide without a reload
+    const offStream = apiStream({ catalog: () => { pullModels(); pullShop(); }, status: () => undefined });
     return () => {
       alive = false;
+      offStream();
     };
   }, []);
 
@@ -330,7 +344,7 @@ curl -X POST ${BASE}/api/portal/session \\
         </div>
 
         <p className="mt-10 border-t border-[#2A2B2E] pt-5 text-[11.5px] text-[#6f6a63]">
-          Angka di halaman ini ditarik langsung dari gateway saat halaman dibuka — harga, context, dan status tidak pernah di-hardcode.
+          Angka di halaman ini ditarik langsung dari gateway dan ikut berubah saat admin mengedit harga atau paket — tidak ada yang di-hardcode.
         </p>
       </div>
     </div>

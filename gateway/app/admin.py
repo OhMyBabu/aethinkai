@@ -4,6 +4,7 @@ import math
 from datetime import datetime, timezone
 from typing import Any
 
+import asyncpg
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
@@ -134,8 +135,9 @@ async def list_models(include_upstream: bool = False, admin: dict = Depends(auth
 
 @router.put("/models/{model_id:path}")
 async def upsert_price(model_id: str, body: PriceIn, admin: dict = Depends(auth.require_admin)):
-    row = await db.pool().fetchrow(
-        """
+    try:
+        row = await db.pool().fetchrow(
+            """
         INSERT INTO model_prices(model_id, public_id, provider_label, display_name,
                                  price_in_idr, price_out_idr, price_cached_idr,
                                  active, availability, effective_at, updated_by, updated_at)
@@ -155,10 +157,14 @@ async def upsert_price(model_id: str, body: PriceIn, admin: dict = Depends(auth.
         RETURNING model_id, public_id, provider_label, display_name, price_in_idr,
                   price_out_idr, price_cached_idr, active, availability
         """,
-        model_id, body.public_id, body.provider_label, body.display_name,
-        body.price_in_idr, body.price_out_idr, body.price_cached_idr,
-        body.active, body.availability or ("on" if body.active else "off"), admin["email"],
-    )
+            model_id, body.public_id, body.provider_label, body.display_name,
+            body.price_in_idr, body.price_out_idr, body.price_cached_idr,
+            body.active, body.availability or ("on" if body.active else "off"), admin["email"],
+        )
+    except asyncpg.exceptions.UniqueViolationError:
+        raise HTTPException(409, {"error": {
+            "message": f"public_id '{body.public_id}' sudah dipakai produk lain",
+            "code": "duplicate_public_id"}})
     await db.log_audit(admin["email"], "price.upsert", model_id, body.model_dump())
     return {"model": dict(row)}
 

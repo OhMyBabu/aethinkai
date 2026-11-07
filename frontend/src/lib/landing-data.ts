@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { catalogStream } from "@/lib/gw";
+import { apiStream } from "@/lib/gw";
 import type { AIModel, ModelCategory, Provider } from "@/types";
 
 /**
@@ -124,12 +124,14 @@ export function useLandingData(): LandingData {
     };
 
     void pull();
-    // realtime: the gateway pushes on every admin change; polling stays as a net
-    const offStream = catalogStream(() => void pull());
-    // admin edits must show up without a reload: poll + refresh on focus
+    // Two push channels: `catalog` (admin edits a model/price) and `status` (a request
+    // just landed in the usage window). Without the second one the header pill and the
+    // status panel only moved on the 15s poll.
+    const offStream = apiStream({ catalog: () => void pull(), status: () => void pull() });
+    // safety net only — push is the primary path
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible") void pull();
-    }, 15_000);
+    }, 30_000);
     const onFocus = () => void pull();
     window.addEventListener("focus", onFocus);
     return () => {
