@@ -30,14 +30,6 @@ export default function LandingPage() {
   // Catalogue + prices + status come from the gateway, never from fixtures.
   const { models: enabledModels, status } = useLandingData();
 
-  const popular = useMemo(() => {
-    const providers = ["DeepSeek", "GLM", "Kimi", "Anthropic"] as const;
-    return providers
-      .map((provider) => enabledModels.filter((model) => model.provider === provider).sort((a, b) => b.popularity - a.popularity)[0])
-      .filter(Boolean)
-      .slice(0, 4);
-  }, [enabledModels]);
-
   const navLinkClass =
     "text-[12.5px] text-ash transition hover:text-warm focus-visible:text-warm";
 
@@ -53,7 +45,7 @@ export default function LandingPage() {
             <div className="min-w-0">
               <span className="inline-flex items-center gap-2 rounded-full border border-ash/25 bg-warm/[0.03] px-3 py-1 text-[11px] font-medium text-ash max-[899px]:px-3.5 max-[899px]:py-1.5 max-[899px]:text-[12px]">
                 <span className="size-1.5 rounded-full bg-flame" aria-hidden />
-                AethinkAI Signal Nexus
+                OpenAI-compatible API
               </span>
 
               <h1 className="mt-5 text-[38px] font-semibold leading-[1.03] tracking-[-0.035em] text-warm sm:text-[52px] lg:text-[62px]">
@@ -85,7 +77,7 @@ export default function LandingPage() {
               </div>
 
               <p className="mt-3 text-[11.5px] text-dim">
-                Free bansos key · shared quota · no card required
+                Pay as you go · QRIS · API key issued in Telegram
               </p>
             </div>
 
@@ -100,20 +92,17 @@ export default function LandingPage() {
               <FeatureStrip />
               <KpiStrip models={enabledModels} status={status} />
               <div id="models" className="scroll-mt-24">
-                <PopularModels models={popular} />
+                <PopularModels models={enabledModels} />
               </div>
             </div>
             <div id="terminal" ref={revealPreview} className="min-w-0 scroll-mt-24 space-y-3">
               <TerminalPreview />
-              <p className="text-center text-[11px] text-dim">
-                Three languages, one base URL — copy a snippet and send it with your key.
-              </p>
             </div>
           </div>
         </section>
 
         <div ref={revealPricing} className="mx-auto max-w-[1320px] px-4 pb-14 sm:px-6">
-          <PricingPreview models={enabledModels} />
+          <PricingPreview />
         </div>
 
         <div className="mx-auto max-w-[1320px] px-4 pb-16 sm:px-6">

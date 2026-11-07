@@ -43,7 +43,7 @@ export default function AdminSettingsPage() {
             <BrandLogo size={40} />
             <div>
               <p className="text-[14px] font-semibold text-warm">AethinkAI Gateway</p>
-              <p className="mt-0.5 text-[11.5px] text-ash">Signal Nexus · production · English UI</p>
+              <p className="mt-0.5 text-[11.5px] text-ash">Production · OpenAI-compatible · English UI</p>
             </div>
           </div>
           <ul className="mt-3 space-y-1.5 text-[11.5px]">

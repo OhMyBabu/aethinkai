@@ -382,6 +382,67 @@ async def catalog_stream(request: Request):
                                       "Connection": "keep-alive"})
 
 
+@app.get("/api/popular-models")
+async def popular_models(days: int = 3, limit: int = 4):
+    """Top models by real request volume — the landing "popular" row.
+
+    Derived from usage_events, not from marketing: last `days` (default 3) requests
+    across all buyers, newest activity decides. Falls back to a wider window while
+    the gateway is young and the 3-day window is still empty.
+    """
+    days = max(1, min(days, 30))
+    limit = max(1, min(limit, 12))
+    pool = db.pool()
+
+    async def top(window_days: int):
+        return await pool.fetch(
+            """
+            WITH resolved AS (
+                SELECT coalesce(p.public_id, e.model_id) AS id
+                  FROM usage_events e
+                  LEFT JOIN model_prices p ON p.model_id = e.model_id
+                 WHERE e.created_at >= now() - ($1 || ' days')::interval
+            )
+            SELECT r.id, count(*)::int AS requests
+              FROM resolved r
+              JOIN model_prices p2 ON p2.public_id = r.id
+             WHERE p2.availability <> 'off'
+             GROUP BY r.id
+             ORDER BY requests DESC, r.id
+             LIMIT $2
+            """,
+            str(window_days), limit,
+        )
+
+    rows = await top(days)
+    window = days
+    if len(rows) < limit:
+        for wider in (7, 30):
+            more = {r["id"]: r for r in rows}
+            for r in await top(wider):
+                more.setdefault(r["id"], r)
+            rows = list(more.values())[:limit]
+            window = wider
+            if len(rows) >= limit:
+                break
+
+    picked = [{"id": r["id"], "requests": int(r["requests"])} for r in rows]
+    if len(picked) < limit:
+        seen = {p["id"] for p in picked}
+        for r in await pool.fetch(
+            """SELECT coalesce(public_id, split_part(model_id, '/', 2)) AS id
+                 FROM model_prices
+                WHERE availability <> 'off' AND (price_in_idr > 0 OR price_out_idr > 0)
+                ORDER BY price_in_idr, model_id LIMIT $1""", limit * 2):
+            if r["id"] and r["id"] not in seen:
+                picked.append({"id": r["id"], "requests": 0})
+                seen.add(r["id"])
+            if len(picked) >= limit:
+                break
+
+    return {"window_days": window, "models": picked[:limit]}
+
+
 @app.get("/api/models")
 async def public_models():
     """Catalogue visible to customers: only models the admin enabled and priced."""

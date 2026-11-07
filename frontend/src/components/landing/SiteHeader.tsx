@@ -521,9 +521,6 @@ export function SiteHeader() {
       <div className="mx-auto flex h-[72px] max-w-[1320px] items-center gap-4 px-4 sm:px-6">
         <Link to="/" aria-label="AethinkAI home" className="flex shrink-0 items-center gap-2.5">
           <Wordmark />
-          <span className="hidden border-l border-[#3A3B3D] pl-2.5 text-[10.5px] font-medium uppercase tracking-[0.16em] text-[#85888B] xl:inline">
-            Gateway
-          </span>
         </Link>
 
         <nav aria-label="Main" className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 lg:flex">

@@ -402,7 +402,7 @@ export function SignalNexus({ className, routes }: { className?: string; routes?
           >
             <BrandLogo size={30} />
             <p className="mt-1.5 text-[11.5px] font-semibold tracking-[0.01em] text-warm">AethinkAI</p>
-            <p className="mt-0.5 text-[7.5px] uppercase tracking-[0.26em] text-ash">Signal Nexus</p>
+            <p className="mt-0.5 text-[7.5px] uppercase tracking-[0.26em] text-ash">OpenAI-compatible</p>
             <p className="mt-1.5 flex items-center gap-1 rounded-full border border-[#E7893C]/25 bg-[#E7893C]/[0.09] px-1.5 py-0.5 text-[7.5px] font-medium text-flame">
               <span className="size-1 rounded-full bg-flame" aria-hidden />
               {routes ?? activeModels} routes live
@@ -448,7 +448,7 @@ export function SignalNexus({ className, routes }: { className?: string; routes?
             <BrandLogo size={26} />
             <div>
               <p className="text-[14px] font-semibold text-warm">AethinkAI</p>
-              <p className="text-[10px] uppercase tracking-[0.22em] text-ash">Signal Nexus</p>
+              <p className="text-[10px] uppercase tracking-[0.22em] text-ash">OpenAI-compatible</p>
             </div>
             <span className="ml-auto rounded-full border border-[#E7893C]/25 bg-[#E7893C]/[0.09] px-2.5 py-1 text-[11px] font-medium text-flame">
               {activeModels} live

@@ -23,7 +23,7 @@ import type { LandingStatus } from "@/lib/landing-data";
 export function FeatureStrip() {
   const features = [
     { icon: Blocks, title: "Multi-Model Access", text: "One credential across DeepSeek, GLM, Kimi and Claude." },
-    { icon: GitBranch, title: "Intelligent Routing", text: "Signal-aware routing with graceful fallbacks per request." },
+    { icon: GitBranch, title: "Intelligent Routing", text: "Per-request route selection with automatic fallbacks." },
     { icon: ShieldCheck, title: "Enterprise Ready", text: "Key scoping, audit trails and predictable spend limits." },
   ];
   return (
@@ -62,16 +62,42 @@ export function KpiStrip({ models, status }: { models: AIModel[]; status: Landin
 }
 
 export function PopularModels({ models }: { models: AIModel[] }) {
+  // Ranked by real traffic, not by marketing: the gateway counts requests per public
+  // model id and this endpoint returns the top four of the last 3 days.
+  const [rank, setRank] = useState<{ id: string; requests: number }[]>([]);
+  const [windowDays, setWindowDays] = useState<number | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/popular-models?limit=4", { headers: { Accept: "application/json" } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!alive || !data) return;
+        setRank(data.models ?? []);
+        setWindowDays(data.window_days ?? null);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const ordered = rank.length
+    ? rank
+        .map((entry) => models.find((model) => model.id === entry.id))
+        .filter((model): model is AIModel => Boolean(model))
+    : models.slice(0, 4);
+  const counts = new Map(rank.map((entry) => [entry.id, entry.requests]));
+
   return (
     <div>
       <div className="mb-2.5 flex items-center justify-between">
         <h3 className="text-[12px] font-medium uppercase tracking-[0.16em] text-ash">Popular models</h3>
-        <a href="#catalog" className="-my-2 flex h-11 items-center px-1 text-[13px] text-flame active:opacity-70 sm:text-[11.5px]">
-          View all
+        <a href="#catalog" className="flex items-center gap-1 text-[11.5px] text-flame active:opacity-70">
+          Top 4{windowDays ? ` · last ${windowDays}d` : ""} <ArrowRight size={11} aria-hidden />
         </a>
       </div>
       <ul className="grid gap-2.5 sm:grid-cols-2">
-        {models.map((model) => (
+        {ordered.map((model) => (
           <li
             key={model.id}
             data-reveal
@@ -83,7 +109,8 @@ export function PopularModels({ models }: { models: AIModel[] }) {
               <p className="truncate text-[14px] font-medium text-warm max-[899px]:text-[15px] sm:text-[12.5px]">{model.displayName}</p>
               <p className="mt-0.5 truncate font-mono text-[11.5px] text-ash max-[899px]:text-[12.5px] sm:text-[9.5px]">{model.modelId}</p>
               <p className="truncate text-[11.5px] text-dim sm:text-[9.5px]">
-                {model.category} · {formatCompact(model.contextWindow)} ctx
+                {model.category} · {ctxLabel(model.contextWindow)} ctx · {formatIDR(model.inputRate)} / {formatIDR(model.outputRate)} per 1M
+                {counts.get(model.id) ? ` · ${counts.get(model.id)} req` : ""}
               </p>
               </div>
             </div>
@@ -134,18 +161,17 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
 
       <div className="surface overflow-hidden p-0 max-[899px]:hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[680px] border-collapse text-left">
+          <table className="w-full min-w-[760px] border-collapse text-left">
             <caption className="sr-only">Complete model catalogue with context window and pricing</caption>
             <thead>
               <tr className="border-b border-ash/15 bg-warm/[0.02]">
-                {["Model", "Model ID", "Category", "Context", "Price / 1M in", "Status"].map((head, i) => (
+                {["Model", "Model ID", "Category", "Context", "In / 1M", "Out / 1M", "Status"].map((head, i) => (
                   <th
                     key={head}
                     scope="col"
                     className={cn(
                       "whitespace-nowrap px-4 py-2.5 text-[10.5px] font-medium uppercase tracking-[0.12em] text-ash",
-                      i === 4 && "text-right",
-                      i === 5 && "text-right",
+                      i >= 4 && "text-right",
                     )}
                   >
                     {head}
@@ -181,10 +207,13 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-[12px] tabular-nums text-warm/85">
-                      {new Intl.NumberFormat("id-ID").format(model.contextWindow)}
+                      {ctxLabel(model.contextWindow)}
                     </td>
                     <td className="px-4 py-3 text-right text-[12px] tabular-nums text-warm/85">
                       {formatIDR(model.inputRate)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-[12px] tabular-nums text-warm/85">
+                      {formatIDR(model.outputRate)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <span className="inline-flex items-center gap-1.5 text-[12px] text-flame sm:text-[11px]">
@@ -228,20 +257,22 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
                     : "off"}
               </span>
             </div>
-            <dl className="mt-3 grid grid-cols-3 gap-2 border-t border-ash/10 pt-2.5">
+            <dl className="mt-3 grid grid-cols-2 gap-2 border-t border-ash/10 pt-2.5">
               <div>
                 <dt className="text-[11px] uppercase tracking-[0.1em] text-dim">Context</dt>
-                <dd className="mt-1 text-[13px] tabular-nums text-warm/85">
-                  {new Intl.NumberFormat("id-ID").format(model.contextWindow)}
-                </dd>
+                <dd className="mt-1 text-[13px] tabular-nums text-warm/85">{ctxLabel(model.contextWindow)}</dd>
               </div>
-              <div>
+              <div className="text-right">
                 <dt className="text-[11px] uppercase tracking-[0.1em] text-dim">Category</dt>
                 <dd className="mt-1 truncate text-[13px] text-warm/85">{model.category}</dd>
               </div>
-              <div className="text-right">
-                <dt className="text-[11px] uppercase tracking-[0.1em] text-dim">Price / 1M</dt>
+              <div>
+                <dt className="text-[11px] uppercase tracking-[0.1em] text-dim">In / 1M</dt>
                 <dd className="mt-1 text-[13px] tabular-nums text-warm/85">{formatIDR(model.inputRate)}</dd>
+              </div>
+              <div className="text-right">
+                <dt className="text-[11px] uppercase tracking-[0.1em] text-dim">Out / 1M</dt>
+                <dd className="mt-1 text-[13px] tabular-nums text-warm/85">{formatIDR(model.outputRate)}</dd>
               </div>
             </dl>
           </li>
@@ -249,14 +280,15 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
       </ul>
 
       <p className="mt-2.5 text-[12px] text-dim sm:text-[11px]">
-        Pricing · rates shown are per 1M input tokens.
+        Pricing · per 1M tokens, input and output.
       </p>
     </section>
   );
 }
 
-export function PricingPreview({ models }: { models: AIModel[] }) {
-  // Real per-model pricing straight from the gateway — no invented packages.
+export function PricingPreview() {
+  // The shop is the package table the admin owns — no derived model "plans" and no
+  // second price strip. Per-model rates live in the catalogue below.
   const [packages, setPackages] = useState<Pkg[]>([]);
   const [topup, setTopup] = useState<TopupPolicy | null>(null);
   useEffect(() => {
@@ -272,81 +304,61 @@ export function PricingPreview({ models }: { models: AIModel[] }) {
       alive = false;
     };
   }, []);
-  const plans = [...models]
-    .sort((a, b) => a.inputRate - b.inputRate)
-    .slice(0, 3)
-    .map((model, index) => ({
-      name: model.displayName,
-      price: `Rp ${model.inputRate.toLocaleString("id-ID")}`,
-      credits: `in / 1M token`,
-      note: `out Rp ${model.outputRate.toLocaleString("id-ID")}`,
-      highlighted: index === 1,
-    }));
+
   return (
     <section id="pricing" className="scroll-mt-24">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-[12px] uppercase tracking-[0.2em] text-flame sm:text-[11px]">Pricing</p>
           <h2 className="mt-1.5 text-[24px] font-semibold tracking-[-0.02em] text-warm sm:text-[30px]">
-            Pay per token, not per seat
+            Pay as you go
           </h2>
           <p className="mt-1.5 max-w-xl text-[13px] leading-6 text-ash">
-            Every request is metered in micro-IDR and billed at the model's real rate. Top up once, spend across all routes.
+            Buy credit once, spend it across every model. Rates per model are in the catalogue below.
           </p>
         </div>
         <Button variant="ghost" size="md" className="cta-landing-soft" trailingIcon={<ArrowRight size={14} />} onClick={() => window.location.assign("/login")}>
-          Start building
+          Get started
         </Button>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
-        {plans.map((plan) => (
-          <Card
-            key={plan.name}
-            data-reveal
-            className={plan.highlighted ? "border-flame/35 bg-flame/[0.05]" : undefined}
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-[13px] font-semibold text-warm max-[899px]:text-[15px]">{plan.name}</p>
-              {plan.highlighted ? <StatusPill tone="active">Popular</StatusPill> : null}
-            </div>
-            <p className="mt-3 text-[22px] font-semibold tabular-nums text-warm max-[899px]:text-[24px]">{plan.price}</p>
-            <p className="mt-1 text-[12px] text-ash max-[899px]:text-[13px]">{plan.credits} · {plan.note}</p>
-            <Button
-              variant={plan.highlighted ? "primary" : "secondary"}
-              size="md"
-              full
-              className={plan.highlighted ? "cta-landing mt-4" : "cta-landing-soft mt-4"}
-              onClick={() => window.location.assign("/login")}
+        {packages.map((pkg, index) => {
+          const highlighted = packages.length > 2 ? index === 1 : index === 0;
+          return (
+            <Card
+              key={pkg.sku}
+              data-reveal
+              className={highlighted ? "border-flame/35 bg-flame/[0.05]" : undefined}
             >
-              Get API key
-            </Button>
-          </Card>
-        ))}
-      </div>
-
-      {packages.length ? (
-        <div className="mt-5 rounded-2xl border border-ash/20 bg-warm/[0.02] p-4">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-[13px] font-semibold text-warm">Paket saldo</p>
-            <p className="text-[11px] text-ash">
-              Saldo masuk ke akun, dipakai semua model
-              {topup?.enabled ? ` · top-up bebas mulai Rp ${topup.min_idr.toLocaleString("id-ID")}` : ""}
-            </p>
-          </div>
-          <div className="mt-3 grid gap-2 sm:grid-cols-3">
-            {packages.slice(0, 3).map((pkg) => (
-              <div key={pkg.sku} className="rounded-xl border border-ash/15 bg-[#141518] px-3 py-2.5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-[12.5px] font-medium text-warm">{pkg.name}</p>
-                  <p className="font-mono text-[12px] text-flame">Rp {pkg.price_idr.toLocaleString("id-ID")}</p>
-                </div>
-                <p className="mt-0.5 text-[10.5px] text-ash">
-                  {pkg.rpm_limit} req/menit · kredit Rp {(pkg.credits_micro / 1_000_000).toLocaleString("id-ID")}
-                </p>
+              <div className="flex items-center justify-between">
+                <p className="text-[13px] font-semibold text-warm max-[899px]:text-[15px]">{pkg.name}</p>
+                {highlighted ? <StatusPill tone="active">Popular</StatusPill> : null}
               </div>
-            ))}
-          </div>
-        </div>
+              <p className="mt-3 text-[22px] font-semibold tabular-nums text-warm max-[899px]:text-[24px]">
+                {formatIDR(pkg.price_idr)}
+              </p>
+              <p className="mt-1 text-[12px] text-ash max-[899px]:text-[13px]">
+                {formatIDR(pkg.credits_micro / 1_000_000)} credit · {pkg.rpm_limit} req/min
+              </p>
+              {pkg.blurb ? <p className="mt-1.5 text-[11.5px] leading-5 text-dim">{pkg.blurb}</p> : null}
+              <Button
+                variant={highlighted ? "primary" : "secondary"}
+                size="md"
+                full
+                className={highlighted ? "cta-landing mt-4" : "cta-landing-soft mt-4"}
+                onClick={() => window.location.assign("/login")}
+              >
+                Buy {pkg.name}
+              </Button>
+            </Card>
+          );
+        })}
+      </div>
+      {packages.length ? (
+        <p className="mt-3 text-[11.5px] text-dim">
+          Credit never expires; requests are billed per token at the model rate.
+          {topup?.enabled ? ` Custom top-up from ${formatIDR(topup.min_idr)}.` : ""}
+        </p>
       ) : null}
     </section>
   );
