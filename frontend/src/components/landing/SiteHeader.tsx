@@ -326,8 +326,9 @@ function StatusPanel({ onClose }: { onClose: () => void }) {
   const ok = status ? status.errors_24h === 0 : true;
   const services = [
     { name: "Gateway API", latency: status?.p95_latency_ms || null, uptime: status ? `${status.success_rate}%` : "—" },
-    { name: "Model routes", latency: models.length, uptime: `${status?.models_active ?? models.length} live` },
-    { name: "Uptime", latency: null, uptime: uptimeLabel(status?.uptime_seconds ?? 0) },
+    { name: "Model katalog", latency: models.length, uptime: `${status?.models_active ?? models.length} live` },
+    // process age, labelled as such — a deploy resets it, so it must not read as SLA uptime
+    { name: "Proses gateway", latency: null, uptime: uptimeLabel(status?.uptime_seconds ?? 0) },
   ];
 
   return (

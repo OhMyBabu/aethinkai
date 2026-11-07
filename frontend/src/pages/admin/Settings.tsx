@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertTriangle, Palette, RotateCcw, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardHeader } from "@/components/common/Card";
 import { Button } from "@/components/common/Button";
 import { Modal } from "@/components/common/Modal";
+import { publicModels } from "@/lib/gw";
 import { useToast } from "@/components/common/Toast";
 import { useStore } from "@/data/store";
 import { BrandLogo } from "@/components/layout/BrandLogo";
@@ -13,6 +14,18 @@ export default function AdminSettingsPage() {
   const { state, setPrefs, resetWorkspace } = useStore();
   const { toast } = useToast();
   const [resetOpen, setResetOpen] = useState(false);
+  const [modelCount, setModelCount] = useState<number | null>(null);
+
+  // the catalogue lives in the gateway, not in the UI store — ask it instead of counting seeds
+  useEffect(() => {
+    let alive = true;
+    publicModels()
+      .then((data) => alive && setModelCount(data.data.length))
+      .catch(() => alive && setModelCount(null));
+    return () => {
+      alive = false;
+    };
+  }, []);
   const [confirmText, setConfirmText] = useState("");
 
   return (
@@ -99,7 +112,7 @@ export default function AdminSettingsPage() {
             Reset workspace data
           </Button>
           <span className="text-[11.5px] text-ash">
-            {state.users.length} users · {state.models.length} models · {state.apiKeys.length} keys · {state.usage.length} requests
+            {state.users.length} users · {modelCount ?? "—"} model (live) · {state.apiKeys.length} keys · {state.usage.length} requests
           </span>
         </div>
       </Card>

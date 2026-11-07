@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""Audit: does the landing page tell the truth about the gateway?
+
+The landing is the shop window. Every number on it — model count, price per 1M,
+context window, on/gangguan status, success rate, p95 — must be derivable from the
+database, with no fixture, no cache and no hardcoded marketing value in between.
+
+Checks
+  1. /api/models  vs model_prices   (id, prices, availability, context, max_output)
+  2. /api/status  vs model_prices   (models_active counts only availability='on')
+  3. frontend source: no fixture catalogue may feed a public page
+  4. no private/upstream leak in the public payload (no upstream route, no cost)
+
+Exit code 0 = in sync, 1 = drift found.
+
+    gateway/.venv/bin/python gateway/scripts/audit_landing_sync.py
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import sys
+import urllib.request
+from pathlib import Path
+
+BASE = os.environ.get("GW", "https://router.aethink.ai.id")
+ROOT = Path(__file__).resolve().parents[2]
+FRONTEND = ROOT / "frontend" / "src"
+
+# (db column, key inside /api/models pricing_idr_per_1m)
+FIELDS = (("price_in_idr", "input"),
+          ("price_out_idr", "output"),
+          ("price_cached_idr", "cached_input"))
+
+failures: list[str] = []
+
+
+def db_url() -> str:
+    path = os.environ.get("AETHINK_DB_ENV", "/root/.secrets/aethink-db.env")
+    with open(path, "r", encoding="utf-8") as fh:
+        for line in fh:
+            if line.startswith("DATABASE_URL="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return os.environ.get("DATABASE_URL", "")
+
+
+def psql_json(sql: str) -> list[dict]:
+    import subprocess
+
+    out = subprocess.run(
+        ["psql", db_url(), "-tA", "-c",
+         f"SELECT coalesce(json_agg(t), '[]'::json) FROM ({sql}) t"],
+        capture_output=True, text=True, check=True).stdout
+    return json.loads(out or "[]")
+
+
+def get(path: str) -> dict:
+    with urllib.request.urlopen(f"{BASE}{path}", timeout=20) as resp:
+        return json.loads(resp.read())
+
+
+def check(ok: bool, label: str, detail: str = "") -> None:
+    print(f"{'PASS' if ok else 'FAIL'}  {label}{('  [' + detail + ']') if detail else ''}")
+    if not ok:
+        failures.append(label)
+
+
+def main() -> int:
+    rows = {r["public_id"]: r for r in psql_json(
+        """SELECT public_id, price_in_idr, price_out_idr, price_cached_idr,
+                  availability, context_window, max_output
+             FROM model_prices WHERE public_id IS NOT NULL""")}
+    public = {m["id"]: m for m in get("/api/models")["data"]}
+
+    check(set(rows) - {"_"} != set(), "katalog DB tidak kosong", str(len(rows)))
+
+    # 1. catalogue
+    off_db = {k for k, v in rows.items() if v["availability"] == "off"}
+    check(not (set(public) & off_db), "model off tidak bocor ke katalog publik",
+          ", ".join(sorted(set(public) & off_db)) or "bersih")
+
+    missing = set(rows) - off_db - set(public)
+    check(not missing, "semua model on/gangguan tampil di /api/models", ", ".join(sorted(missing)) or "lengkap")
+
+    drift = []
+    for name, api in public.items():
+        row = rows.get(name)
+        if not row:
+            drift.append(f"{name}: tidak ada di DB")
+            continue
+        for column, api_key in FIELDS:
+            if int(api["pricing_idr_per_1m"][api_key]) != row[column]:
+                drift.append(f"{name}.{column}: api {api['pricing_idr_per_1m'][api_key]} db {row[column]}")
+        if api["status"] != row["availability"]:
+            drift.append(f"{name}.status: api {api['status']} db {row['availability']}")
+        if int(api["context_length"] or 0) != int(row["context_window"] or 0):
+            drift.append(f"{name}.context: api {api['context_length']} db {row['context_window']}")
+        if int(api["max_completion_tokens"] or 0) != int(row["max_output"] or 0):
+            drift.append(f"{name}.max_output: api {api['max_completion_tokens']} db {row['max_output']}")
+    check(not drift, "harga/status/context di /api/models == DB", "; ".join(drift[:4]) or "identik")
+
+    # 2. status panel
+    status = get("/api/status")
+    expected_active = sum(1 for v in rows.values()
+                          if v["availability"] == "on" and (v["price_in_idr"] > 0 or v["price_out_idr"] > 0))
+    check(status.get("models_active") == expected_active,
+          "models_active == model on berharga", f"{status.get('models_active')} vs {expected_active}")
+    check("window_minutes" in status and "window_error_pct" in status,
+          "status memakai jendela 15 menit, bukan tail 24 jam",
+          f"{status.get('window_requests')} req / {status.get('window_error_pct')}%")
+
+    # 3. no fixtures in public data path
+    bad = []
+    for path in FRONTEND.rglob("*.ts*"):
+        if "fixtures" in path.name:
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if "SEED_MODELS" in text:
+            bad.append(str(path.relative_to(ROOT)))
+    check(not bad, "tidak ada halaman yang memakai SEED_MODELS", ", ".join(bad) or "bersih")
+
+    # 4. no upstream/cost leakage in the public payload
+    blob = json.dumps(public)
+    leaks = [p for p in ("mr/", "ky/", "upstream", "cost", "myrikko") if p in blob]
+    check(not leaks, "payload publik tidak membocorkan route/cost provider", ", ".join(leaks) or "bersih")
+
+    print()
+    if failures:
+        print(f"DRIFT: {len(failures)} masalah")
+        return 1
+    print(f"IN SYNC: {len(public)} model diperiksa, landing == backend")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

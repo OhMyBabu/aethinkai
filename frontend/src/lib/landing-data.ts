@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { catalogStream } from "@/lib/gw";
 import type { AIModel, ModelCategory, Provider } from "@/types";
-import { SEED_MODELS } from "@/data/fixtures";
 
 /**
  * Landing data — everything the public page claims must come from the gateway,
@@ -131,10 +130,9 @@ export function useLandingData(): LandingData {
     };
   }, []);
 
-  const models = useMemo(
-    () => (apiModels.length ? apiModels.map(toAIModel) : SEED_MODELS.filter((model) => model.enabled)),
-    [apiModels],
-  );
+  // Never fall back to fixtures: a buyer must not see an invented price when the
+  // gateway is unreachable. Empty catalogue renders as "sinkron…", not as fake data.
+  const models = useMemo(() => apiModels.map(toAIModel), [apiModels]);
 
   return { models, status, live: apiModels.length > 0 };
 }

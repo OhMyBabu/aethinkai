@@ -205,14 +205,33 @@ async def public_status():
         FROM usage_events
         """
     )
+    # what the shop actually sells: availability='on', priced. `active` alone counted
+    # a model in maintenance as live on the landing page.
     models_active = await db.pool().fetchval(
-        "SELECT count(*) FROM model_prices WHERE active AND (price_in_idr > 0 OR price_out_idr > 0)"
+        """SELECT count(*) FROM model_prices
+            WHERE availability = 'on' AND (price_in_idr > 0 OR price_out_idr > 0)"""
     )
     requests_24h = int(row["requests_24h"] or 0)
     errors_24h = int(row["errors_24h"] or 0)
     success_rate = 100.0 if requests_24h == 0 else round((1 - errors_24h / requests_24h) * 100, 2)
+
+    # Verdict from the recent window, not from a 24-hour tail: two 400s from a probe this
+    # morning would otherwise advertise "degraded" all day. Needs a sample of 10.
+    recent = await db.pool().fetchrow(
+        """SELECT count(*) AS total,
+                  count(*) FILTER (WHERE status <> 'ok') AS bad
+             FROM usage_events
+            WHERE created_at > now() - interval '15 minutes'"""
+    )
+    r_total, r_bad = int(recent["total"] or 0), int(recent["bad"] or 0)
+    recent_error_pct = 0.0 if r_total == 0 else round(r_bad / r_total * 100, 2)
+    healthy = r_total < 10 or recent_error_pct <= 5.0
+
     return {
-        "status": "operational" if errors_24h == 0 else "degraded",
+        "status": "operational" if healthy else "degraded",
+        "window_minutes": 15,
+        "window_requests": r_total,
+        "window_error_pct": recent_error_pct,
         "db": True,
         "uptime_seconds": int(time.time() - STARTED_AT),
         "models_active": int(models_active or 0),
