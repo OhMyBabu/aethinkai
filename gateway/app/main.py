@@ -400,8 +400,11 @@ async def chat_completions(request: Request, key: dict = Depends(require_key)):
         "price_out_idr": route["price_out_idr"],
         "price_cached_idr": route["price_cached_idr"],
     }
-    upstream_model = route["model_id"]
-    # customer-facing slug -> 9Router route; the prefix never leaves the gateway
+    # catalogue slug -> the local 9Router route that actually serves it. The
+    # mapping lives in model_aliases because the two catalogues name models
+    # differently (`glm-5.3` vs `neuralwatt:glm-5.3-flash`). No mapping means the
+    # local router has no provider for it: fail honestly, never reach elsewhere.
+    upstream_model = route.get("local_model") or route["model_id"]
     payload["model"] = upstream_model
 
     balance = await db.balance_micro(key["user_id"])

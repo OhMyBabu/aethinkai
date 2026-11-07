@@ -96,11 +96,13 @@ async def resolve_model(alias: str) -> dict[str, Any] | None:
     """
     row = await pool().fetchrow(
         """
-        SELECT model_id, public_id, display_name,
-               price_in_idr, price_out_idr, price_cached_idr
-        FROM model_prices
-        WHERE (public_id = $1 OR (public_id IS NULL AND model_id = $1)) AND active
-        ORDER BY (public_id = $1) DESC
+        SELECT mp.model_id, mp.public_id, mp.display_name,
+               mp.price_in_idr, mp.price_out_idr, mp.price_cached_idr,
+               ma.upstream_model AS local_model
+        FROM model_prices mp
+        LEFT JOIN model_aliases ma ON ma.model_id = mp.model_id
+        WHERE (mp.public_id = $1 OR (mp.public_id IS NULL AND mp.model_id = $1)) AND mp.active
+        ORDER BY (mp.public_id = $1) DESC
         LIMIT 1
         """,
         alias,
