@@ -395,6 +395,20 @@ async def chat_completions(request: Request, key: dict = Depends(require_key)):
     if route is None or (route["price_in_idr"] == 0 and route["price_out_idr"] == 0):
         raise HTTPException(403, {"error": {"message": f"Model not enabled: {model_id}", "code": "model_not_allowed"}})
 
+    # Provider-reported limits. Claiming "1M context" is fine only while the route
+    # that serves it says 1M; both numbers come from /v1/models of the local router.
+    out_cap = int(route.get("max_output") or 0)
+    ctx_cap = int(route.get("context_window") or 0)
+    for field in ("max_tokens", "max_completion_tokens"):
+        if payload.get(field) and out_cap:
+            payload[field] = min(int(payload[field]), out_cap)
+    if ctx_cap:
+        chars = sum(len(str(m.get("content") or "")) for m in messages) + 32 * len(messages)
+        if chars / 3.2 > ctx_cap:
+            raise HTTPException(400, {"error": {
+                "message": f"Prompt melebihi context window model ini ({ctx_cap} token)",
+                "code": "context_window_exceeded"}})
+
     price = {
         "price_in_idr": route["price_in_idr"],
         "price_out_idr": route["price_out_idr"],

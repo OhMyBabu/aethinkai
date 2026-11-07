@@ -95,15 +95,28 @@ export function PopularModels({ models }: { models: AIModel[] }) {
   );
 }
 
+function ctxLabel(tokens: number): string {
+  if (!tokens) return "";
+  if (tokens >= 1_000_000) {
+    const m = tokens / 1_000_000;
+    return `${Number.isInteger(m) ? m : m.toFixed(1)}M`;
+  }
+  if (tokens >= 1000) return `${Math.round(tokens / 1000)}K`;
+  return `${tokens}`;
+}
+
 export function FullModelCatalog({ models }: { models: AIModel[] }) {
   const grouped = Array.from(new Set(models.map((model) => model.provider)));
+  // the headline quotes the largest window the catalogue really reports today —
+  // it drops automatically when a route with a smaller window replaces it
+  const maxContextLabel = ctxLabel(Math.max(0, ...models.map((m) => Number(m.contextWindow) || 0)));
   return (
     <section id="catalog" className="scroll-mt-24">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-[12px] uppercase tracking-[0.2em] text-flame sm:text-[11px]">Full catalogue</p>
           <h2 className="mt-1.5 text-[24px] font-semibold tracking-[-0.02em] text-warm sm:text-[30px]">
-            {models.length} routes, up to 1M tokens
+            {models.length} routes{maxContextLabel ? `, up to ${maxContextLabel} tokens` : ""}
           </h2>
           <p className="mt-1.5 max-w-xl text-[13px] leading-6 text-ash max-[899px]:text-[14px] max-[899px]:leading-6">
             Every model the gateway exposes, with context windows and per-million pricing.

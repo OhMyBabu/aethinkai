@@ -95,6 +95,9 @@ async def main() -> int:
     r.raise_for_status()
     ids = [m["id"] for m in r.json().get("data", [])]
 
+    meta = {m["id"]: m for m in (await client.get(
+        "/v1/models", headers={"Authorization": f"Bearer {key}"})).json().get("data", [])}
+
     by_tail: dict[str, list[str]] = {}
     for i in ids:
         tail = i.rsplit(":", 1)[-1].rsplit("/", 1)[-1]
@@ -117,24 +120,36 @@ async def main() -> int:
                 if not ok:
                     print(f"{slug:28} {choice:40} DEAD: {why}")
                     choice = None
-            if choice:
-                mapped += 1
-                if not dry:
-                    await db.pool().execute(
-                        """INSERT INTO model_aliases(model_id, upstream_model, note)
-                           VALUES ($1, $2, $3)
-                           ON CONFLICT (model_id) DO UPDATE
-                              SET upstream_model = EXCLUDED.upstream_model,
-                                  note = EXCLUDED.note, updated_at = now()""",
-                        row["model_id"], choice, f"auto: {len(candidates)} candidates")
-                print(f"{slug:28} {choice:40} ok")
-            else:
+            if not choice:
                 if not dry:
                     await db.pool().execute("DELETE FROM model_aliases WHERE model_id = $1",
                                             row["model_id"])
                 hint = (f"needs provider among {', '.join(sorted({c.split(':')[0] for c in candidates}))}"
                         if candidates else "not in router catalogue")
                 print(f"{slug:28} {'—':40} {hint}")
+                continue
+
+            mapped += 1
+            m = meta.get(choice) or {}
+            caps = m.get("capabilities") or {}
+            ctx = m.get("context_length") or caps.get("contextWindow")
+            out = m.get("max_completion_tokens") or caps.get("maxOutput")
+            if not dry:
+                await db.pool().execute(
+                    """INSERT INTO model_aliases(model_id, upstream_model, note)
+                       VALUES ($1, $2, $3)
+                       ON CONFLICT (model_id) DO UPDATE
+                          SET upstream_model = EXCLUDED.upstream_model,
+                              note = EXCLUDED.note, updated_at = now()""",
+                    row["model_id"], choice, f"auto: {len(candidates)} candidates")
+                # limits are what the provider actually reports, never a claim
+                await db.pool().execute(
+                    """UPDATE model_prices
+                          SET context_window = $2, max_output = $3,
+                              capabilities = $4::jsonb, limits_synced_at = now()
+                        WHERE model_id = $1""",
+                    row["model_id"], ctx or None, out or None, json.dumps(caps))
+            print(f"{slug:28} {choice:40} ok   ctx={ctx or '?'} out={out or '?'}")
         print(f"\n{mapped}/{len(rows)} catalogue entries served by the LOCAL router"
               f"{' (dry run)' if dry else ''}")
         return 0
