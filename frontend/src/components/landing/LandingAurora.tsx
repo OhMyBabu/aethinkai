@@ -1,15 +1,16 @@
 /**
- * Landing atmosphere — 9Remote's background palette, AethinkAI's identity.
+ * Landing atmosphere — 9Remote's restraint, AethinkAI's palette.
  *
- * base #0A0A0A · 40px hairline grid at white 4% · neutral ambient light
- * drifting 22s / 26s. No warm wash behind the page: the accent belongs to the
- * CTA, the diagram and the type, not to the air around them.
+ * base #0A0A0A · 40px hairline grid at white 4% · two very low neutral blooms
+ * (5% / 3.5%) drifting 22s / 26s · one 6% accent whisper behind the diagram.
+ * No cone, no spotlight: on 9Remote the page is black first and lit second, so
+ * the light should be felt, not seen. Nothing here ever sits on the nav row.
  */
 export function LandingAurora() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[#0A0A0A]">
       {/* base wash — flat charcoal, no hue */}
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,#0C0C0D_0%,#0A0A0A_46%,#080808_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#0B0B0C_0%,#0A0A0A_48%,#080808_100%)]" />
 
       {/* technical grid — 40px, white 4%, fades with the page */}
       <div
@@ -26,58 +27,25 @@ export function LandingAurora() {
         }}
       />
 
-      {/* key light — a wide cone from above the fold. screen blend is what makes
-          it read as light instead of a lighter rectangle of paint. */}
+      {/* ambient — barely there, the way 9Remote keeps it */}
       <div
-        className="landing-keylight absolute inset-x-0 top-0 h-[76%]"
+        className="landing-ambient-a absolute left-[-18%] top-[-30%] h-[900px] w-[1080px] rounded-full blur-[150px]"
         style={{
-          background:
-            "radial-gradient(58% 48% at 34% 0%, rgba(255,255,255,0.30), rgba(255,255,255,0.10) 40%, transparent 72%)",
-          mixBlendMode: "screen",
-          // keep the nav row out of the cone: labels must stay above 4.5:1
-          maskImage:
-            "linear-gradient(180deg, transparent 0px, transparent 84px, #000 140px)",
-          WebkitMaskImage:
-            "linear-gradient(180deg, transparent 0px, transparent 84px, #000 140px)",
+          background: "radial-gradient(closest-side, rgba(255,255,255,0.05), transparent 76%)",
+        }}
+      />
+      <div
+        className="landing-ambient-b absolute right-[-20%] top-[18%] h-[760px] w-[880px] rounded-full blur-[160px]"
+        style={{
+          background: "radial-gradient(closest-side, rgba(255,255,255,0.035), transparent 78%)",
         }}
       />
 
-      {/* ambient light — neutral, slow, and bright enough to actually read as
-          light rather than a grey smudge */}
+      {/* a whisper of accent behind the routing diagram */}
       <div
-        className="landing-ambient-a absolute left-[-14%] top-[-26%] h-[980px] w-[1180px] rounded-full blur-[120px]"
+        className="absolute right-[2%] top-[4%] h-[560px] w-[600px] rounded-full opacity-60 blur-[160px]"
         style={{
-          background:
-            "radial-gradient(closest-side, rgba(255,255,255,0.26), rgba(255,255,255,0.10) 46%, transparent 74%)",
-        }}
-      />
-      <div
-        className="landing-ambient-b absolute right-[-16%] top-[20%] h-[820px] w-[940px] rounded-full blur-[130px]"
-        style={{
-          background:
-            "radial-gradient(closest-side, rgba(255,255,255,0.18), rgba(255,255,255,0.06) 48%, transparent 76%)",
-        }}
-      />
-      {/* top centre — a wide, low cone so the fold has a light source */}
-      <div
-        className="absolute left-[26%] top-[-30%] h-[620px] w-[900px] rounded-full blur-[150px]"
-        style={{
-          background: "radial-gradient(closest-side, rgba(255,255,255,0.14), transparent 76%)",
-        }}
-      />
-      {/* low centre glow — lifts the fold instead of letting it fall to black */}
-      <div
-        className="absolute bottom-[-24%] left-[24%] h-[620px] w-[1040px] rounded-full blur-[140px]"
-        style={{
-          background: "radial-gradient(closest-side, rgba(255,255,255,0.06), transparent 78%)",
-        }}
-      />
-
-      {/* a whisper of accent behind the routing diagram — 7%, not a wash */}
-      <div
-        className="absolute right-[4%] top-[6%] h-[520px] w-[560px] rounded-full opacity-70 blur-[150px]"
-        style={{
-          background: "radial-gradient(closest-side, rgba(231,137,60,0.07), transparent 76%)",
+          background: "radial-gradient(closest-side, rgba(231,137,60,0.06), transparent 78%)",
         }}
       />
 
