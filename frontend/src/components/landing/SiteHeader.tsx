@@ -42,6 +42,7 @@ function NavItem({
   active,
   onClick,
   hasPanel,
+  panelId,
 }: {
   label: string;
   icon: React.ReactNode;
@@ -49,6 +50,7 @@ function NavItem({
   active?: boolean;
   onClick?: () => void;
   hasPanel?: boolean;
+  panelId?: string;
 }) {
   const classes = cn(
     "group relative inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg px-3 text-[13px] font-medium tracking-[-0.01em] transition-[background-color,color] duration-200",
@@ -95,7 +97,14 @@ function NavItem({
       {inner}
     </a>
   ) : (
-    <button type="button" onClick={onClick} aria-expanded={active} aria-haspopup="true" className={classes}>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={active}
+      aria-haspopup="true"
+      data-panel={panelId}
+      className={classes}
+    >
       {inner}
     </button>
   );
@@ -110,17 +119,18 @@ const BASE = (import.meta.env.VITE_GATEWAY_BASE_URL ?? `${window.location.origin
 
 const snippets: Record<string, string> = {
   cURL: `curl ${BASE}/chat/completions \\
-  -H "Authorization: Bearer sk-•••" \\
+  -H "Authorization: Bearer $AETHINK_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "model": "deepseek-v4.1-flash",
     "messages": [{ "role": "user", "content": "Summarise this invoice" }]
   }'`,
-  Python: `from openai import OpenAI
+  Python: `import os
+from openai import OpenAI
 
 client = OpenAI(
     base_url="${BASE}",
-    api_key="sk-•••",
+    api_key=os.environ["AETHINK_API_KEY"],
 )
 
 r = client.chat.completions.create(
@@ -131,7 +141,7 @@ r = client.chat.completions.create(
 
 const client = new OpenAI({
   baseURL: "${BASE}",
-  apiKey: process.env.AETHINK_KEY,
+  apiKey: process.env.AETHINK_API_KEY,
 });
 
 const r = await client.chat.completions.create({
@@ -156,7 +166,7 @@ const panelMotion = {
 
 /** Shared floating popover shell: graphite card, 1px border, soft shadow, 12px radius. */
 const FLOATING =
-  "absolute left-1/2 top-[54px] z-50 mt-2 -translate-x-1/2 rounded-xl border bg-[#222325] shadow-[0_20px_48px_-20px_rgba(0,0,0,0.85)]";
+  "absolute left-1/2 top-[72px] z-50 mt-2 -translate-x-1/2 rounded-xl border bg-[#222325] shadow-[0_20px_48px_-20px_rgba(0,0,0,0.85)]";
 
 const FLOATING_STYLE = { borderColor: "#3A3B3D" } as const;
 
@@ -180,53 +190,57 @@ function DocsPanel({ onClose }: { onClose: () => void }) {
   const [lang, setLang] = useState<keyof typeof snippets>("cURL");
   const [copied, setCopied] = useState(false);
   const { models } = useLandingData();
-  const providerCount = new Set(models.map((model) => model.provider)).size;
-  const sampleModel = models[0]?.modelId ?? "deepseek-v4.1-flash";
+  const sampleModel = models[0]?.modelId ?? "deepseek-v4.1-flash-1017";
   const code = snippets[lang].replace(/deepseek-v4\.1-flash/g, sampleModel);
 
   return (
     <motion.div
       {...panelMotion}
       role="region"
-      aria-label="Documentation"
+      aria-label="Quickstart API"
       style={FLOATING_STYLE}
-      className={cn(FLOATING, "max-h-[calc(100vh-4.5rem)] w-[min(860px,calc(100vw-32px))] overflow-y-auto")}
+      className={cn(
+        FLOATING,
+        "w-[min(720px,calc(100vw-32px))] max-h-[min(480px,calc(100dvh-100px))] overflow-y-auto",
+      )}
     >
-      <div className="grid w-full min-w-0 gap-7 p-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+      <div className="flex items-start justify-between gap-3 border-b border-ash/12 px-4 py-3.5 sm:px-5">
         <div className="min-w-0">
-          <div className="flex items-center justify-between">
-            <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-flame">
-              <BookOpen size={12} aria-hidden /> Documentation
-            </p>
-            <Link
-              to="/panduan"
-              onClick={onClose}
-              className="inline-flex h-8 items-center gap-1 rounded-lg border border-flame/35 px-2.5 text-[11.5px] text-flame transition hover:bg-flame/10"
-            >
-              Panduan lengkap <ArrowUpRight size={11} />
-            </Link>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close documentation"
-              className="grid size-8 place-items-center rounded-lg text-ash transition hover:bg-warm/[0.06] hover:text-warm"
-            >
-              <X size={14} />
-            </button>
-          </div>
+          <p className="flex items-center gap-2 text-[13.5px] font-semibold tracking-[-0.01em] text-warm">
+            <BookOpen size={13} className="text-flame" aria-hidden /> Quickstart API
+          </p>
+          <p className="mt-0.5 text-[11.5px] text-dim">Your first request in a minute</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <Link
+            to="/panduan"
+            onClick={onClose}
+            className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-[11.5px] text-ash transition hover:bg-warm/[0.06] hover:text-warm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flame/40"
+          >
+            Full documentation <ArrowUpRight size={11} />
+          </Link>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close quickstart"
+            className="grid size-8 place-items-center rounded-lg text-ash transition hover:bg-warm/[0.06] hover:text-warm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flame/40"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      </div>
 
-          <h3 className="mt-3 text-[19px] font-semibold tracking-[-0.02em] text-warm">
-            One base URL.{providerCount ? ` ${providerCount} providers.` : ""} First request in a minute.
-          </h3>
-
-          <div className="mt-4 flex items-center gap-1.5">
+      <div className="grid min-w-0 gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
             {(Object.keys(snippets) as Array<keyof typeof snippets>).map((key) => (
               <button
                 key={key}
                 type="button"
                 onClick={() => setLang(key)}
+                aria-pressed={lang === key}
                 className={cn(
-                  "relative rounded-lg px-2.5 py-1 text-[11px] font-medium transition",
+                  "relative rounded-lg px-2.5 py-1 text-[11px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flame/40",
                   lang === key ? "text-warm" : "text-ash hover:text-warm",
                 )}
               >
@@ -247,22 +261,22 @@ function DocsPanel({ onClose }: { onClose: () => void }) {
                 setCopied(true);
                 setTimeout(() => setCopied(false), 1600);
               }}
-              className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-ash/20 px-2.5 py-1 text-[11px] text-ash transition hover:border-ash/35 hover:text-warm"
+              className="ml-auto inline-flex h-7 items-center gap-1.5 rounded-lg border border-ash/20 px-2.5 text-[11px] text-ash transition hover:border-ash/35 hover:text-warm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flame/40"
             >
               {copied ? <Check size={11} className="text-flame" /> : <Copy size={11} />}
-              {copied ? "Copied" : "Copy"}
+              <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
             </button>
           </div>
 
-          <div className="relative mt-3 min-w-0 overflow-hidden rounded-xl border border-ash/15 bg-[#0f1012]">
+          <div className="mt-2.5 min-w-0 overflow-hidden rounded-xl border border-ash/12 bg-[#0B0B0C]">
             <AnimatePresence mode="wait">
               <motion.pre
                 key={lang}
-                initial={{ opacity: 0, y: 6 }}
+                initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.18 }}
-                className="max-h-[220px] w-full min-w-0 overflow-y-auto whitespace-pre-wrap break-words p-3.5 font-mono text-[11px] leading-5 text-warm/85"
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.16 }}
+                className="max-h-[240px] w-full min-w-0 overflow-auto whitespace-pre p-3.5 font-mono text-[11px] leading-5 text-warm/85"
               >
                 {code}
               </motion.pre>
@@ -270,44 +284,37 @@ function DocsPanel({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        <motion.div {...listMotion} className="min-w-0">
-          <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-ash">
-            <Layers size={12} aria-hidden /> Endpoints
-          </p>
-          <ul className="mt-3 space-y-1.5">
+        <div className="min-w-0">
+          <p className="text-[10.5px] font-medium uppercase tracking-[0.16em] text-dim">Common endpoints</p>
+          <ul className="mt-2 divide-y divide-ash/10">
             {endpoints.map((endpoint) => (
-              <motion.li
-                key={endpoint.path}
-                {...itemMotion}
-                className="group flex items-center gap-3 rounded-lg border border-transparent px-2.5 py-2 transition hover:border-ash/15 hover:bg-warm/[0.03]"
-              >
+              <li key={endpoint.path} className="flex items-center gap-2.5 py-2">
                 <span
                   className={cn(
-                    "rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold",
-                    endpoint.method === "POST"
-                      ? "bg-flame/12 text-flame"
-                      : "bg-warm/[0.07] text-warm/70",
+                    "w-10 shrink-0 rounded-md px-1.5 py-0.5 text-center font-mono text-[9.5px] font-semibold",
+                    endpoint.method === "POST" ? "bg-flame/12 text-flame" : "bg-warm/[0.06] text-warm/70",
                   )}
                 >
                   {endpoint.method}
                 </span>
-                <code className="flex-1 truncate font-mono text-[11.5px] text-warm/85">{endpoint.path}</code>
-                <span className="text-[10.5px] text-dim">{endpoint.note}</span>
-                <ArrowUpRight size={12} className="text-ash opacity-0 transition group-hover:opacity-100" aria-hidden />
-              </motion.li>
+                <code className="min-w-0 flex-1 truncate font-mono text-[11.5px] text-warm/85">{endpoint.path}</code>
+                <span className="shrink-0 text-[10px] text-dim">{endpoint.note}</span>
+              </li>
             ))}
           </ul>
 
-          <div className="mt-4 rounded-xl border border-ash/15 bg-warm/[0.02] p-3.5">
-            <p className="flex items-center gap-2 text-[11px] font-medium text-warm">
-              <Terminal size={12} className="text-flame" aria-hidden /> Auth
+          <div className="mt-3 rounded-xl border border-ash/12 bg-warm/[0.02] p-3">
+            <p className="flex items-center gap-1.5 text-[10.5px] font-medium uppercase tracking-[0.16em] text-dim">
+              <Terminal size={11} className="text-flame" aria-hidden /> Authentication
             </p>
-            <p className="mt-1.5 text-[11.5px] leading-5 text-ash">
-              Send your key as <code className="font-mono text-warm/85">Authorization: Bearer sk-…</code>. Keys are
-              scoped per model and revocable from the dashboard.
+            <code className="mt-1.5 block overflow-x-auto whitespace-nowrap font-mono text-[11px] text-warm/85">
+              Authorization: Bearer $AETHINK_API_KEY
+            </code>
+            <p className="mt-1 text-[11px] leading-4 text-dim">
+              One key for every model. Rotate or revoke it from the dashboard.
             </p>
           </div>
-        </motion.div>
+        </div>
       </div>
     </motion.div>
   );
@@ -324,22 +331,45 @@ const uptimeLabel = (seconds: number) => {
   return `${Math.round(seconds / 86_400)}d`;
 };
 
-function useBars(seed: number) {
-  return Array.from({ length: 32 }, (_, index) => {
-    const value = Math.sin((index + seed) * 1.7) * 0.5 + 0.5;
-    return 0.72 + value * 0.28;
-  });
-}
-
 function StatusPanel({ onClose }: { onClose: () => void }) {
-  const bars = useBars(3);
   const { status, models } = useLandingData();
-  const ok = status ? status.status === "operational" : true;
-  const services = [
-    { name: "Gateway API", latency: status?.p95_latency_ms || null, uptime: status ? `${status.success_rate}%` : "—" },
-    { name: "Model katalog", latency: models.length, uptime: `${status?.models_active ?? models.length} live` },
-    // process age, labelled as such — a deploy resets it, so it must not read as SLA uptime
-    { name: "Proses gateway", latency: null, uptime: uptimeLabel(status?.uptime_seconds ?? 0) },
+  const [seenAt, setSeenAt] = useState(() => Date.now());
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => setSeenAt(Date.now()), [status]);
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 10_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const title = !status
+    ? "Status unavailable"
+    : status.status === "operational"
+      ? "All systems operational"
+      : "Degraded performance";
+
+  const seconds = Math.max(0, Math.round((now - seenAt) / 1000));
+  const updated = seconds < 60 ? `${seconds}s ago` : `${Math.round(seconds / 60)}m ago`;
+
+  const series = [...(status?.models ?? [])].sort((a, b) => b.requests - a.requests).slice(0, 5);
+  const peak = Math.max(1, ...series.map((row) => row.requests));
+
+  const rows = [
+    {
+      name: "Gateway API",
+      value: status ? `${status.p95_latency_ms.toLocaleString("en-US")} ms` : "—",
+      meta: "p95",
+    },
+    {
+      name: "Model catalog",
+      value: `${status?.models_active ?? models.length} live`,
+      meta: "",
+    },
+    {
+      name: "Gateway process",
+      value: uptimeLabel(status?.uptime_seconds ?? 0),
+      meta: "uptime",
+    },
   ];
 
   return (
@@ -348,86 +378,104 @@ function StatusPanel({ onClose }: { onClose: () => void }) {
       role="region"
       aria-label="System status"
       style={FLOATING_STYLE}
-      className={cn(FLOATING, "w-[min(360px,calc(100vw-32px))] p-4")}
+      className={cn(
+        FLOATING,
+        "w-[min(360px,calc(100vw-32px))] max-h-[min(560px,calc(100dvh-100px))] overflow-y-auto p-4",
+      )}
     >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="flex items-center gap-2 text-[11.5px] font-semibold text-warm">
-            <span className="relative flex size-2">
-              <span className="absolute inline-flex size-2 animate-ping rounded-full bg-flame/60" />
-              <span className="relative inline-flex size-2 rounded-full bg-flame" />
-            </span>
-            {status ? (ok ? "All systems operational" : "Degraded — upstream errors") : "Status unavailable"}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 text-[12.5px] font-semibold text-warm">
+            <span
+              className={cn(
+                "size-2 shrink-0 rounded-full",
+                status ? (status.status === "operational" ? "bg-[#5FBF7A]" : "bg-flame") : "bg-ash",
+              )}
+              aria-hidden
+            />
+            {title}
           </p>
           <p className="mt-1 text-[10.5px] text-dim">
-            {status
-              ? `Live · ${status.requests_24h} req / 24h · ${status.success_rate}% success · verdict last ${status.window_minutes ?? 15}m, min 10 req`
-              : "Gateway unreachable from here"}
+            {status ? `Updated ${updated} · window last ${status.window_minutes ?? 15}m` : "Gateway unreachable from here"}
           </p>
         </div>
-        <Link
-          to="/status"
-          onClick={onClose}
-          className="mb-3 inline-flex h-8 items-center gap-1 rounded-lg border border-flame/35 px-2.5 text-[11.5px] text-flame transition hover:bg-flame/10"
-        >
-          Halaman status <ArrowUpRight size={11} />
-        </Link>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close status"
-          className="grid size-7 place-items-center rounded-lg text-ash transition hover:bg-warm/[0.06] hover:text-warm"
+          className="grid size-7 shrink-0 place-items-center rounded-lg text-ash transition hover:bg-warm/[0.06] hover:text-warm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flame/40"
         >
           <X size={13} />
         </button>
       </div>
 
-      <div className="mt-3.5 flex h-10 items-end gap-[3px]">
-        {bars.map((value, index) => (
-          <motion.span
-            key={index}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: `${value * 100}%`, opacity: 1 }}
-            transition={{ delay: index * 0.012, type: "spring", stiffness: 260, damping: 24 }}
-            className="flex-1 rounded-sm bg-gradient-to-t from-flame/30 to-flame/80"
-            title={`${Math.round(value * 100)}%`}
-          />
+      <dl className="mt-3.5 grid grid-cols-3 gap-2 border-y border-ash/10 py-3">
+        {[
+          { k: "Success 24h", v: status ? `${status.success_rate.toFixed(2)}%` : "—" },
+          { k: "Requests 24h", v: status ? status.requests_24h.toLocaleString("en-US") : "—" },
+          { k: "Latency p95", v: status ? `${status.p95_latency_ms.toLocaleString("en-US")} ms` : "—" },
+        ].map((item) => (
+          <div key={item.k} className="min-w-0">
+            <dd className="text-[16px] font-semibold tabular-nums tracking-[-0.01em] text-warm">{item.v}</dd>
+            <dt className="mt-0.5 truncate text-[10px] text-dim">{item.k}</dt>
+          </div>
         ))}
+      </dl>
+
+      <div className="mt-3">
+        <div className="flex items-baseline justify-between text-[10.5px]">
+          <span className="text-ash">Top models</span>
+          <span className="tabular-nums text-dim">
+            last 24h · {series.length} of {status?.models_active ?? models.length}
+          </span>
+        </div>
+        {series.length > 0 ? (
+          <div className="mt-2 flex h-11 items-end gap-1.5">
+            {series.map((row) => (
+              <div key={row.model_id} className="flex h-full min-w-0 flex-1 flex-col justify-end" title={`${row.model_id} · ${row.requests} req`}>
+                <motion.span
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: `${Math.max(10, (row.requests / peak) * 100)}%`, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 26 }}
+                  className="w-full rounded-sm bg-gradient-to-t from-flame/25 to-flame/75"
+                />
+                <span className="mt-1 truncate text-[8.5px] leading-none text-dim">{row.model_id.split("-")[0]}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-2 text-[11px] text-dim">No requests recorded in the last 24 hours.</p>
+        )}
       </div>
 
-      <ul className="mt-4 space-y-2">
-        {services.map((service, index) => (
-          <motion.li
-            key={service.name}
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.08 + index * 0.06 }}
-            className="flex items-center justify-between text-[11.5px]"
-          >
-            <span className="flex items-center gap-2 text-ash">
-              <Check size={11} className="text-flame" aria-hidden /> {service.name}
+      <ul className="mt-3.5 divide-y divide-ash/10">
+        {rows.map((row) => (
+          <li key={row.name} className="flex items-center justify-between gap-3 py-2 text-[11.5px]">
+            <span className="flex min-w-0 items-center gap-2 text-ash">
+              <Check size={11} className="shrink-0 text-flame" aria-hidden />
+              <span className="truncate">{row.name}</span>
             </span>
-            <span className="flex items-center gap-2 text-warm/75">
-              {service.latency !== null ? (
-                <span className="tabular-nums text-dim">
-                  {service.latency}
-                  {service.name === "Model routes" ? "" : "ms"}
-                </span>
-              ) : null}
-              <span className="tabular-nums">{service.uptime}</span>
+            <span className="flex shrink-0 items-baseline gap-1">
+              <span className="tabular-nums text-warm/85">{row.value}</span>
+              {row.meta ? <span className="text-[10px] text-dim">{row.meta}</span> : null}
             </span>
-          </motion.li>
+          </li>
         ))}
       </ul>
 
-      <div className="mt-3.5 flex items-center justify-between border-t border-ash/12 pt-2.5 text-[10.5px] text-dim">
-        <span className="flex items-center gap-1.5">
-          <ShieldCheck size={11} aria-hidden /> {status ? `${status.errors_24h} errors / 24h` : "no telemetry"}
-        </span>
-        <span className="flex items-center gap-1 text-flame">
-          <Zap size={10} aria-hidden /> {status?.models_active ?? models.length} routes live
-        </span>
-      </div>
+      <p className="mt-2 text-[10.5px] text-dim">
+        {status
+          ? `${status.errors_24h} errors · ${status.models_active} routes live · ${status.requests_24h.toLocaleString("en-US")} requests / 24h`
+          : "No telemetry from the gateway"}
+      </p>
+
+      <Link
+        to="/status"
+        onClick={onClose}
+        className="mt-3 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-flame/30 bg-flame/[0.08] text-[11.5px] font-medium text-flame transition hover:bg-flame/[0.14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flame/40"
+      >
+        Status page <ArrowUpRight size={12} />
+      </Link>
     </motion.div>
   );
 }
@@ -472,12 +520,17 @@ export function SiteHeader() {
       }
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setDocsOpen(false);
-        setStatusOpen(false);
-        setBansosOpen(false);
-        setMobileOpen(false);
-        setMobilePanel(null);
+      if (event.key !== "Escape") return;
+      const open = docsOpen ? "docs" : statusOpen ? "status" : bansosOpen ? "bansos" : null;
+      setDocsOpen(false);
+      setStatusOpen(false);
+      setBansosOpen(false);
+      setMobileOpen(false);
+      setMobilePanel(null);
+      if (open) {
+        requestAnimationFrame(() => {
+          document.querySelector<HTMLButtonElement>(`[data-panel="${open}"]`)?.focus();
+        });
       }
     };
     document.addEventListener("mousedown", onDown);
@@ -486,7 +539,7 @@ export function SiteHeader() {
       document.removeEventListener("mousedown", onDown);
       document.removeEventListener("keydown", onKey);
     };
-  }, []);
+  }, [docsOpen, statusOpen, bansosOpen]);
 
   const dashboardHref = role ? (role === "admin" ? "/admin/overview" : "/app/overview") : "/login";
 
@@ -537,6 +590,7 @@ export function SiteHeader() {
             label="Docs"
             icon={<BookOpen size={14} strokeWidth={1.9} />}
             hasPanel
+            panelId="docs"
             active={docsOpen}
             onClick={() => {
               setDocsOpen((value) => !value);
@@ -548,6 +602,7 @@ export function SiteHeader() {
             label="Status"
             icon={<Activity size={14} strokeWidth={1.9} />}
             hasPanel
+            panelId="status"
             active={statusOpen}
             onClick={() => {
               setStatusOpen((value) => !value);
@@ -675,7 +730,7 @@ export function SiteHeader() {
                         <p className="text-[12px] font-medium text-warm">Base URL</p>
                         <code className="mt-1 block break-all font-mono text-[12.5px] text-flame">{BASE}</code>
                         <p className="mt-2 text-[12.5px] leading-5 text-ash">
-                          Authenticate with <code className="font-mono text-warm/85">Bearer sk-…</code>. One key covers
+                          Authenticate with <code className="font-mono text-warm/85">Bearer YOUR_API_KEY</code>. One key covers
                           DeepSeek, GLM, Kimi and Claude.
                         </p>
                       </div>
