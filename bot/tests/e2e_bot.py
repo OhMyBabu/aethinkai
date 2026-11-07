@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 os.environ.setdefault("BOT_TOKEN", "0:test")
@@ -23,7 +24,9 @@ bot.send = lambda chat_id, text, keyboard=None: SENT.append((chat_id, text)) or 
 bot.edit = lambda *a, **k: None
 bot.tg = lambda *a, **k: {}
 
-TG = 555000111
+# A fresh Telegram id per run: the buyer's balance is cumulative, so a fixed id
+# makes the "saldo Rp5.000" assertion fail on the second run.
+TG = 555_000_000 + int(time.time()) % 100_000
 results: list[tuple[bool, str, str]] = []
 
 

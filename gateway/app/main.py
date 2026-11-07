@@ -5,6 +5,7 @@ cost_micro == tokens * price_idr_per_1M  (exact integer, see README).
 """
 
 import asyncio
+import os
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -46,7 +47,17 @@ async def _hold_janitor() -> None:
         await asyncio.sleep(60)
 
 
-app = FastAPI(title="AethinkAI Gateway", version="0.1.0", lifespan=lifespan)
+# API docs are a map of the whole attack surface. They stay off unless the
+# operator explicitly enables them; nginx also 404s these paths at the edge.
+_DOCS = (os.environ.get("AETHINK_DOCS") or "").strip() in {"1", "true", "yes"}
+app = FastAPI(
+    title="AethinkAI Gateway",
+    version="0.1.0",
+    lifespan=lifespan,
+    docs_url="/docs" if _DOCS else None,
+    redoc_url="/redoc" if _DOCS else None,
+    openapi_url="/openapi.json" if _DOCS else None,
+)
 
 STARTED_AT = time.time()
 app.include_router(user_router)

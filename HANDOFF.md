@@ -5,6 +5,30 @@ it lists what exists, why it is shaped this way, and what is still open.
 
 ---
 
+## 0. Kondisi deployment sekarang (2026-11-07, box baru)
+
+Bagian di bawah adalah catatan operator pertama (dev box lama, pm2 + quick tunnel).
+Deployment yang jalan sekarang:
+
+| Bagian | Kenyataan |
+|---|---|
+| Host | `129.226.219.219`, domain `router.aethink.ai.id` (A record terverifikasi) |
+| Gateway | systemd `aethink-gateway`, uvicorn `127.0.0.1:8080`, env dari `/root/.secrets/aethink-db.env` |
+| Bot | systemd `aethink-bot`, `@AethinkBot` (id 8747681973), long polling |
+| Web | nginx `:443` (Let's Encrypt, renew otomatis), SPA dari `/var/www/aethink`, `/api` + `/v1` diproksi |
+| DB | Postgres 16 lokal, db/role `aethink`, `scram-sha-256`, `statement_timeout=30s` |
+| Upstream | 9Router relay `43.173.36.225:20128` via `UPSTREAM_KEY` (Bearer), katalog di-cache 60 s |
+| Deploy | `./deploy.sh` (backend/frontend/all) — bukan pm2, bukan quick tunnel lagi |
+| Ops | `./scripts/healthcheck.sh`, `./scripts/backup.sh`, `./scripts/migrate-bundle.sh` |
+| Keamanan | UFW 22/80/443, fail2ban 3 jail, CSP+HSTS, docs ditutup, edge rate limit — lihat `deploy/SECURITY.md` |
+| Tes | access 35/35 · link 32/32 · bot 12/12 · `tsc -b` 0 error |
+
+Selisih penting dari catatan lama: `mk/...` bukan lagi nama route; `model_prices.model_id`
+berisi route asli (`mr/glm-5.3-flash`) dan `public_id` adalah yang dilihat pembeli.
+Migrasi server: `MIGRATE.md`. Harga & margin: `audit/PRICING-AUDIT.md`.
+
+---
+
 ## 1. What the product is
 
 A reseller-grade LLM gateway in Rupiah:
