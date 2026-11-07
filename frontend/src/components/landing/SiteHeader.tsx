@@ -521,7 +521,7 @@ export function SiteHeader() {
       className={cn(
         "site-header safe-t sticky top-0 z-40 border-b transition-[background-color,border-color,backdrop-filter,box-shadow] duration-300",
         scrolled
-          ? "site-header--scrolled border-[#2A2B2E]/80 bg-[#18191B]/75 shadow-[0_10px_30px_-26px_rgba(0,0,0,0.9)] backdrop-blur-[16px]"
+          ? "site-header--scrolled bg-[#0A0A0A]/75 shadow-[0_10px_30px_-26px_rgba(0,0,0,0.9)] backdrop-blur-[16px]"
           : "border-transparent bg-transparent backdrop-blur-0",
       )}
     >

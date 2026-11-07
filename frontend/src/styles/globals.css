@@ -279,11 +279,30 @@ html[data-reduced-motion="true"] .lift:hover { transform: none; }
 .site-header {
   -webkit-backdrop-filter: blur(0);
   backdrop-filter: blur(0);
+  /* unlayered on purpose: the global `* { border-color: … }` rule sits outside
+     @layer, so it beats the utility classes. Without this the bar keeps a 1px
+     line even in the transparent state. */
+  border-bottom-color: transparent;
 }
 
 .site-header--scrolled {
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+
+/* ambient drift — 9Remote cadence, transform/opacity only */
+@keyframes landing-ambient-drift {
+  from { transform: translate3d(-1%, -1%, 0) scale(1.04); opacity: 0.75; }
+  to   { transform: translate3d(1%, 1%, 0) scale(1.1); opacity: 1; }
+}
+
+.landing-ambient-a { animation: landing-ambient-drift 22s ease-in-out infinite alternate; }
+.landing-ambient-b { animation: landing-ambient-drift 26s ease-in-out infinite alternate-reverse; }
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-ambient-a,
+  .landing-ambient-b { animation: none !important; }
 }
 
 /* the existing Sign in CTA: same size/colour, just an accent halo */

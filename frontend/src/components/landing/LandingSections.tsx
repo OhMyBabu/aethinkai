@@ -184,7 +184,7 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
                 const rows = models.filter((model) => model.provider === provider);
                 if (rows.length === 0) return null;
                 return rows.map((model, index) => (
-                  <tr key={model.id} className="border-b border-ash/10 last:border-0 transition-colors hover:bg-warm/[0.03]">
+                  <tr key={model.id} className="border-b border-ash/15 last:border-0 transition-colors hover:bg-warm/[0.04]">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <span className="grid size-7 shrink-0 place-items-center rounded-lg border border-ash/20 bg-warm/[0.04] text-warm/85">
