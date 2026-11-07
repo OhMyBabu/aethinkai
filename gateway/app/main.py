@@ -90,13 +90,15 @@ async def _http_error_shape(request: Request, exc: _StarletteHTTPExc):
 
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
+    """Only headers the edge does NOT set.
+
+    nginx owns HSTS / X-Frame-Options / Referrer-Policy / Permissions-Policy /
+    COOP. Setting them here too emits duplicates with *different* values
+    (`X-Frame-Options: SAMEORIGIN, DENY`), which browsers resolve differently —
+    so the app deliberately stays out of that set.
+    """
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
-    response.headers.setdefault("X-Frame-Options", "DENY")
-    response.headers.setdefault("Referrer-Policy", "no-referrer")
-    response.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
-    response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
-    response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
     if request.url.path.startswith(("/api/", "/v1/")):
         response.headers.setdefault("Cache-Control", "no-store")
     return response
