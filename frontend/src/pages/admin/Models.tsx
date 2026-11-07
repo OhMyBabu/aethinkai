@@ -1,11 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Boxes, GitBranch, Loader2, Pencil, RefreshCw, Save, Search, X } from "lucide-react";
+import { Boxes, GitBranch, Loader2, Pencil, Plus, RefreshCw, Save, Search, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/common/Card";
 import { Button } from "@/components/common/Button";
 import { useToast } from "@/components/common/Toast";
-import { adminModels, adminRoutes, savePrice, type GwModel, type GwRoute } from "@/lib/gw";
+import { Modal } from "@/components/common/Modal";
+import { SearchInput } from "@/components/common/SearchInput";
+import {
+  adminModels,
+  adminRoutes,
+  createProduct,
+  savePrice,
+  upstreamCatalogue,
+  type GwModel,
+  type GwRoute,
+  type GwRouterModel,
+} from "@/lib/gw";
 import { formatIDR } from "@/lib/format";
 
 function Toggle({ on, label, onChange }: { on: boolean; label: string; onChange: (next: boolean) => void }) {
@@ -207,9 +218,14 @@ function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute
 export default function AdminModelsPage() {
   const [models, setModels] = useState<GwModel[]>([]);
   const [routesByModel, setRoutesByModel] = useState<Record<string, GwRoute[]>>({});
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerQuery, setPickerQuery] = useState("");
+  const [pickerRows, setPickerRows] = useState<GwRouterModel[]>([]);
+  const [pickerBusy, setPickerBusy] = useState<string | null>(null);
+  const [pickerError, setPickerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [onlyPriced, setOnlyPriced] = useState(false);
+  const [onlyPriced, setOnlyPriced] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -235,6 +251,31 @@ export default function AdminModelsPage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const timer = setTimeout(() => {
+      upstreamCatalogue(pickerQuery)
+        .then((data) => setPickerRows(data.models))
+        .catch(() => setPickerRows([]));
+    }, 220);
+    return () => clearTimeout(timer);
+  }, [pickerOpen, pickerQuery]);
+
+  const addProduct = async (row: GwRouterModel) => {
+    setPickerBusy(row.id);
+    setPickerError(null);
+    try {
+      await createProduct({ upstream_model: row.id });
+      setPickerOpen(false);
+      setPickerQuery("");
+      await load();
+    } catch (err) {
+      setPickerError((err as Error).message);
+    } finally {
+      setPickerBusy(null);
+    }
+  };
+
   const rows = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return models.filter((m) => {
@@ -253,9 +294,14 @@ export default function AdminModelsPage() {
         description="Ini yang dijual: nama publik, harga per 1M token, dan status tayang. Provider mana yang melayani tiap model diatur di halaman Routing — bukan di sini."
         breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Models" }]}
         actions={
-          <Button variant="ghost" onClick={() => void load()} disabled={loading} leadingIcon={<RefreshCw size={14} />}>
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="primary" onClick={() => setPickerOpen(true)} leadingIcon={<Plus size={14} />}>
+              Produk
+            </Button>
+            <Button variant="ghost" onClick={() => void load()} disabled={loading} leadingIcon={<RefreshCw size={14} />}>
+              Refresh
+            </Button>
+          </div>
         }
       />
 
@@ -325,8 +371,50 @@ export default function AdminModelsPage() {
 
       <p className="text-[11.5px] leading-5 text-ash">
         Model tanpa harga ditolak gateway (<span className="font-mono">403 model_not_allowed</span>). Harga di-snapshot
-        per request, jadi riwayat tagihan tidak berubah saat harga diperbarui.
+        per request, jadi riwayat tagihan tidak berubah saat harga diperbarui. Satu nama = satu produk; model yang
+        sama dari provider lain ditambahkan sebagai route, bukan baris baru.
       </p>
+
+      <Modal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        title="Tambah produk"
+        description="Pilih model dari router. Kalau nama modelnya sudah dijual, sistem menolak dan mengarahkan ke Routing — supaya katalog tidak berisi duplikat."
+      >
+        <div className="space-y-3">
+          <SearchInput value={pickerQuery} onChange={setPickerQuery} placeholder="cari model router…" />
+          {pickerError ? (
+            <div className="rounded-lg border border-[#c4633a]/40 bg-[#c4633a]/10 px-3 py-2 text-[12px] text-[#e79c78]">
+              {pickerError}
+            </div>
+          ) : null}
+          <div className="max-h-[320px] space-y-1.5 overflow-y-auto">
+            {pickerRows.map((row) => {
+              const exists = models.some((m) => m.model_id === row.id);
+              return (
+                <button
+                  key={row.id}
+                  type="button"
+                  disabled={exists || pickerBusy === row.id}
+                  onClick={() => void addProduct(row)}
+                  className="flex w-full items-center justify-between gap-3 rounded-lg border border-ash/15 px-3 py-2 text-left transition hover:border-flame/40 disabled:opacity-50"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-mono text-[12px] text-warm">{row.id}</span>
+                    <span className="block text-[10.5px] text-ash">
+                      {row.provider} · ctx {row.context_window ?? "—"} · out {row.max_output ?? "—"}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-[10.5px] text-ash">{exists ? "sudah jadi produk" : "tambah"}</span>
+                </button>
+              );
+            })}
+            {pickerRows.length === 0 ? (
+              <p className="text-[12px] text-ash">Tidak ada model yang cocok.</p>
+            ) : null}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

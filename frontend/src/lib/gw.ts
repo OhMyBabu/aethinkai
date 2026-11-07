@@ -702,6 +702,18 @@ export type GwRouterModel = {
   in_use: boolean;
 };
 
+export async function createProduct(body: {
+  upstream_model: string;
+  public_id?: string | null;
+  display_name?: string | null;
+  provider_label?: string | null;
+}) {
+  return request<{ model: GwModel; next: string }>("/api/admin/products", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
 export async function adminRoutes() {
   return request<{ routes: GwRoute[] }>("/api/admin/routes");
 }

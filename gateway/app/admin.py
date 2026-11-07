@@ -46,14 +46,21 @@ class ImportIn(BaseModel):
 
 
 @router.get("/models")
-async def list_models(admin: dict = Depends(auth.require_admin)):
-    """Union of upstream catalogue + local price rows, with 30d usage."""
+async def list_models(include_upstream: bool = False, admin: dict = Depends(auth.require_admin)):
+    """The catalogue is what we SELL: one row per product, not per upstream route.
+
+    With five providers connected, the router advertises hundreds of route ids and many
+    of them are the same model. Merging that into this list produced duplicate products
+    ("glm-5.3" five times). Default is therefore products only; `?include_upstream=1`
+    is for the import screen that needs the raw router catalogue.
+    """
     upstream_ids: list[str] = []
-    try:
-        data = await upstream.list_models()
-        upstream_ids = [m["id"] for m in data.get("data", [])]
-    except Exception:
-        pass
+    if include_upstream:
+        try:
+            data = await upstream.list_models()
+            upstream_ids = [m["id"] for m in data.get("data", [])]
+        except Exception:
+            pass
 
     rows = await db.pool().fetch(
         """
