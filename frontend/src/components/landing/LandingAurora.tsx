@@ -1,10 +1,9 @@
 /**
- * Landing atmosphere — 9Remote's restraint, AethinkAI's palette.
+ * Landing atmosphere — layered white ambient light, 9Remote technique.
  *
- * base #0A0A0A · 40px hairline grid at white 4% · two very low neutral blooms
- * (5% / 3.5%) drifting 22s / 26s · one 6% accent whisper behind the diagram.
- * No cone, no spotlight: on 9Remote the page is black first and lit second, so
- * the light should be felt, not seen. Nothing here ever sits on the nav row.
+ * base #0A0A0A · 40px hairline grid at white 4% · three white radial gradients
+ * (11% / 8% / 4%) drifting 18s · no hue of its own. The amber in this product
+ * belongs to the CTA and the routing diagram; the air stays neutral.
  */
 export function LandingAurora() {
   return (
@@ -27,42 +26,14 @@ export function LandingAurora() {
         }}
       />
 
-      {/* ambient — barely there, the way 9Remote keeps it */}
-      <div
-        className="landing-ambient-a absolute left-[-18%] top-[-30%] h-[900px] w-[1080px] rounded-full blur-[150px]"
-        style={{
-          background: "radial-gradient(closest-side, rgba(255,255,255,0.05), transparent 76%)",
-        }}
-      />
-      <div
-        className="landing-ambient-b absolute right-[-20%] top-[18%] h-[760px] w-[880px] rounded-full blur-[160px]"
-        style={{
-          background: "radial-gradient(closest-side, rgba(255,255,255,0.035), transparent 78%)",
-        }}
-      />
-
-      {/* film grain, very quiet */}
-      <div
-        className="absolute inset-0 opacity-[0.03] mix-blend-soft-light"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E\")",
-          backgroundSize: "180px 180px",
-        }}
-      />
-
       {/* vignette — pure black edge, nothing more */}
       <div className="absolute inset-0 bg-[radial-gradient(125%_100%_at_50%_-6%,transparent_38%,rgba(0,0,0,0.4)_84%,rgba(0,0,0,0.62)_100%)]" />
 
-      {/* the spot — painted after the vignette on purpose: the corner falloff was
-          eating it. Warm ember behind the diagram, the only colour the air gets. */}
-      <div
-        className="absolute right-[-6%] top-[-10%] h-[640px] w-[720px] rounded-full blur-[120px]"
-        style={{
-          background:
-            "radial-gradient(closest-side, rgba(231,137,60,0.40), rgba(156,84,47,0.15) 46%, transparent 78%)",
-        }}
-      />
+      {/*
+        Ambient light — painted after the grid and the vignette so neither eats it.
+        Three gradients, transform/opacity only, 18s, frozen by reduced-motion.
+      */}
+      <div className="aethink-landing-ambient absolute inset-0" />
     </div>
   );
 }
