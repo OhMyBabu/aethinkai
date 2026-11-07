@@ -36,7 +36,8 @@ build_frontend() {
 }
 
 smoke() {
-  local base="${AETHINK_ORIGIN:-http://127.0.0.1}"
+  # port 80 now only redirects (certbot --redirect); probe the real origin
+  local base="${AETHINK_ORIGIN:-https://router.aethink.ai.id}"
   printf 'landing      %s\n' "$(curl -s -o /dev/null -w '%{http_code}' "$base/")"
   printf 'health       %s\n' "$(curl -s "$base/health")"
   printf 'models       %s model\n' "$(curl -s --retry 3 --retry-connrefused "$base/api/models" | python3 -c 'import sys,json
