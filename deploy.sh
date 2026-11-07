@@ -39,8 +39,12 @@ smoke() {
   local base="${AETHINK_ORIGIN:-http://127.0.0.1}"
   printf 'landing      %s\n' "$(curl -s -o /dev/null -w '%{http_code}' "$base/")"
   printf 'health       %s\n' "$(curl -s "$base/health")"
-  printf 'models       %s model\n' "$(curl -s "$base/api/models" | python3 -c 'import sys,json;print(json.load(sys.stdin)["count"])')"
-  printf 'packages     %s paket\n' "$(curl -s "$base/api/packages" | python3 -c 'import sys,json;print(len(json.load(sys.stdin)["packages"]))')"
+  printf 'models       %s model\n' "$(curl -s --retry 3 --retry-connrefused "$base/api/models" | python3 -c 'import sys,json
+try: print(json.load(sys.stdin)["count"])
+except Exception: print("?")')"
+  printf 'packages     %s paket\n' "$(curl -s --retry 3 --retry-connrefused "$base/api/packages" | python3 -c 'import sys,json
+try: print(len(json.load(sys.stdin)["packages"]))
+except Exception: print("?")')"
 }
 
 case "$WHAT" in

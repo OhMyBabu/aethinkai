@@ -338,6 +338,7 @@ async def dashboard_summary(admin: dict = Depends(auth.require_admin)):
           count(DISTINCT user_id)                                                     AS active_users,
           coalesce(sum(cost_micro), 0)                                                AS revenue_micro,
           coalesce(sum(cost_usd), 0)                                                  AS cost_usd,
+          count(*) FILTER (WHERE cost_usd > 0)                                        AS cost_tracked,
           coalesce(sum(cost_micro) FILTER (WHERE created_at::date = now()::date), 0)  AS revenue_today_micro,
           count(*) FILTER (WHERE created_at > now() - interval '24 hours')            AS requests_24h,
           count(*) FILTER (WHERE status <> 'ok')                                      AS failed_requests
@@ -371,7 +372,16 @@ async def dashboard_summary(admin: dict = Depends(auth.require_admin)):
         "revenue_today_idr": int(usage["revenue_today_micro"]) / 1_000_000,
         "cost_idr": round(cost_idr, 2),
         "margin_idr": round(margin, 2),
-        "margin_pct": round((margin / (revenue / 1_000_000) * 100), 1) if revenue else None,
+        # A margin is only meaningful when the upstream cost was actually recorded.
+        # cost_usd stays 0 when the 9Router price card and its usage DB are both
+        # unreachable, and a 100% margin on every request is a lie the operator
+        # would price against.
+        "cost_known": int(usage["cost_tracked"]) > 0,
+        "cost_tracked_requests": int(usage["cost_tracked"]),
+        "margin_pct": (
+            round((margin / (revenue / 1_000_000) * 100), 1)
+            if revenue and int(usage["cost_tracked"]) > 0 else None
+        ),
         "topup_idr": int(topups["topup_micro"]) / 1_000_000,
         "topup_count": int(topups["topup_count"]),
         "liability_idr": int(liability["wallets_micro"]) / 1_000_000,

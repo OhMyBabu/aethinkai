@@ -175,9 +175,15 @@ export default function AdminOverviewPage() {
             <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ash">
               <span>modal {formatIDR(summary?.cost_idr ?? 0)}</span>
               <span className="text-ash/50">·</span>
-              <span className={cn("font-medium", (summary?.margin_idr ?? 0) >= 0 ? "text-flame" : "text-[#e08a5f]")}>
-                margin {formatIDR(summary?.margin_idr ?? 0)} ({(summary?.margin_pct ?? 0).toFixed(1)}%)
-              </span>
+              {summary && summary.cost_known === false ? (
+                <span className="font-medium text-[#e3b183]" title="Kartu harga 9Router / ledger upstream belum terbaca">
+                  modal belum tercatat — margin tidak bisa dihitung
+                </span>
+              ) : (
+                <span className={cn("font-medium", (summary?.margin_idr ?? 0) >= 0 ? "text-flame" : "text-[#e08a5f]")}>
+                  margin {formatIDR(summary?.margin_idr ?? 0)} ({(summary?.margin_pct ?? 0).toFixed(1)}%)
+                </span>
+              )}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
