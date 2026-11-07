@@ -189,14 +189,14 @@ export function SignalNexus({ className, routes }: { className?: string; routes?
       className="nexus-plate group relative"
       style={{ transitionDelay: `${index * 20}ms` }}
     >
-      <div className="flex min-h-[58px] items-center gap-3 rounded-2xl border border-[#FAF8F4]/[0.07] min-[900px]:min-h-0 min-[900px]:gap-2 min-[900px]:rounded-xl xl:gap-2.5 bg-[linear-gradient(180deg,#1F2024_0%,#1A1B1E_60%,#17181B_100%)] px-3 py-2.5 shadow- min-[900px]:px-2 min-[900px]:py-1.5 xl:px-2.5 xl:py-2[inset_0_1px_0_rgba(250,248,244,0.06),0_1px_2px_rgba(0,0,0,0.45)] backdrop-blur transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-[#E7893C]/35 group-hover:shadow-[inset_0_1px_0_rgba(250,248,244,0.09),0_10px_24px_-16px_rgba(231,137,60,0.55)]">
+      <div className="flex min-h-[58px] items-center gap-3 rounded-2xl border border-[#FAF8F4]/[0.07] min-[900px]:min-h-0 min-[900px]:gap-2 min-[900px]:rounded-xl xl:gap-2.5 bg-[linear-gradient(180deg,#222327_0%,#1B1C20_60%,#17181B_100%)] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(250,248,244,0.07),0_1px_2px_rgba(0,0,0,0.5)] min-[900px]:px-2 min-[900px]:py-1.5 xl:px-2.5 xl:py-2 backdrop-blur transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-[#E7893C]/35 group-hover:shadow-[inset_0_1px_0_rgba(250,248,244,0.09),0_10px_24px_-16px_rgba(231,137,60,0.55)]">
         <span className="grid size-9 shrink-0 place-items-center rounded-xl min-[900px]:size-6 min-[900px]:rounded-lg xl:size-7 border border-[#FAF8F4]/[0.08] bg-[#FAF8F4]/[0.035] text-warm/80 transition-colors duration-300 group-hover:text-flame">
           <ModelMark provider={node.provider} size={15} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5">
             <span className="truncate text-[13.5px] font-semibold text-warm min-[900px]:text-[10.5px] xl:text-[11.5px]">{node.name}</span>
-            <span className="flex items-center gap-1 text-[9px] text-ash">
+            <span className="flex items-center gap-1 text-[9px] text-ash/90">
               <span className="relative flex size-1">
                 <span className="absolute inline-flex size-1 animate-ping rounded-full bg-flame/70" />
                 <span className="relative inline-flex size-1 rounded-full bg-flame" />
@@ -204,7 +204,7 @@ export function SignalNexus({ className, routes }: { className?: string; routes?
               <span className="hidden xl:inline">Online</span>
             </span>
           </span>
-          <span className="mt-0.5 block truncate text-[11.5px] text-ash min-[900px]:text-[9px] xl:text-[9.5px]">
+          <span className="mt-0.5 block truncate text-[11.5px] text-ash min-[900px]:text-[9.5px] xl:text-[10px]">
             <span className="xl:hidden">{node.model}</span>
             <span className="hidden xl:inline">{node.note}</span>
           </span>
@@ -268,7 +268,7 @@ export function SignalNexus({ className, routes }: { className?: string; routes?
                 fill="none"
                 stroke={index === 1 ? "#E7893C" : "url(#lane-feed)"}
                 strokeOpacity={index === 1 ? 0.8 : 0.5}
-                strokeWidth={index === 1 ? 1.4 : 0.9}
+                strokeWidth={index === 1 ? 1.45 : 1}
                 strokeLinecap="round"
               />
             ))}
@@ -288,8 +288,8 @@ export function SignalNexus({ className, routes }: { className?: string; routes?
                     d={d}
                     fill="none"
                     stroke="url(#lane-fade)"
-                    strokeWidth={index === 1 ? 1.25 : 0.8}
-                    strokeOpacity={index === 1 ? 0.95 : 0.45}
+                    strokeWidth={index === 1 ? 1.3 : 0.9}
+                    strokeOpacity={index === 1 ? 0.95 : 0.55}
                     strokeLinecap="round"
                   />
                 ))}

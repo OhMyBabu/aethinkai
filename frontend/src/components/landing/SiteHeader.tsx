@@ -518,8 +518,8 @@ export function SiteHeader() {
       ref={headerRef}
       style={{ borderBottomColor: scrolled ? "rgba(58,59,61,0.7)" : "#2A2B2E" }}
       className={cn(
-        "safe-t sticky top-0 z-40 border-b backdrop-blur-md transition-[background-color,border-color] duration-200",
-        scrolled ? "bg-[#18191B]/95" : "bg-[#18191B]/85",
+        "safe-t sticky top-0 z-40 border-b backdrop-blur-xl transition-[background-color,border-color] duration-200",
+        scrolled ? "bg-[#18191B]/96 shadow-[0_10px_30px_-24px_rgba(0,0,0,0.9)]" : "bg-[#18191B]/88",
       )}
     >
       <div className="mx-auto flex h-[72px] max-w-[1320px] items-center gap-4 px-4 sm:px-6">

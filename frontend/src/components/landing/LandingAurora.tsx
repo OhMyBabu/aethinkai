@@ -12,6 +12,21 @@ export function LandingAurora() {
       {/* base wash */}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,#1C1D22_0%,#18191D_44%,#15161A_100%)]" />
 
+      {/* technical grid — 40px, accent at 3.2%, fades with the page */}
+      <div
+        className="absolute inset-0 opacity-[0.5]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, rgba(231,137,60,0.055) 1px, transparent 1px), " +
+            "linear-gradient(to bottom, rgba(231,137,60,0.055) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+          maskImage:
+            "linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.55) 45%, transparent 82%)",
+          WebkitMaskImage:
+            "linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.55) 45%, transparent 82%)",
+        }}
+      />
+
       {/* warm bloom — left of the headline */}
       <div
         className="aurora-a absolute left-[-14%] top-[-24%] h-[880px] w-[1080px] rounded-full opacity-90 blur-[120px]"
@@ -48,7 +63,7 @@ export function LandingAurora() {
 
       {/* film grain */}
       <div
-        className="absolute inset-0 opacity-[0.05] mix-blend-soft-light"
+        className="absolute inset-0 opacity-[0.035] mix-blend-soft-light"
         style={{
           backgroundImage:
             "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E\")",

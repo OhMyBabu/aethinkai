@@ -96,12 +96,12 @@ export function PopularModels({ models }: { models: AIModel[] }) {
           Top 4{windowDays ? ` · last ${windowDays}d` : ""} <ArrowRight size={11} aria-hidden />
         </a>
       </div>
-      <ul className="grid gap-2.5 sm:grid-cols-2">
+      <ul className="grid min-w-0 gap-2.5 sm:grid-cols-2">
         {ordered.map((model) => (
           <li
             key={model.id}
             data-reveal
-            className="group flex items-center justify-between gap-3 rounded-xl border border-ash/18 bg-[#1a1b1e]/70 px-3 py-2.5 transition hover:border-flame/30"
+            className="group flex min-w-0 items-center justify-between gap-3 overflow-hidden rounded-xl border border-ash/18 bg-[#1a1b1e]/70 px-3 py-2.5 transition hover:border-flame/30"
           >
             <div className="flex min-w-0 items-center gap-2">
               <ModelMark modelId={model.modelId} provider={model.provider} size={14} className="text-warm/70" />

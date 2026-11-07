@@ -179,7 +179,7 @@ export function TerminalPreview({ className }: { className?: string }) {
       onBlurCapture={() => setHovered(false)}
     >
       {/* window chrome */}
-      <div className="flex items-center gap-2 border-b border-ash/12 bg-[#141518] px-3 py-2">
+      <div className="flex items-center gap-2 border-b border-ash/14 bg-[#17181B] px-3 py-2 shadow-[inset_0_1px_0_rgba(250,248,244,0.05)]">
         <span className="flex gap-1.5" aria-hidden>
           <span className="size-2.5 rounded-full bg-ash/35" />
           <span className="size-2.5 rounded-full bg-ash/25" />
@@ -199,7 +199,9 @@ export function TerminalPreview({ className }: { className?: string }) {
               onClick={() => setIndex(i)}
               className={cn(
                 "rounded-md px-2 py-1 text-[10.5px] font-medium transition active:scale-[0.97] max-sm:h-11 max-sm:rounded-lg max-sm:px-3 max-sm:text-[12px]",
-                index === i ? "bg-flame/15 text-flame" : "text-ash hover:text-warm",
+                index === i
+                  ? "bg-flame/[0.18] text-flame ring-1 ring-inset ring-flame/25"
+                  : "text-ash/90 hover:text-warm",
               )}
             >
               {snippet.label}
@@ -209,8 +211,8 @@ export function TerminalPreview({ className }: { className?: string }) {
       </div>
 
       {/* filename strip */}
-      <div className="flex items-center justify-between border-b border-ash/10 bg-[#16171a] px-3 py-1.5">
-        <span className="font-mono text-[10px] text-ash">
+      <div className="flex items-center justify-between border-b border-ash/12 bg-[#17181B] px-3 py-1.5">
+        <span className="font-mono text-[10px] text-ash/90">
           {active.filename} <span className="text-ash/50">· slide {index + 1}/3</span>
         </span>
         <button
@@ -225,7 +227,7 @@ export function TerminalPreview({ className }: { className?: string }) {
       </div>
 
       {/* code */}
-      <div className="relative min-h-[248px] bg-[#111214] px-3 py-3 sm:min-h-[264px]">
+      <div className="relative min-h-[248px] bg-[#101113] px-3 py-3 sm:min-h-[264px]">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-[0.35]"

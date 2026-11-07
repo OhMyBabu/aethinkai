@@ -48,7 +48,7 @@ export default function LandingPage() {
                 OpenAI-compatible API
               </span>
 
-              <h1 className="mt-5 text-[38px] font-semibold leading-[1.03] tracking-[-0.035em] text-warm sm:text-[52px] lg:text-[62px]">
+              <h1 className="mt-5 text-balance text-[38px] font-semibold leading-[1.03] tracking-[-0.035em] text-warm sm:text-[52px] lg:text-[62px]">
                 One API.
                 <br />
                 Every Model.
@@ -111,7 +111,7 @@ export default function LandingPage() {
 
         <section className="border-t border-ash/12 bg-[#151619]">
           <div className="mx-auto max-w-[1320px] px-4 py-10 sm:px-6">
-            <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
+            <div className="flex flex-col items-start justify-between gap-5 min-[900px]:flex-row min-[900px]:items-center">
               <div>
                 <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-warm">
                   Ship your first routed request today

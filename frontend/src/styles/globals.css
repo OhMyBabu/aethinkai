@@ -79,6 +79,14 @@ body {
     background-color: color-mix(in srgb, var(--color-charcoal-soft) 88%, transparent);
     border: 1px solid color-mix(in srgb, var(--color-ash) 16%, transparent);
     border-radius: var(--radius-card);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-warm) 5%, transparent);
+    transition: border-color 220ms ease, box-shadow 220ms ease, transform 220ms var(--ease-out-soft);
+  }
+  .surface:hover {
+    border-color: color-mix(in srgb, var(--color-ash) 26%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--color-warm) 7%, transparent),
+      0 12px 30px -22px rgba(0, 0, 0, 0.9);
   }
   .surface-raised {
     background-image: linear-gradient(
