@@ -26,17 +26,50 @@ export function LandingAurora() {
         }}
       />
 
-      {/* ambient light — neutral, slow, only enough for depth */}
+      {/* key light — a wide cone from above the fold. screen blend is what makes
+          it read as light instead of a lighter rectangle of paint. */}
       <div
-        className="landing-ambient-a absolute left-[-16%] top-[-28%] h-[900px] w-[1100px] rounded-full blur-[130px]"
+        className="landing-keylight absolute inset-x-0 top-0 h-[76%]"
         style={{
-          background: "radial-gradient(closest-side, rgba(255,255,255,0.055), transparent 72%)",
+          background:
+            "radial-gradient(58% 48% at 34% 0%, rgba(255,255,255,0.30), rgba(255,255,255,0.10) 40%, transparent 72%)",
+          mixBlendMode: "screen",
+          // keep the nav row out of the cone: labels must stay above 4.5:1
+          maskImage:
+            "linear-gradient(180deg, transparent 0px, transparent 84px, #000 140px)",
+          WebkitMaskImage:
+            "linear-gradient(180deg, transparent 0px, transparent 84px, #000 140px)",
+        }}
+      />
+
+      {/* ambient light — neutral, slow, and bright enough to actually read as
+          light rather than a grey smudge */}
+      <div
+        className="landing-ambient-a absolute left-[-14%] top-[-26%] h-[980px] w-[1180px] rounded-full blur-[120px]"
+        style={{
+          background:
+            "radial-gradient(closest-side, rgba(255,255,255,0.26), rgba(255,255,255,0.10) 46%, transparent 74%)",
         }}
       />
       <div
-        className="landing-ambient-b absolute right-[-18%] top-[24%] h-[760px] w-[880px] rounded-full blur-[150px]"
+        className="landing-ambient-b absolute right-[-16%] top-[20%] h-[820px] w-[940px] rounded-full blur-[130px]"
         style={{
-          background: "radial-gradient(closest-side, rgba(255,255,255,0.035), transparent 74%)",
+          background:
+            "radial-gradient(closest-side, rgba(255,255,255,0.18), rgba(255,255,255,0.06) 48%, transparent 76%)",
+        }}
+      />
+      {/* top centre — a wide, low cone so the fold has a light source */}
+      <div
+        className="absolute left-[26%] top-[-30%] h-[620px] w-[900px] rounded-full blur-[150px]"
+        style={{
+          background: "radial-gradient(closest-side, rgba(255,255,255,0.14), transparent 76%)",
+        }}
+      />
+      {/* low centre glow — lifts the fold instead of letting it fall to black */}
+      <div
+        className="absolute bottom-[-24%] left-[24%] h-[620px] w-[1040px] rounded-full blur-[140px]"
+        style={{
+          background: "radial-gradient(closest-side, rgba(255,255,255,0.06), transparent 78%)",
         }}
       />
 

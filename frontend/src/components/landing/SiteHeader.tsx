@@ -55,7 +55,7 @@ function NavItem({
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7893C]/40",
     active
       ? "bg-[#292B2E] text-[#FAF8F4]"
-      : "text-[#85888B] hover:bg-[#292B2E]/70 hover:text-[#FAF8F4]",
+      : "text-[#9A9DA0] hover:bg-[#292B2E]/70 hover:text-[#FAF8F4]",
   );
 
   const inner = (
@@ -64,7 +64,7 @@ function NavItem({
         aria-hidden
         className={cn(
           "flex transition-colors duration-200",
-          active ? "text-[#E7893C]" : "text-[#85888B] group-hover:text-[#FAF8F4]",
+          active ? "text-[#E7893C]" : "text-[#9A9DA0] group-hover:text-[#FAF8F4]",
         )}
       >
         {icon}
