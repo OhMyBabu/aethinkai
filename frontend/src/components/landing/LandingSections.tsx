@@ -98,8 +98,8 @@ export function PopularModels({ models }: { models: AIModel[] }) {
 function ctxLabel(tokens: number): string {
   if (!tokens) return "";
   if (tokens >= 1_000_000) {
-    const m = tokens / 1_000_000;
-    return `${Number.isInteger(m) ? m : m.toFixed(1)}M`;
+    const m = Math.round((tokens / 1_000_000) * 10) / 10;
+    return `${m % 1 === 0 ? m.toFixed(0) : m}M`;
   }
   if (tokens >= 1000) return `${Math.round(tokens / 1000)}K`;
   return `${tokens}`;
@@ -116,7 +116,7 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
         <div>
           <p className="text-[12px] uppercase tracking-[0.2em] text-flame sm:text-[11px]">Full catalogue</p>
           <h2 className="mt-1.5 text-[24px] font-semibold tracking-[-0.02em] text-warm sm:text-[30px]">
-            {models.length} routes{maxContextLabel ? `, up to ${maxContextLabel} tokens` : ""}
+            {models.length} model{maxContextLabel ? `, up to ${maxContextLabel} token` : ""}
           </h2>
           <p className="mt-1.5 max-w-xl text-[13px] leading-6 text-ash max-[899px]:text-[14px] max-[899px]:leading-6">
             Every model the gateway exposes, with context windows and per-million pricing.

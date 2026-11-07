@@ -80,24 +80,38 @@ export default function UserModelsPage() {
   const [running, setRunning] = useState(false);
   const [output, setOutput] = useState<string | null>(null);
 
+  // The catalogue is admin-controlled: a price change must reach an open tab,
+  // not only a fresh page load. Poll while visible, refresh on focus.
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    publicModels()
-      .then((data) => {
-        if (!cancelled) {
-          setLive(data.data as LiveModel[]);
-          setLoadError(null);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) setLoadError((err as Error).message);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    const pull = (showSpinner: boolean) => {
+      if (showSpinner) setLoading(true);
+      publicModels()
+        .then((data) => {
+          if (!cancelled) {
+            setLive(data.data as LiveModel[]);
+            setLoadError(null);
+          }
+        })
+        .catch((err) => {
+          if (!cancelled) setLoadError((err as Error).message);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    };
+
+    pull(true);
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") pull(false);
+    }, 20_000);
+    const onFocus = () => pull(false);
+    window.addEventListener("focus", onFocus);
+
     return () => {
       cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
     };
   }, []);
 

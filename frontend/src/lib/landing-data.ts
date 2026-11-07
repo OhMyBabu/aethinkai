@@ -114,10 +114,16 @@ export function useLandingData(): LandingData {
     };
 
     void pull();
-    const timer = window.setInterval(() => void pull(), 30_000);
+    // admin edits must show up without a reload: poll + refresh on focus
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void pull();
+    }, 15_000);
+    const onFocus = () => void pull();
+    window.addEventListener("focus", onFocus);
     return () => {
       alive = false;
       window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
     };
   }, []);
 
