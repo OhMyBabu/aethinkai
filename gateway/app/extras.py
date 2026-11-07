@@ -632,3 +632,128 @@ def _brand(model_id: str) -> str:
         if token in low:
             return name
     return "—"
+
+
+# ------------------------------------------------------------------ provider routes
+# A catalogue model is one promise; where it is served is a chain the operator owns.
+class RouteIn(BaseModel):
+    upstream_model: str
+    provider_label: str | None = None
+    priority: int = 10
+    active: bool = True
+    note: str | None = None
+
+
+class RoutePatch(BaseModel):
+    upstream_model: str | None = None
+    provider_label: str | None = None
+    priority: int | None = None
+    active: bool | None = None
+    note: str | None = None
+
+
+class FallbackToggle(BaseModel):
+    enabled: bool
+
+
+def _route_id() -> str:
+    return "rt_" + uuid.uuid4().hex[:16]
+
+
+@router.get("/api/admin/routes")
+async def list_routes(admin: dict = Depends(auth.require_admin)):
+    rows = await db.pool().fetch(
+        """
+        SELECT r.*, coalesce(p.public_id, split_part(r.model_id,'/',2)) AS public_id,
+               coalesce(p.display_name, r.model_id) AS display_name,
+               p.fallback_enabled, p.context_window, p.max_output, p.active AS model_active
+          FROM model_routes r
+          LEFT JOIN model_prices p ON p.model_id = r.model_id
+         ORDER BY r.model_id, r.priority, r.created_at
+        """
+    )
+    return {"routes": [dict(r) for r in rows]}
+
+
+@router.get("/api/admin/model-routes")
+async def routes_for_model(model_id: str, admin: dict = Depends(auth.require_admin)):
+    """One catalogue model's provider chain. model_id is a query param on purpose:
+    a catalogue id contains a slash ('mr/glm-5.3') and path params mangle it."""
+    rows = await db.pool().fetch(
+        """SELECT * FROM model_routes WHERE model_id = $1 ORDER BY priority, created_at""",
+        model_id,
+    )
+    meta = await db.pool().fetchrow(
+        "SELECT public_id, display_name, fallback_enabled, context_window, max_output "
+        "FROM model_prices WHERE model_id = $1", model_id)
+    return {"model_id": model_id,
+            "model": dict(meta) if meta else None,
+            "routes": [dict(r) for r in rows]}
+
+
+class NewRouteIn(RouteIn):
+    model_id: str
+
+
+@router.post("/api/admin/model-routes", status_code=201)
+async def add_route(body: NewRouteIn, admin: dict = Depends(auth.require_admin)):
+    exists = await db.pool().fetchval("SELECT 1 FROM model_prices WHERE model_id = $1", body.model_id)
+    if not exists:
+        raise HTTPException(404, {"error": {"message": "Model katalog tidak ada",
+                                            "code": "model_not_found"}})
+    label = body.provider_label or body.upstream_model.split("/")[0].split(":")[0]
+    try:
+        row = await db.pool().fetchrow(
+            """INSERT INTO model_routes(id, model_id, upstream_model, provider_label,
+                                        priority, active, note)
+               VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *""",
+            _route_id(), body.model_id, body.upstream_model, label, body.priority,
+            body.active, body.note,
+        )
+    except Exception:
+        raise HTTPException(409, {"error": {"message": "Route itu sudah terdaftar untuk model ini",
+                                            "code": "duplicate_route"}})
+    await db.log_audit(admin["email"], "route.create", body.model_id,
+                       {"upstream": body.upstream_model, "priority": body.priority})
+    return {"route": dict(row)}
+
+
+@router.patch("/api/admin/model-fallback")
+async def toggle_fallback(body: FallbackToggle, model_id: str,
+                          admin: dict = Depends(auth.require_admin)):
+    row = await db.pool().fetchrow(
+        "UPDATE model_prices SET fallback_enabled = $2 WHERE model_id = $1 "
+        "RETURNING model_id, fallback_enabled", model_id, body.enabled)
+    if row is None:
+        raise HTTPException(404, {"error": {"message": "Model katalog tidak ada",
+                                            "code": "model_not_found"}})
+    await db.log_audit(admin["email"], "model.fallback", model_id, {"enabled": body.enabled})
+    return {"model_id": row["model_id"], "fallback_enabled": row["fallback_enabled"]}
+
+
+@router.get("/api/admin/upstream/catalogue")
+async def upstream_catalogue(q: str = "", limit: int = 60,
+                             admin: dict = Depends(auth.require_admin)):
+    """Router catalogue with the facts needed to pick a route: provider, ctx, max out."""
+    try:
+        data = (await upstream.list_models()).get("data", [])
+    except Exception as exc:
+        raise HTTPException(502, {"error": {"message": f"Router tidak terjangkau: {exc}",
+                                            "code": "upstream_error"}})
+    used = {r["upstream_model"] for r in await db.pool().fetch("SELECT upstream_model FROM model_routes")}
+    needle = q.strip().lower()
+    out = []
+    for m in data:
+        mid = m.get("id") or ""
+        if needle and needle not in mid.lower():
+            continue
+        caps = m.get("capabilities") or {}
+        out.append({
+            "id": mid,
+            "provider": mid.split("/")[0].split(":")[0],
+            "context_window": m.get("context_length") or caps.get("contextWindow"),
+            "max_output": m.get("max_completion_tokens") or caps.get("maxOutput"),
+            "in_use": mid in used,
+        })
+    out.sort(key=lambda r: r["id"])
+    return {"count": len(out), "models": out[:max(1, min(limit, 500))]}

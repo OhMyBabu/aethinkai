@@ -671,3 +671,83 @@ export const adminCreditBuyer = (id: string, amountIdr: number, note = "manual c
     method: "POST",
     body: JSON.stringify({ amount_idr: amountIdr, note }),
   });
+
+
+/* ------------------------------------------------------------------ */
+/*  Provider routes per catalogue model                                */
+/* ------------------------------------------------------------------ */
+
+export type GwRoute = {
+  id: string;
+  model_id: string;
+  upstream_model: string;
+  provider_label: string | null;
+  priority: number;
+  active: boolean;
+  note: string | null;
+  created_at: string;
+  public_id?: string | null;
+  display_name?: string | null;
+  fallback_enabled?: boolean;
+  context_window?: number | null;
+  max_output?: number | null;
+  model_active?: boolean;
+};
+
+export type GwRouterModel = {
+  id: string;
+  provider: string;
+  context_window: number | null;
+  max_output: number | null;
+  in_use: boolean;
+};
+
+export async function adminRoutes() {
+  return request<{ routes: GwRoute[] }>("/api/admin/routes");
+}
+
+export async function modelRoutes(modelId: string) {
+  return request<{
+    model_id: string;
+    model: { public_id: string | null; display_name: string | null; fallback_enabled: boolean;
+             context_window: number | null; max_output: number | null } | null;
+    routes: GwRoute[];
+  }>(`/api/admin/model-routes?model_id=${encodeURIComponent(modelId)}`);
+}
+
+export async function createModelRoute(body: {
+  model_id: string; upstream_model: string; provider_label?: string | null;
+  priority?: number; active?: boolean; note?: string | null;
+}) {
+  return request<{ route: GwRoute }>("/api/admin/model-routes", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function patchModelRoute(
+  id: string,
+  body: Partial<{ upstream_model: string; provider_label: string; priority: number; active: boolean; note: string }>,
+) {
+  return request<{ route: GwRoute }>(`/api/admin/routes/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteModelRoute(id: string) {
+  return request<{ ok: boolean }>(`/api/admin/routes/${id}`, { method: "DELETE" });
+}
+
+export async function toggleModelFallback(modelId: string, enabled: boolean) {
+  return request<{ model_id: string; fallback_enabled: boolean }>(
+    `/api/admin/model-fallback?model_id=${encodeURIComponent(modelId)}`,
+    { method: "PATCH", body: JSON.stringify({ enabled }) },
+  );
+}
+
+export async function upstreamCatalogue(q: string) {
+  return request<{ count: number; models: GwRouterModel[] }>(
+    `/api/admin/upstream/catalogue?q=${encodeURIComponent(q)}&limit=80`,
+  );
+}

@@ -98,7 +98,7 @@ async def resolve_model(alias: str) -> dict[str, Any] | None:
         """
         SELECT mp.model_id, mp.public_id, mp.display_name,
                mp.price_in_idr, mp.price_out_idr, mp.price_cached_idr,
-               mp.context_window, mp.max_output,
+               mp.context_window, mp.max_output, mp.fallback_enabled,
                ma.upstream_model AS local_model
         FROM model_prices mp
         LEFT JOIN model_aliases ma ON ma.model_id = mp.model_id
@@ -109,6 +109,18 @@ async def resolve_model(alias: str) -> dict[str, Any] | None:
         alias,
     )
     return dict(row) if row else None
+
+
+async def routes_for(model_id: str) -> list[dict[str, Any]]:
+    """Ordered provider routes for a catalogue model (admin-managed chain)."""
+    rows = await pool().fetch(
+        """SELECT id, upstream_model, provider_label, priority
+             FROM model_routes
+            WHERE model_id = $1 AND active
+            ORDER BY priority, created_at""",
+        model_id,
+    )
+    return [dict(r) for r in rows]
 
 
 async def create_hold(user_id: str, key_id: str, amount_micro: int, ttl_seconds: int) -> str | None:
@@ -232,15 +244,15 @@ async def record_usage(ev: dict[str, Any]) -> None:
             id, request_id, user_id, key_id, model_id, served_model,
             tokens_in, tokens_out, tokens_cached,
             price_in_idr, price_out_idr, cost_micro, cost_usd, cost_delta_micro,
-            latency_ms, status, http_status, stream, client_ip, client_ua
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+            latency_ms, status, http_status, stream, client_ip, client_ua, route
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
         """,
         ev["id"], ev["request_id"], ev["user_id"], ev.get("key_id"), ev["model_id"], ev.get("served_model"),
         ev.get("tokens_in", 0), ev.get("tokens_out", 0), ev.get("tokens_cached", 0),
         ev.get("price_in_idr", 0), ev.get("price_out_idr", 0), ev.get("cost_micro", 0),
         ev.get("cost_usd", 0), ev.get("cost_delta_micro", 0),
         ev.get("latency_ms", 0), ev.get("status", "ok"), ev.get("http_status"), ev.get("stream", False),
-        ev.get("client_ip"), ev.get("client_ua"),
+        ev.get("client_ip"), ev.get("client_ua"), ev.get("route"),
     )
 
 

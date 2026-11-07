@@ -23,6 +23,7 @@ const titles: Record<string, string> = {
   "/admin/monitor": "Key Monitor",
   "/admin/model-live": "Model Monitor",
   "/admin/bansos": "Bansos",
+  "/admin/routing": "Model Routing",
   "/admin/fallbacks": "Model Fallback",
   "/admin/usage": "Usage Analytics",
   "/admin/settings": "Admin Settings",

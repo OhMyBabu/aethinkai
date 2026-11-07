@@ -32,6 +32,7 @@ import AdminMonitorPage from "@/pages/admin/Monitor";
 import AdminModelLivePage from "@/pages/admin/ModelsLive";
 import AdminBansosPage from "@/pages/admin/Bansos";
 import AdminFallbacksPage from "@/pages/admin/Fallbacks";
+import AdminRoutingPage from "@/pages/admin/Routing";
 import AdminAccessPage from "@/pages/admin/Access";
 import AdminUsagePage from "@/pages/admin/Usage";
 import AdminSettingsPage from "@/pages/admin/Settings";
@@ -121,6 +122,7 @@ export default function App() {
             <Route path="model-live" element={<AdminModelLivePage />} />
             <Route path="bansos" element={<AdminBansosPage />} />
             <Route path="fallbacks" element={<AdminFallbacksPage />} />
+            <Route path="routing" element={<AdminRoutingPage />} />
             <Route path="access" element={<AdminAccessPage />} />
             <Route path="usage" element={<AdminUsagePage />} />
             <Route path="settings" element={<AdminSettingsPage />} />

@@ -272,6 +272,21 @@ def pretty_name(model_id: str, display_name: str | None) -> str:
     return " ".join(out) or slug
 
 
+def _upstream_chain(payload: dict[str, Any], routes: list[str], extra: list[str]) -> list[dict[str, Any]]:
+    """Ordered attempts, deduplicated: admin routes first, then model-level fallbacks.
+
+    The buyer asked for one model name; each entry here is a host we are willing to
+    try for it, in the operator's order.
+    """
+    seen: set[str] = set()
+    out: list[dict[str, Any]] = []
+    for name in [*routes, *extra]:
+        if name and name not in seen:
+            seen.add(name)
+            out.append({**payload, "model": name})
+    return out
+
+
 @app.get("/api/models")
 async def public_models():
     """Catalogue visible to customers: only models the admin enabled and priced."""
@@ -418,7 +433,14 @@ async def chat_completions(request: Request, key: dict = Depends(require_key)):
     # mapping lives in model_aliases because the two catalogues name models
     # differently (`glm-5.3` vs `neuralwatt:glm-5.3-flash`). No mapping means the
     # local router has no provider for it: fail honestly, never reach elsewhere.
-    upstream_model = route.get("local_model") or route["model_id"]
+    routed = await db.routes_for(route["model_id"])
+    if not route.get("fallback_enabled", True):
+        routed = routed[:1]                     # "fallback off": primary route only
+    if not routed:
+        # nothing configured: the synced alias is the single route
+        routed = [{"upstream_model": route.get("local_model") or route["model_id"]}]
+    upstream_model = routed[0]["upstream_model"]
+    route_chain = [r["upstream_model"] for r in routed]
     payload["model"] = upstream_model
 
     balance = await db.balance_micro(key["user_id"])
@@ -462,9 +484,8 @@ async def chat_completions(request: Request, key: dict = Depends(require_key)):
             http_status = 200
             served_route = upstream_model
             try:
-                chain = [{**payload, "model": upstream_model}]
-                for fb_model in await extras.fallbacks_for(upstream_model):
-                    chain.append({**payload, "model": fb_model})
+                chain = _upstream_chain(payload, route_chain,
+                                        await extras.fallbacks_for(upstream_model))
                 for candidate in chain:
                     agen = upstream.stream_chat(candidate)
                     try:
@@ -493,6 +514,7 @@ async def chat_completions(request: Request, key: dict = Depends(require_key)):
                     hold_id, grant, key["user_id"], charged, request_id, f"{model_id} {ti}/{to}"
                 )
                 event.update({
+                    "route": served_route,
                     "served_model": usage.get("_model"), "tokens_in": ti, "tokens_out": to,
                     "tokens_cached": cached, "cost_micro": charged,
                     "cost_usd": await _cost_usd(served_route, ti, to, cached),
@@ -508,9 +530,8 @@ async def chat_completions(request: Request, key: dict = Depends(require_key)):
                      "X-Balance-Micro": str(balance - hold_amount), **rate_headers},
         )
 
-    chain = [{**payload, "model": upstream_model}]
-    for fb_model in await extras.fallbacks_for(upstream_model):
-        chain.append({**payload, "model": fb_model})
+    chain = _upstream_chain(payload, route_chain,
+                            await extras.fallbacks_for(upstream_model))
 
     status_code, body, served_route = 502, b'{"error":{"message":"upstream unreachable"}}', upstream_model
     last_error: Exception | None = None

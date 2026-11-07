@@ -1,22 +1,6 @@
 import { useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import {
-  Activity,
-  ArrowRightLeft,
-  Boxes,
-  Cpu,
-  Gift,
-  CreditCard,
-  Gauge,
-  KeyRound,
-  LayoutDashboard,
-  Radar,
-  Settings,
-  ShieldCheck,
-  Tag,
-  Users,
-  X,
-} from "lucide-react";
+import { Activity, ArrowRightLeft, Boxes, Cpu, CreditCard, Gauge, Gift, GitBranch, KeyRound, LayoutDashboard, Radar, Settings, ShieldCheck, Tag, Users, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Wordmark } from "@/components/layout/BrandLogo";
 import { StatusPill } from "@/components/common/StatusPill";
@@ -42,6 +26,7 @@ const adminNav = [
   { to: "/admin/monitor", label: "Key Monitor", icon: Radar },
   { to: "/admin/model-live", label: "Model Monitor", icon: Cpu },
   { to: "/admin/bansos", label: "Bansos", icon: Gift },
+  { to: "/admin/routing", label: "Routing", icon: GitBranch },
   { to: "/admin/fallbacks", label: "Fallback", icon: ArrowRightLeft },
   { to: "/admin/usage", label: "Usage Analytics", icon: Activity },
   { to: "/admin/settings", label: "Admin Settings", icon: Settings },
