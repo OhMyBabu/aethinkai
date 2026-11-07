@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 import { Wordmark } from "@/components/layout/BrandLogo";
 import { TelegramConnect } from "@/components/portal/TelegramConnect";
-import { createPayment, fetchOrders, fetchPackages, placeOrder, type Pkg, type PortalOrder } from "@/lib/portal";
+import { createPayment, fetchOrders, fetchShop, placeOrder, topupOrder,
+  type Pkg, type PortalOrder, type TopupPolicy } from "@/lib/portal";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/cn";
 
@@ -68,6 +69,8 @@ const when = (iso: string | null) => {
 function StorePanel({ token, onChanged }: { token: string; onChanged: () => void }) {
   const navigate = useNavigate();
   const [packages, setPackages] = useState<Pkg[]>([]);
+  const [topup, setTopup] = useState<TopupPolicy>({ min_idr: 2000, max_idr: null, enabled: true });
+  const [topupAmount, setTopupAmount] = useState("20000");
   const [orders, setOrders] = useState<PortalOrder[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -75,7 +78,11 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
   const [receiptBusy, setReceiptBusy] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    try { setPackages(await fetchPackages()); } catch { /* keep empty */ }
+    try {
+      const shop = await fetchShop();
+      setPackages(shop.packages);
+      setTopup(shop.topup);
+    } catch { /* keep empty */ }
     try { setOrders(await fetchOrders(token)); } catch { /* session may be key-only */ }
   }, [token]);
 
@@ -100,6 +107,32 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
       }
     } catch (err) {
       setNotice(err instanceof Error ? err.message : "Gagal membuat order");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const buyTopup = async () => {
+    const amount = Math.round(Number(topupAmount));
+    if (!Number.isFinite(amount) || amount < topup.min_idr) {
+      setNotice(`Top-up minimal ${idr(topup.min_idr)}.`);
+      return;
+    }
+    setBusy("topup");
+    setNotice(null);
+    try {
+      const order = await topupOrder(token, amount);
+      setNotice(`Top-up ${order.order_id} dibuat (${idr(amount)}). Lanjut pembayaran…`);
+      await refresh();
+      onChanged();
+      try {
+        const pay = await createPayment(token, order.order_id);
+        navigate(`/pay/${order.order_id}?t=${encodeURIComponent(pay.checkout_token)}`);
+      } catch {
+        setNotice(`Top-up ${order.order_id} dibuat (${idr(amount)}). Pembayaran otomatis belum aktif — hubungi admin.`);
+      }
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "Gagal membuat top-up");
     } finally {
       setBusy(null);
     }
@@ -130,6 +163,44 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
           </div>
         ))}
       </div>
+      {topup.enabled ? (
+        <div className="mt-3 rounded-lg border border-[#3A3B3D] bg-[#141518] p-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <p className="text-[12.5px] font-semibold text-[#FAF8F4]">Top-up nominal bebas</p>
+            <p className="text-[10.5px] text-[#85888B]">
+              min {idr(topup.min_idr)}{topup.max_idr ? ` · maks ${idr(topup.max_idr)}` : ""} · RPM tidak berubah
+            </p>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              type="number"
+              value={topupAmount}
+              onChange={(e) => setTopupAmount(e.target.value)}
+              className="h-9 w-[140px] rounded-md border border-[#3A3B3D] bg-[#191A1D] px-3 font-mono text-[12.5px] text-[#FAF8F4]"
+            />
+            <div className="flex gap-1.5">
+              {[10000, 25000, 50000].map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setTopupAmount(String(v))}
+                  className="h-8 rounded-md border border-[#3A3B3D] px-2 text-[11px] text-[#a9a49c] transition hover:bg-[#22242a]"
+                >
+                  {idr(v)}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => void buyTopup()}
+              disabled={busy !== null}
+              className="ml-auto flex h-8 items-center justify-center gap-1.5 rounded-md bg-[#E7893C] px-3 text-[12px] font-semibold text-[#18191B] transition hover:bg-[#F09A55] disabled:opacity-50"
+            >
+              {busy === "topup" ? <Loader2 size={12} className="animate-spin" /> : null} Top-up
+            </button>
+          </div>
+        </div>
+      ) : null}
       {notice ? (
         <p className="mt-3 rounded-md border border-[#E7893C]/35 bg-[#E7893C]/10 px-3 py-2 text-[11.5px] leading-5 text-[#E7893C]">
           {notice}

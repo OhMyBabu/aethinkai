@@ -61,22 +61,46 @@ portal = APIRouter(prefix="/api/portal", tags=["portal"])
 store = APIRouter(prefix="/api", tags=["store"])
 
 # Single source of truth for the catalogue: the web store, the bot and the grant path all read this.
-PACKAGES = [
-    {"sku": "starter", "name": "Starter", "idr": 5_000, "rpm": 60,
-     "blurb": "cocok buat coba-coba & bot pribadi"},
-    {"sku": "pro", "name": "Pro", "idr": 25_000, "rpm": 180,
-     "blurb": "buat produk kecil & automation harian"},
-    {"sku": "max", "name": "Max", "idr": 100_000, "rpm": 600,
-     "blurb": "traffic tinggi, parallel request"},
-]
-PACKAGE_BY_SKU = {p["sku"]: p for p in PACKAGES}
+async def load_packages(include_inactive: bool = False) -> list[dict[str, Any]]:
+    """Packages live in the database: admin owns them, every surface reads them.
+
+    Shaped for both consumers: `idr`/`rpm` for the bot (which has always read those
+    keys) and `price_idr`/`credits_micro`/`rpm_limit` for the gateway and web UI.
+    """
+    rows = await db.pool().fetch(
+        f"""SELECT sku, name, blurb, price_idr, credits_micro, rpm_limit, kind, active, sort
+              FROM packages {"" if include_inactive else "WHERE active"}
+             ORDER BY sort, price_idr"""
+    )
+    out = []
+    for r in rows:
+        item = dict(r)
+        item["idr"] = int(r["price_idr"])
+        item["rpm"] = int(r["rpm_limit"])
+        item["credits"] = int(r["credits_micro"]) / 1_000_000
+        out.append(item)
+    return out
+
+
+async def package_by_sku(sku: str, include_inactive: bool = False) -> dict[str, Any] | None:
+    for p in await load_packages(include_inactive=include_inactive):
+        if p["sku"] == sku:
+            return p
+    return None
+
+
+async def topup_policy() -> dict[str, Any]:
+    row = await db.pool().fetchrow("SELECT min_idr, max_idr, enabled FROM topup_policy WHERE id = 1")
+    return dict(row) if row else {"min_idr": 2000, "max_idr": 5000000, "enabled": True}
+
+
 BOT_USERNAME = os.environ.get("AETHINK_BOT_USERNAME", "AethinkBot")
 LINK_TTL_MINUTES = 10
 
 
 @store.get("/packages")
 async def public_packages():
-    return {"packages": [{**p, "credits_micro": p["idr"] * 1_000_000} for p in PACKAGES]}
+    return {"packages": await load_packages(), "topup": await topup_policy()}
 internal = APIRouter(prefix="/api/internal", tags=["internal"])
 admin_ops = APIRouter(prefix="/api/admin/access", tags=["admin-access"])
 
@@ -686,20 +710,20 @@ class OrderReq(BaseModel):
 @portal.post("/order")
 async def portal_order(body: OrderReq, row: dict = Depends(portal_identity)):
     """Web purchase: allowed only for a Telegram-linked buyer (that is the identity check)."""
-    pkg = PACKAGE_BY_SKU.get(body.sku)
+    pkg = await package_by_sku(body.sku)
     if pkg is None:
-        raise _bad("unknown_sku", "Paket tidak dikenal", 400)
+        raise _bad("unknown_sku", "Paket tidak dikenal atau sudah tidak dijual", 400)
     buyer_id = row.get("buyer_id")
     if not buyer_id:
         raise _bad("telegram_required", "Hubungkan Telegram dulu untuk membeli", 403)
 
     order_id = await unique_order_ref()
-    credits = pkg["idr"] * 1_000_000
+    credits = int(pkg["credits_micro"])
     await db.pool().execute(
         """INSERT INTO orders(id, buyer_id, sku, credits_micro, price_idr, payment_ref, status, rpm_limit)
            VALUES ($1,$2,$3,$4,$5,$1,'pending',$6)
            ON CONFLICT (id) DO NOTHING""",
-        order_id, buyer_id, pkg["sku"], credits, pkg["idr"], pkg["rpm"],
+        order_id, buyer_id, pkg["sku"], credits, int(pkg["price_idr"]), int(pkg["rpm_limit"]),
     )
     await db.log_audit(f"buyer:{buyer_id}", "portal.order", order_id,
                        {"sku": pkg["sku"], "credits_micro": credits})
@@ -707,14 +731,59 @@ async def portal_order(body: OrderReq, row: dict = Depends(portal_identity)):
         "order_id": order_id,
         "sku": pkg["sku"],
         "name": pkg["name"],
-        "price_idr": pkg["idr"],
+        "price_idr": int(pkg["price_idr"]),
         "credits_micro": credits,
-        "rpm_limit": pkg["rpm"],
+        "rpm_limit": int(pkg["rpm_limit"]),
         "status": "pending",
         "payment": {
             "method": "manual",
             "note": "Bayar ke admin (transfer/QRIS), lalu tekan 'Saya sudah bayar' di bot atau tunggu admin konfirmasi.",
         },
+    }
+
+
+class TopupReq(BaseModel):
+    # bounds are checked below against topup_policy so the error is friendly, not a 422
+    amount_idr: int = Field(ge=1, le=1_000_000_000)
+
+
+@portal.post("/topup")
+async def portal_topup(body: TopupReq, row: dict = Depends(portal_identity)):
+    """Free-nominal top-up: credits == nominal, RPM unchanged.
+
+    Buying a plan raises RPM (best package ever bought); topping up only adds credit.
+    That keeps the shop explainable: one number for throughput, one number for money.
+    """
+    policy = await topup_policy()
+    if not policy.get("enabled"):
+        raise _bad("topup_disabled", "Top-up nominal bebas sedang tidak dibuka", 403)
+    amount = int(body.amount_idr)
+    if amount < int(policy["min_idr"]):
+        raise _bad("topup_too_small", f"Minimal top-up Rp{int(policy['min_idr']):,}".replace(",", "."), 400)
+    if policy.get("max_idr") and amount > int(policy["max_idr"]):
+        raise _bad("topup_too_large", f"Maksimal top-up Rp{int(policy['max_idr']):,}".replace(",", "."), 400)
+    buyer_id = row.get("buyer_id")
+    if not buyer_id:
+        raise _bad("telegram_required", "Hubungkan Telegram dulu untuk top-up", 403)
+
+    order_id = await unique_order_ref()
+    credits = amount * 1_000_000
+    rpm = int(row.get("rpm_limit") or 30)
+    await db.pool().execute(
+        """INSERT INTO orders(id, buyer_id, sku, credits_micro, price_idr, payment_ref, status, rpm_limit)
+           VALUES ($1,$2,'topup',$3,$4,$1,'pending',$5)""",
+        order_id, buyer_id, credits, amount, rpm)
+    await db.log_audit(f"buyer:{buyer_id}", "portal.topup", order_id,
+                       {"amount_idr": amount, "credits_micro": credits})
+    return {
+        "order_id": order_id,
+        "sku": "topup",
+        "name": "Top-up saldo",
+        "price_idr": amount,
+        "credits_micro": credits,
+        "rpm_limit": rpm,
+        "status": "pending",
+        "payment": {"method": "manual", "note": "Bayar QRIS/transfer, lalu admin konfirmasi."},
     }
 
 
@@ -732,7 +801,7 @@ async def order_receipt(order_id: str, row: dict = Depends(portal_identity)):
     if row.get("buyer_id") and order["buyer_id"] != row["buyer_id"]:
         raise _bad("not_found", "Invoice tidak ada", 404)
 
-    pkg = PACKAGE_BY_SKU.get(order["sku"]) or {}
+    pkg = await package_by_sku(order["sku"], include_inactive=True) or {}
     owner = await db.pool().fetchval(
         "SELECT user_id FROM api_keys WHERE buyer_id = $1 ORDER BY created_at DESC LIMIT 1",
         order["buyer_id"])
@@ -990,6 +1059,13 @@ async def _key_for_grant(con, user_id: str, buyer_id: str, label: str,
     """
     row = await _active_key(con, user_id)
     if row is not None:
+        # RPM belongs to the account and never drops: a Pro purchase after a Starter
+        # purchase raises the existing key instead of minting a second credential.
+        if int(rpm or 0) > int(row["rpm_limit"] or 0):
+            await con.execute("UPDATE api_keys SET rpm_limit = $2 WHERE id = $1", row["id"], int(rpm))
+        await con.execute(
+            """UPDATE buyers SET plan_rpm = GREATEST(plan_rpm, $2) WHERE id = $1""",
+            buyer_id, int(rpm or 0))
         return row["id"], None, row["prefix"], True
     key_id, raw_key, prefix = await _mint_key(con, user_id, buyer_id, label, rpm)
     return key_id, raw_key, prefix, False
@@ -1003,6 +1079,9 @@ async def _mint_key(con, user_id: str, buyer_id: str, label: str, rpm: int) -> t
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active')""",
         key_id, user_id, buyer_id, prefix, digest, label, label, rpm,
     )
+    # the first purchase also sets the account's earned RPM
+    await con.execute(
+        "UPDATE buyers SET plan_rpm = GREATEST(plan_rpm, $2) WHERE id = $1", buyer_id, int(rpm or 0))
     return key_id, raw, prefix
 
 

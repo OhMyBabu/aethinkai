@@ -12,7 +12,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from . import auth, db, upstream
+from . import auth, db, portal, upstream
 
 PUBLIC_EMAIL = "bansos@aethink.ai"
 MAX_PUBLIC_KEYS = 40
@@ -778,6 +778,114 @@ async def delete_route(route_id: str, admin: dict = Depends(auth.require_admin))
     await db.log_audit(admin["email"], "route.delete", row["model_id"],
                        {"upstream": row["upstream_model"]})
     return {"ok": True}
+
+
+# ------------------------------------------------------------------ packages
+
+
+class PackageIn(BaseModel):
+    sku: str = Field(min_length=2, max_length=24, pattern="^[a-z0-9][a-z0-9-]*$")
+    name: str = Field(min_length=2, max_length=40)
+    price_idr: int = Field(gt=0, le=1_000_000_000)
+    # omitted => credits == price (the default link Bang asked for); fill it to break it
+    credits_micro: int | None = Field(default=None, gt=0)
+    rpm_limit: int = Field(default=30, ge=1, le=100_000)
+    blurb: str | None = Field(default=None, max_length=120)
+    kind: str = Field(default="plan", pattern="^(plan|topup)$")
+    active: bool = True
+    sort: int = 100
+
+
+class PackagePatch(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=40)
+    price_idr: int | None = Field(default=None, gt=0, le=1_000_000_000)
+    credits_micro: int | None = Field(default=None, gt=0)
+    rpm_limit: int | None = Field(default=None, ge=1, le=100_000)
+    blurb: str | None = Field(default=None, max_length=120)
+    kind: str | None = Field(default=None, pattern="^(plan|topup)$")
+    active: bool | None = None
+    sort: int | None = None
+
+
+class TopupPatch(BaseModel):
+    min_idr: int | None = Field(default=None, ge=2000, le=10_000_000)
+    max_idr: int | None = Field(default=None, ge=2000, le=1_000_000_000)
+    enabled: bool | None = None
+
+
+@router.get("/api/admin/packages")
+async def admin_packages(admin: dict = Depends(auth.require_admin)):
+    rows = await portal.load_packages(include_inactive=True)
+    policy = await portal.topup_policy()
+    return {"packages": rows, "topup": policy}
+
+
+@router.post("/api/admin/packages")
+async def create_package(body: PackageIn, admin: dict = Depends(auth.require_admin)):
+    credits = body.credits_micro if body.credits_micro is not None else body.price_idr * 1_000_000
+    exists = await db.pool().fetchval("SELECT 1 FROM packages WHERE sku = $1", body.sku)
+    if exists:
+        raise HTTPException(409, {"error": {"message": f"SKU '{body.sku}' sudah ada",
+                                            "code": "duplicate_sku"}})
+    row = await db.pool().fetchrow(
+        """INSERT INTO packages(sku, name, blurb, price_idr, credits_micro, rpm_limit, kind, active, sort)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *""",
+        body.sku, body.name, body.blurb, body.price_idr, credits, body.rpm_limit,
+        body.kind, body.active, body.sort)
+    await db.log_audit(admin["email"], "package.create", body.sku,
+                       {"price_idr": body.price_idr, "credits_micro": credits, "rpm": body.rpm_limit})
+    return {"package": dict(row)}
+
+
+@router.patch("/api/admin/packages/{sku}")
+async def patch_package(sku: str, body: PackagePatch, admin: dict = Depends(auth.require_admin)):
+    sets, args = [], [sku]
+    for key, value in body.model_dump(exclude_none=True).items():
+        args.append(value)
+        sets.append(f"{key} = ${len(args)}")
+    if not sets:
+        raise HTTPException(400, {"error": {"message": "Nothing to update", "code": "empty_patch"}})
+    row = await db.pool().fetchrow(
+        f"UPDATE packages SET {', '.join(sets)}, updated_at = now() WHERE sku = $1 RETURNING *", *args)
+    if row is None:
+        raise HTTPException(404, {"error": {"message": "Paket tidak ada", "code": "not_found"}})
+    # existing buyers keep the RPM they earned; only new purchases use the new value.
+    await db.log_audit(admin["email"], "package.patch", sku, body.model_dump(exclude_none=True))
+    return {"package": dict(row)}
+
+
+@router.delete("/api/admin/packages/{sku}")
+async def delete_package(sku: str, admin: dict = Depends(auth.require_admin)):
+    used = await db.pool().fetchval("SELECT 1 FROM orders WHERE sku = $1 LIMIT 1", sku)
+    if used:
+        row = await db.pool().fetchrow(
+            "UPDATE packages SET active = false, updated_at = now() WHERE sku = $1 RETURNING sku, active", sku)
+        await db.log_audit(admin["email"], "package.deactivate", sku, {})
+        return {"package": dict(row) if row else None,
+                "deactivated": True, "reason": "sudah punya riwayat order — dinonaktifkan, bukan dihapus"}
+    row = await db.pool().fetchrow("DELETE FROM packages WHERE sku = $1 RETURNING sku", sku)
+    if row is None:
+        raise HTTPException(404, {"error": {"message": "Paket tidak ada", "code": "not_found"}})
+    await db.log_audit(admin["email"], "package.delete", sku, {})
+    return {"deleted": True, "sku": row["sku"]}
+
+
+@router.patch("/api/admin/topup")
+async def patch_topup(body: TopupPatch, admin: dict = Depends(auth.require_admin)):
+    sets, args = [], []
+    for key, value in body.model_dump(exclude_none=True).items():
+        args.append(value)
+        sets.append(f"{key} = ${len(args)}")
+    if not sets:
+        raise HTTPException(400, {"error": {"message": "Nothing to update", "code": "empty_patch"}})
+    row = await db.pool().fetchrow(
+        f"UPDATE topup_policy SET {', '.join(sets)}, updated_at = now() WHERE id = 1 RETURNING *", *args)
+    cur = await db.pool().fetchrow("SELECT min_idr, max_idr, enabled FROM topup_policy WHERE id = 1")
+    if cur and int(cur["max_idr"] or 0) and int(cur["max_idr"]) < int(cur["min_idr"]):
+        raise HTTPException(400, {"error": {"message": "max_idr lebih kecil dari min_idr",
+                                            "code": "invalid_range"}})
+    await db.log_audit(admin["email"], "topup.patch", "policy", body.model_dump(exclude_none=True))
+    return {"topup": dict(row) if row else await portal.topup_policy()}
 
 
 @router.patch("/api/admin/model-fallback")

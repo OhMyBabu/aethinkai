@@ -10,6 +10,7 @@ Checks
   2. /api/status  vs model_prices   (models_active counts only availability='on')
   3. frontend source: no fixture catalogue may feed a public page
   4. no private/upstream leak in the public payload (no upstream route, no cost)
+  5. /api/packages vs packages + topup_policy (price, credit, RPM, min top-up)
 
 Exit code 0 = in sync, 1 = drift found.
 
@@ -120,6 +121,40 @@ def main() -> int:
         if "SEED_MODELS" in text:
             bad.append(str(path.relative_to(ROOT)))
     check(not bad, "tidak ada halaman yang memakai SEED_MODELS", ", ".join(bad) or "bersih")
+
+    # 5. packages: the shop must quote the same numbers the admin owns
+    shop = get("/api/packages")
+    db_pkgs = {r["sku"]: r for r in psql_json(
+        "SELECT sku, name, price_idr, credits_micro, rpm_limit, active "
+        "FROM packages WHERE active ORDER BY sort, price_idr")}
+    api_pkgs = {p["sku"]: p for p in shop.get("packages", [])}
+    check(set(db_pkgs) == set(api_pkgs),
+          "paket di /api/packages == paket aktif di DB",
+          f"db={len(db_pkgs)} api={len(api_pkgs)}")
+    bad_pkg = []
+    for sku, row in db_pkgs.items():
+        p = api_pkgs.get(sku) or {}
+        if (int(p.get("price_idr", -1)) != int(row["price_idr"])
+                or int(p.get("credits_micro", -1)) != int(row["credits_micro"])
+                or int(p.get("rpm_limit", -1)) != int(row["rpm_limit"])
+                or int(p.get("idr", -1)) != int(row["price_idr"])
+                or int(p.get("rpm", -1)) != int(row["rpm_limit"])):
+            bad_pkg.append(sku)
+    check(not bad_pkg, "harga/kredit/RPM paket identik DB & API", ", ".join(bad_pkg) or "cocok")
+    check(all(int(p["rpm_limit"]) > 0 and int(p["price_idr"]) > 0 and int(p["credits_micro"]) > 0
+              for p in api_pkgs.values()),
+          "setiap paket punya harga, kredit, dan RPM", f"{len(api_pkgs)} paket")
+    policy = shop.get("topup") or {}
+    db_policy = (psql_json("SELECT min_idr, max_idr, enabled FROM topup_policy WHERE id = 1") or [{}])[0]
+    check(bool(policy) and int(policy.get("min_idr", -1)) == int(db_policy.get("min_idr", -2))
+          and bool(policy.get("enabled")) == bool(db_policy.get("enabled")),
+          "aturan top-up identik DB & API",
+          f"min={policy.get('min_idr')} enabled={policy.get('enabled')}")
+
+    # 6. no package price hardcoded in the guide page
+    docs = (FRONTEND / "pages" / "public" / "Docs.tsx").read_text(encoding="utf-8", errors="ignore")
+    hard = [lit for lit in ('"Starter"', '"Pro"', '"Max"') if lit in docs]
+    check(not hard, "panduan tidak punya daftar paket hardcoded", ", ".join(hard) or "bersih")
 
     # 4. no upstream/cost leakage in the public payload
     blob = json.dumps(public)

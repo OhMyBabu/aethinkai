@@ -156,6 +156,74 @@ export function catalogStream(onChange: () => void): () => void {
   return apiStream({ catalog: onChange });
 }
 
+export type GwPackage = {
+  sku: string;
+  name: string;
+  blurb: string | null;
+  price_idr: number;
+  credits_micro: number;
+  rpm_limit: number;
+  kind: "plan" | "topup";
+  active: boolean;
+  sort: number;
+};
+
+export type GwTopup = { min_idr: number; max_idr: number | null; enabled: boolean };
+
+export async function adminPackages() {
+  return request<{ packages: GwPackage[]; topup: GwTopup }>("/api/admin/packages");
+}
+
+export async function createPackage(body: {
+  sku: string;
+  name: string;
+  price_idr: number;
+  credits_micro?: number | null;
+  rpm_limit: number;
+  blurb?: string | null;
+  kind?: "plan" | "topup";
+  active?: boolean;
+  sort?: number;
+}) {
+  return request<{ package: GwPackage }>("/api/admin/packages", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function patchPackage(
+  sku: string,
+  body: Partial<{
+    name: string;
+    price_idr: number;
+    credits_micro: number;
+    rpm_limit: number;
+    blurb: string;
+    kind: "plan" | "topup";
+    active: boolean;
+    sort: number;
+  }>,
+) {
+  return request<{ package: GwPackage }>(`/api/admin/packages/${encodeURIComponent(sku)}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deletePackage(sku: string) {
+  return request<{ deleted?: boolean; deactivated?: boolean; sku?: string; reason?: string }>(
+    `/api/admin/packages/${encodeURIComponent(sku)}`,
+    { method: "DELETE" },
+  );
+}
+
+export async function patchTopup(body: Partial<GwTopup>) {
+  return request<{ topup: GwTopup }>("/api/admin/topup", {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
 export async function publicModels() {
   return request<{ object: string; data: PublicModel[]; count: number }>("/api/models", {}, false);
 }

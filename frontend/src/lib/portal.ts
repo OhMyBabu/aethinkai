@@ -7,7 +7,15 @@ export type Pkg = {
   rpm: number;
   blurb: string;
   credits_micro: number;
+  price_idr: number;
+  rpm_limit: number;
+  credits?: number;
+  kind?: "plan" | "topup";
+  active?: boolean;
+  sort?: number;
 };
+
+export type TopupPolicy = { min_idr: number; max_idr: number | null; enabled: boolean };
 
 export type LinkStart = {
   code: string;
@@ -24,10 +32,28 @@ export type LinkStatus = {
   buyer?: { id: string; tg_id: number | null; username: string | null; name?: string | null };
 };
 
-export async function fetchPackages(): Promise<Pkg[]> {
+export async function fetchShop(): Promise<{ packages: Pkg[]; topup: TopupPolicy }> {
   const res = await fetch("/api/packages", { headers: { Accept: "application/json" } });
   const body = await res.json();
-  return (body?.packages ?? []) as Pkg[];
+  return {
+    packages: (body?.packages ?? []) as Pkg[],
+    topup: (body?.topup ?? { min_idr: 2000, max_idr: null, enabled: true }) as TopupPolicy,
+  };
+}
+
+export async function fetchPackages(): Promise<Pkg[]> {
+  return (await fetchShop()).packages;
+}
+
+export async function topupOrder(token: string, amount_idr: number) {
+  const res = await fetch("/api/portal/topup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ amount_idr }),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body?.error?.message ?? "Gagal membuat top-up");
+  return body as { order_id: string; credits_micro: number; price_idr: number; status: string };
 }
 
 export async function startLink(): Promise<LinkStart> {

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -10,6 +11,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Card } from "@/components/common/Card";
+import { fetchShop, type Pkg, type TopupPolicy } from "@/lib/portal";
 import { Button } from "@/components/common/Button";
 import { StatusPill } from "@/components/common/StatusPill";
 import type { AIModel } from "@/types";
@@ -255,6 +257,21 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
 
 export function PricingPreview({ models }: { models: AIModel[] }) {
   // Real per-model pricing straight from the gateway — no invented packages.
+  const [packages, setPackages] = useState<Pkg[]>([]);
+  const [topup, setTopup] = useState<TopupPolicy | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetchShop()
+      .then((shop) => {
+        if (!alive) return;
+        setPackages(shop.packages);
+        setTopup(shop.topup);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
   const plans = [...models]
     .sort((a, b) => a.inputRate - b.inputRate)
     .slice(0, 3)
@@ -306,6 +323,31 @@ export function PricingPreview({ models }: { models: AIModel[] }) {
           </Card>
         ))}
       </div>
+
+      {packages.length ? (
+        <div className="mt-5 rounded-2xl border border-ash/20 bg-warm/[0.02] p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <p className="text-[13px] font-semibold text-warm">Paket saldo</p>
+            <p className="text-[11px] text-ash">
+              Saldo masuk ke akun, dipakai semua model
+              {topup?.enabled ? ` · top-up bebas mulai Rp ${topup.min_idr.toLocaleString("id-ID")}` : ""}
+            </p>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            {packages.slice(0, 3).map((pkg) => (
+              <div key={pkg.sku} className="rounded-xl border border-ash/15 bg-[#141518] px-3 py-2.5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-[12.5px] font-medium text-warm">{pkg.name}</p>
+                  <p className="font-mono text-[12px] text-flame">Rp {pkg.price_idr.toLocaleString("id-ID")}</p>
+                </div>
+                <p className="mt-0.5 text-[10.5px] text-ash">
+                  {pkg.rpm_limit} req/menit · kredit Rp {(pkg.credits_micro / 1_000_000).toLocaleString("id-ID")}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

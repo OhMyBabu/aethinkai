@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Check, Copy, Terminal } from "lucide-react";
 import { publicModels, type PublicModel } from "@/lib/gw";
+import { fetchShop, type Pkg, type TopupPolicy } from "@/lib/portal";
 import { cn } from "@/lib/cn";
 
 const BASE = "https://router.aethink.ai.id";
@@ -64,6 +65,8 @@ const ERRORS = [
 
 export default function DocsPage() {
   const [models, setModels] = useState<PublicModel[]>([]);
+  const [packages, setPackages] = useState<Pkg[]>([]);
+  const [topup, setTopup] = useState<TopupPolicy>({ min_idr: 2000, max_idr: null, enabled: true });
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,6 +74,13 @@ export default function DocsPage() {
     publicModels()
       .then((data) => alive && setModels(data.data))
       .catch((e) => alive && setErr(e instanceof Error ? e.message : "gagal memuat katalog"));
+    fetchShop()
+      .then((shop) => {
+        if (!alive) return;
+        setPackages(shop.packages);
+        setTopup(shop.topup);
+      })
+      .catch(() => undefined);
     return () => {
       alive = false;
     };
@@ -239,21 +249,34 @@ curl -X POST ${BASE}/api/portal/session \\
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#23252A] text-[#a9a49c]">
-                  {[
-                    ["Starter", "Rp 5.000", "Rp 5.000", "60"],
-                    ["Pro", "Rp 25.000", "Rp 25.000", "180"],
-                    ["Max", "Rp 100.000", "Rp 100.000", "600"],
-                  ].map(([name, price, credits, rpm]) => (
-                    <tr key={name}>
-                      <td className="px-3 py-2 text-[#FAF8F4]">{name}</td>
-                      <td className="px-3 py-2 text-right">{price}</td>
-                      <td className="px-3 py-2 text-right">{credits}</td>
-                      <td className="px-3 py-2 text-right font-mono">{rpm}</td>
+                  {packages.map((pkg) => (
+                    <tr key={pkg.sku}>
+                      <td className="px-3 py-2 text-[#FAF8F4]">
+                        {pkg.name}
+                        {pkg.blurb ? <span className="ml-1.5 text-[10.5px] text-[#85888B]">{pkg.blurb}</span> : null}
+                      </td>
+                      <td className="px-3 py-2 text-right">{idr(pkg.price_idr)}</td>
+                      <td className="px-3 py-2 text-right">{idr(pkg.credits_micro / 1_000_000)}</td>
+                      <td className="px-3 py-2 text-right font-mono">{pkg.rpm_limit}</td>
                     </tr>
                   ))}
+                  {!packages.length ? (
+                    <tr>
+                      <td colSpan={4} className="px-3 py-3 text-[12px] text-[#85888B]">
+                        Paket sedang tidak tersedia — cek portal.
+                      </td>
+                    </tr>
+                  ) : null}
                 </tbody>
               </table>
             </div>
+            <p>
+              RPM milik <strong>akun</strong>: nilainya paket tertinggi yang pernah dibeli, dan tidak turun kalau kamu
+              beli paket lebih kecil lagi.{" "}
+              {topup.enabled
+                ? `Top-up nominal bebas (minimal ${idr(topup.min_idr)}) hanya menambah saldo — RPM tidak berubah.`
+                : "Top-up nominal bebas sedang ditutup; pembelian lewat paket."}
+            </p>
             <p>
               Setiap balasan membawa <code className="font-mono text-[12px]">X-RateLimit-Limit</code>,{" "}
               <code className="font-mono text-[12px]">X-RateLimit-Remaining</code>, <code className="font-mono text-[12px]">X-RateLimit-Reset</code>.
