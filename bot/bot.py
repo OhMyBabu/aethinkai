@@ -655,7 +655,21 @@ def do_grant(order_id: str) -> tuple[bool, str]:
     panel = data.get("telegram_msg_id") or order.get("telegram_msg_id")
     key = data.get("key") or ""
     pkg_name = PKG.get(order.get("sku", ""), {}).get("name", order.get("sku", "paket"))
-    if buyer_tg and key:
+    if buyer_tg and data.get("key_reused"):
+        # identity = wallet: a top-up must not hand out a second credential
+        text = (f"✅ <b>Saldo bertambah</b>\n\n"
+                f"Order <code>{order_id}</code> · paket <b>{html.escape(pkg_name)}</b>\n"
+                f"Saldo: <b>{idr(int(data.get('balance_micro', 0) or 0))}</b> · "
+                f"limit <b>{int(data.get('rpm_limit', 60) or 60)} req/menit</b>\n\n"
+                f"Key kamu tetap: <code>{data.get('key_prefix') or ''}…</code>\n"
+                "Tidak ada key baru — satu akun Telegram = satu key.")
+        kb = [[url_btn("🌐 Buka portal", f"{portal_url()}/portal"), btn("🔑 Key Saya", "m:keys")],
+              [btn("⬅️ Menu", "m:home")]]
+        if panel:
+            edit(chat_id, panel, text, kb)
+        else:
+            send(chat_id, text, kb)
+    elif buyer_tg and key:
         deliver_key(int(buyer_tg), order_id, pkg_name, key,
                     int(data.get("balance_micro", 0) or 0), int(data.get("rpm_limit", 60) or 60),
                     panel=int(panel) if panel else None)

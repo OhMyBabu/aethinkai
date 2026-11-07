@@ -784,6 +784,32 @@ async def _ensure_user(con, tg_id: int, sku: str, name: str | None) -> str:
     return user_id
 
 
+async def _active_key(con, user_id: str):
+    """The single live key of a wallet (see migrations/003_one_key_per_user.sql)."""
+    return await con.fetchrow(
+        """SELECT id, prefix, rpm_limit, label FROM api_keys
+            WHERE user_id = $1 AND revoked_at IS NULL AND status = 'active'
+            ORDER BY created_at DESC LIMIT 1""",
+        user_id,
+    )
+
+
+async def _key_for_grant(con, user_id: str, buyer_id: str, label: str,
+                         rpm: int) -> tuple[str, str | None, str, bool]:
+    """Reuse the wallet's key instead of minting a second one.
+
+    Identity is the Telegram account: one buyer = one wallet = one key. A second
+    purchase tops up the same wallet, so it must not hand out another credential
+    (two keys on one wallet made 'which key is mine' unanswerable and doubled the
+    credential surface for zero benefit).
+    """
+    row = await _active_key(con, user_id)
+    if row is not None:
+        return row["id"], None, row["prefix"], True
+    key_id, raw_key, prefix = await _mint_key(con, user_id, buyer_id, label, rpm)
+    return key_id, raw_key, prefix, False
+
+
 async def _mint_key(con, user_id: str, buyer_id: str, label: str, rpm: int) -> tuple[str, str, str]:
     raw, prefix, digest = _new_key()
     key_id = db.new_id()
@@ -853,7 +879,8 @@ async def internal_grant(request: Request):
 
                 buyer_id = await _ensure_buyer(con, body.tg_id, body.username, body.name)
                 user_id = await _ensure_user(con, body.tg_id, body.sku, body.name)
-                key_id, raw_key, prefix = await _mint_key(con, user_id, buyer_id, body.sku, body.rpm_limit)
+                key_id, raw_key, prefix, reused = await _key_for_grant(
+                    con, user_id, buyer_id, body.sku, int(body.rpm_limit))
                 await con.execute(
                     """INSERT INTO orders(id, buyer_id, sku, credits_micro, price_idr, payment_ref,
                                           status, key_id, telegram_msg_id, granted_at)
@@ -890,7 +917,9 @@ async def internal_grant(request: Request):
 
     await db.log_audit(f"bot:{body.tg_id}", "internal.grant", body.order_id,
                        {"sku": body.sku, "credits_micro": body.credits_micro, "ip": ip})
-    return _grant_result(body.order_id, buyer_id, raw_key, prefix, bal, body.rpm_limit)
+    result = _grant_result(body.order_id, buyer_id, raw_key, prefix, bal, body.rpm_limit)
+    result["key_reused"] = reused
+    return result
 
 
 async def grant_order(order_id: str) -> dict:
@@ -923,7 +952,7 @@ async def grant_order(order_id: str) -> dict:
                         "balance_micro": int(bal or 0), "rpm_limit": order["rpm_limit"]}
 
             user_id = await _ensure_user(con, order["tg_id"], order["sku"], order["name"])
-            key_id, raw_key, prefix = await _mint_key(
+            key_id, raw_key, prefix, reused = await _key_for_grant(
                 con, user_id, order["buyer_id"], order["sku"], int(order["rpm_limit"] or 60))
             await con.execute(
                 """UPDATE orders SET status='granted', key_id=$2, granted_at=now() WHERE id=$1""",
@@ -932,7 +961,8 @@ async def grant_order(order_id: str) -> dict:
             bal = await _credit(con, user_id, int(order["credits_micro"]), order_id,
                                 f"paid {order['sku']}")
     return {"order_id": order_id, "already_granted": False, "key": raw_key, "key_prefix": prefix,
-            "balance_micro": int(bal), "rpm_limit": int(order["rpm_limit"] or 60)}
+            "key_reused": reused, "balance_micro": int(bal),
+            "rpm_limit": int(order["rpm_limit"] or 60)}
 
 
 class OrderIn(BaseModel):
@@ -1157,7 +1187,8 @@ async def internal_grant_order(order_id: str, request: Request):
             rpm = await con.fetchval(
                 "SELECT coalesce(max(rpm_limit), 60) FROM api_keys WHERE buyer_id = $1", order["buyer_id"]
             )
-            key_id, raw_key, prefix = await _mint_key(con, user_id, order["buyer_id"], label, int(rpm or 60))
+            key_id, raw_key, prefix, reused = await _key_for_grant(
+                con, user_id, order["buyer_id"], label, int(rpm or 60))
             await con.execute("UPDATE orders SET status='granted', key_id=$2, granted_at=now() WHERE id=$1",
                               order_id, key_id)
             bal = await _credit(con, user_id, order["credits_micro"], order_id, f"telegram {order['sku']}")
@@ -1165,6 +1196,7 @@ async def internal_grant_order(order_id: str, request: Request):
     await db.log_audit(f"bot:{buyer['tg_id']}", "internal.grant_order", order_id,
                        {"sku": order["sku"], "credits_micro": order["credits_micro"], "ip": ip})
     result = _grant_result(order_id, order["buyer_id"], raw_key, prefix, bal, int(rpm or 60))
+    result["key_reused"] = reused
     result["tg_id"] = buyer["tg_id"]
     result["telegram_msg_id"] = order["telegram_msg_id"]
     return result
@@ -1192,8 +1224,9 @@ async def internal_rotate(request: Request):
             label = live[0]["label"] or "starter"
             rpm = live[0]["rpm_limit"] or 60
             await con.execute(
-                "UPDATE api_keys SET revoked_at = now(), status = 'revoked' WHERE buyer_id = $1 AND revoked_at IS NULL",
-                buyer["id"],
+                "UPDATE api_keys SET revoked_at = now(), status = 'revoked' "
+                "WHERE user_id = $1 AND revoked_at IS NULL",
+                live[0]["user_id"],
             )
             key_id, raw_key, prefix = await _mint_key(con, live[0]["user_id"], buyer["id"], label, rpm)
     await db.log_audit(f"bot:{body.tg_id}", "internal.rotate", key_id, {})

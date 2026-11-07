@@ -281,11 +281,17 @@ async def notify_buyer(order_id: str, granted: dict[str, Any]) -> None:
         return
     key = granted.get("key") or ""
     balance = int(granted.get("balance_micro") or 0)
-    text = (f"✅ <b>Pembayaran diterima</b>\n\n"
+    head = (f"✅ <b>Pembayaran diterima</b>\n\n"
             f"Order <code>{order_id}</code> · paket <b>{row['sku']}</b>\n"
-            f"Saldo: <b>Rp{balance/1_000_000:,.0f}</b> · limit <b>{row['rpm_limit']} req/menit</b>\n\n"
-            f"<b>API key</b>\n<code>{key}</code>\n\n"
-            "Simpan sekarang — key hanya ditampilkan sekali di chat ini.")
+            f"Saldo: <b>Rp{balance/1_000_000:,.0f}</b> · limit <b>{row['rpm_limit']} req/menit</b>\n\n")
+    if key:
+        text = head + (f"<b>API key</b>\n<code>{key}</code>\n\n"
+                       "Simpan sekarang — key hanya ditampilkan sekali di chat ini.")
+    else:
+        # one wallet = one key: a repeat purchase tops up, it does not mint a credential
+        text = head + (f"Saldo ditambahkan ke akun yang sudah ada.\n"
+                       f"Key kamu tetap: <code>{granted.get('key_prefix') or ''}…</code>\n\n"
+                       "Pakai key yang sama — tidak ada key baru yang dibuat.")
     kb = {"inline_keyboard": [[{"text": "🌐 Buka portal", "url": "https://router.aethink.ai.id/portal"}]]}
     try:
         async with httpx.AsyncClient(timeout=20) as c:
