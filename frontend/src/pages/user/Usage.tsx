@@ -16,6 +16,7 @@ import { modelNames, toUsageEntry } from "@/lib/gateway-data";
 import { useLive } from "@/lib/live";
 import type { Range, UsageEntry } from "@/types";
 import { buildSeries, seriesTotals } from "@/lib/series";
+import { settle } from "@/lib/async";
 import { formatCompact, formatDateTime, formatIDR, formatNumber } from "@/lib/format";
 import { downloadCSV, toCSV } from "@/lib/csv";
 
@@ -36,15 +37,21 @@ export default function UserUsagePage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    Promise.all([meRequests(range, 300), listKeys(), modelNames()])
+    Promise.all(
+      [settle(meRequests(range, 300)), settle(listKeys()), settle(modelNames())] as const,
+    )
       .then(([reqs, keyList, nameMap]) => {
         if (cancelled) return;
-        setUsage(reqs.requests.map(toUsageEntry));
-        setKeys(keyList.keys);
-        setNames({
-          ...nameMap,
-          ...Object.fromEntries(reqs.requests.map((r) => [r.model_id, r.display_name ?? r.model_id])),
-        });
+        if (reqs) setUsage(reqs.requests.map(toUsageEntry));
+        if (keyList) setKeys(keyList.keys);
+        if (nameMap || reqs) {
+          setNames({
+            ...(nameMap ?? {}),
+            ...Object.fromEntries(
+              (reqs?.requests ?? []).map((r) => [r.model_id, r.display_name ?? r.model_id]),
+            ),
+          });
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

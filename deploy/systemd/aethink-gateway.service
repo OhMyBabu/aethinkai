@@ -1,0 +1,18 @@
+[Unit]
+Description=AethinkAI Gateway (FastAPI, /v1 OpenAI-compatible + portal + internal API)
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/ops/aethinkai/gateway
+EnvironmentFile=/root/.secrets/aethink-db.env
+ExecStart=/root/ops/aethinkai/gateway/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8080 --log-level warning
+Restart=always
+RestartSec=3
+StandardOutput=append:/var/log/aethink/gateway.log
+StandardError=append:/var/log/aethink/gateway.log
+
+[Install]
+WantedBy=multi-user.target

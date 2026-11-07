@@ -31,6 +31,12 @@ docs/       PRD, design references, DB schema, runtime notes, secrets contract
 
 ## Run it
 
+Ringkas: `./deploy.sh` (build frontend + restart gateway + smoke check). Panduan lengkap
+dari nol sampai domain + TLS: **[DEPLOY.md](DEPLOY.md)**. Unit systemd dan vhost nginx
+yang dipakai server ada di `deploy/`.
+
+Manual:
+
 ```bash
 # 0. Postgres 16 running locally, database + role created, see docs/SECRETS.md
 # 1. gateway

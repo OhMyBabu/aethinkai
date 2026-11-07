@@ -401,14 +401,15 @@ async def portal_models(days: int = 30, row: dict = Depends(portal_identity)):
     days = max(1, min(days, 365))
     rows = await db.pool().fetch(
         """
-        SELECT regexp_replace(model_id, '^mk/', '') AS model_id,
+        SELECT coalesce(mp.public_id, split_part(e.model_id, '/', 2)) AS model_id,
                count(*) AS requests,
-               coalesce(sum(tokens_in),0) AS tokens_in,
-               coalesce(sum(tokens_out),0) AS tokens_out,
-               coalesce(sum(cost_micro),0) AS cost_micro,
-               max(created_at) AS last_used_at
-        FROM usage_events
-        WHERE key_id = ANY($1::text[]) AND created_at > now() - ($2 || ' days')::interval
+               coalesce(sum(e.tokens_in),0) AS tokens_in,
+               coalesce(sum(e.tokens_out),0) AS tokens_out,
+               coalesce(sum(e.cost_micro),0) AS cost_micro,
+               max(e.created_at) AS last_used_at
+        FROM usage_events e
+        LEFT JOIN model_prices mp ON mp.model_id = e.model_id
+        WHERE e.key_id = ANY($1::text[]) AND e.created_at > now() - ($2 || ' days')::interval
         GROUP BY 1 ORDER BY cost_micro DESC
         """,
         await _scope_keys(row), str(days),
@@ -435,14 +436,16 @@ async def portal_requests(limit: int = 50, offset: int = 0, row: dict = Depends(
     offset = max(0, offset)
     rows = await db.pool().fetch(
         """
-        SELECT request_id,
-               regexp_replace(model_id, '^mk/', '') AS model_id,
-               regexp_replace(coalesce(served_model, model_id), '^mk/', '') AS served_model,
-               tokens_in, tokens_out, tokens_cached,
-               cost_micro, latency_ms, status, http_status, stream, client_ip, client_ua, created_at
-        FROM usage_events
-        WHERE key_id = ANY($1::text[])
-        ORDER BY created_at DESC LIMIT $2 OFFSET $3
+        SELECT e.request_id,
+               coalesce(mp.public_id, split_part(e.model_id, '/', 2)) AS model_id,
+               coalesce(smp.public_id, split_part(coalesce(e.served_model, e.model_id), '/', 2)) AS served_model,
+               e.tokens_in, e.tokens_out, e.tokens_cached,
+               e.cost_micro, e.latency_ms, e.status, e.http_status, e.stream, e.client_ip, e.client_ua, e.created_at
+        FROM usage_events e
+        LEFT JOIN model_prices mp ON mp.model_id = e.model_id
+        LEFT JOIN model_prices smp ON smp.model_id = coalesce(e.served_model, e.model_id)
+        WHERE e.key_id = ANY($1::text[])
+        ORDER BY e.created_at DESC LIMIT $2 OFFSET $3
         """,
         await _scope_keys(row), limit, offset,
     )

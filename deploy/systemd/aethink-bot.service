@@ -1,0 +1,19 @@
+[Unit]
+Description=AethinkAI Telegram store bot (long polling)
+After=network-online.target aethink-gateway.service
+Wants=aethink-gateway.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/ops/aethinkai/bot
+Environment=BOT_ENV_FILE=/root/.secrets/aethink-bot.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/root/ops/aethinkai/bot/.venv/bin/python bot.py
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/aethink/bot.log
+StandardError=append:/var/log/aethink/bot.log
+
+[Install]
+WantedBy=multi-user.target

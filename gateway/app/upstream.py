@@ -1,16 +1,20 @@
 """9Router upstream client (loopback peer auth)."""
 
 import json
+import os
 import time
 from typing import Any, AsyncIterator
 
 import httpx
 
-from .config import PEER_TOKEN, UPSTREAM_BASE, UPSTREAM_TIMEOUT
+from .config import PEER_TOKEN, UPSTREAM_BASE, UPSTREAM_KEY, UPSTREAM_TIMEOUT  # noqa: F401
 
 
 def headers() -> dict[str, str]:
     h = {"Content-Type": "application/json", "x-9r-real-ip": "127.0.0.1"}
+    if UPSTREAM_KEY:
+        # remote relay: standard OpenAI bearer auth
+        h["Authorization"] = f"Bearer {UPSTREAM_KEY}"
     if PEER_TOKEN:
         h["x-9r-peer-token"] = PEER_TOKEN
     return h
@@ -21,10 +25,30 @@ def client() -> httpx.AsyncClient:
 
 
 async def list_models() -> dict[str, Any]:
+    """Upstream catalogue, cached briefly.
+
+    The relay answers ~1.2k models in several seconds; every dashboard panel and
+    every `/v1/models` call hit it, which made an admin Overview wait 7 s before
+    it could paint. A short TTL cache keeps the screens instant without serving
+    a catalogue that is minutes stale.
+    """
+    import time as _time
+
+    global _models_cache
+    now = _time.monotonic()
+    if _models_cache and now - _models_cache[0] < MODELS_TTL:
+        return _models_cache[1]
+
     async with client() as c:
         r = await c.get("/models", headers=headers())
         r.raise_for_status()
-        return r.json()
+        data = r.json()
+    _models_cache = (now, data)
+    return data
+
+
+_models_cache: tuple[float, dict[str, Any]] | None = None
+MODELS_TTL = float(os.environ.get("UPSTREAM_MODELS_TTL", "60") or 60)
 
 
 async def stream_chat(payload: dict[str, Any]) -> AsyncIterator[bytes]:

@@ -15,12 +15,29 @@ import os
 import sys
 import time
 import uuid
+from pathlib import Path
 
 import httpx
 
 BASE = os.environ.get("GW", "http://127.0.0.1:8080")
-SECRET = open("/root/.secrets/aethink-internal").read().strip()
-ADMIN = {"email": "admin@aethink.ai", "password": "RmmkmHbTS6VLn38x"}
+SECRET = open(os.environ.get("AETHINK_INTERNAL_FILE", "/root/.secrets/aethink-internal")).read().strip()
+
+
+def _admin_creds() -> dict:
+    """Admin password comes from the env or gateway/.admin — never hardcoded."""
+    env_pw = os.environ.get("AETHINK_ADMIN_PASSWORD")
+    if env_pw:
+        return {"email": os.environ.get("AETHINK_ADMIN_EMAIL", "admin@aethink.ai"), "password": env_pw}
+    admin_file = Path(__file__).resolve().parent.parent / ".admin"
+    if admin_file.exists():
+        for line in admin_file.read_text().splitlines():
+            parts = line.split()
+            if len(parts) == 3 and parts[0] == "admin":
+                return {"email": parts[1], "password": parts[2]}
+    raise SystemExit("no admin credentials: run gateway/scripts/seed_admin.py or set AETHINK_ADMIN_PASSWORD")
+
+
+ADMIN = _admin_creds()
 MODEL = "deepseek-v4.1-flash-1017"
 
 results: list[tuple[bool, str, str]] = []

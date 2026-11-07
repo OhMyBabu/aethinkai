@@ -16,6 +16,7 @@ import { adminRequests, adminUsers, type GwRequestRow } from "@/lib/gw";
 import { modelNames } from "@/lib/gateway-data";
 import type { Range, UsageEntry } from "@/types";
 import { buildSeries, seriesTotals } from "@/lib/series";
+import { settle } from "@/lib/async";
 import { formatCompact, formatDateTime, formatIDR, formatNumber } from "@/lib/format";
 import { downloadCSV, toCSV } from "@/lib/csv";
 
@@ -50,12 +51,15 @@ export default function AdminUsagePage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    Promise.all([adminRequests(range, 500), adminUsers(), modelNames()])
+    Promise.all(
+      [settle(adminRequests(range, 500)), settle(adminUsers()), settle(modelNames())] as const,
+    )
       .then(([reqs, users, nameMap]) => {
         if (cancelled) return;
-        setNames(nameMap);
-        setEmails(users.users.map((u) => u.email));
-        setRowsRaw(
+        if (nameMap) setNames(nameMap);
+        if (users) setEmails(users.users.map((u) => u.email));
+        if (reqs)
+          setRowsRaw(
           reqs.requests.map((row: GwRequestRow) => ({
             id: row.id,
             at: row.created_at,

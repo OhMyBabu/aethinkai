@@ -4,8 +4,9 @@ import asyncio
 import hashlib
 import secrets
 import sys
+from pathlib import Path
 
-sys.path.insert(0, "/root/projects/aethinkai-gateway")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app import db  # noqa: E402
 
@@ -34,6 +35,16 @@ async def main() -> None:
         "INSERT INTO balances(user_id, balance_micro) VALUES ($1,$2) ON CONFLICT (user_id) DO NOTHING",
         uid, 50_000 * 1_000_000,
     )
+    # Wallet invariant: keep ledger == balance (see seed_admin.py).
+    led = int(await p.fetchval(
+        "SELECT coalesce(sum(amount_micro),0) FROM ledger_entries WHERE user_id=$1", uid))
+    bal = int(await p.fetchval("SELECT balance_micro FROM balances WHERE user_id=$1", uid))
+    if bal != led:
+        await p.execute(
+            """INSERT INTO ledger_entries(id, user_id, kind, amount_micro, balance_after, ref, note)
+               VALUES ($1,$2,'opening',$3,$4,'seed','opening balance')""",
+            db.new_id(), uid, bal - led, bal,
+        )
 
     await p.execute("DELETE FROM api_keys WHERE user_id = $1", uid)
     raw, prefix, digest = new_key()
@@ -65,7 +76,7 @@ async def main() -> None:
         )
 
     await p.execute("INSERT INTO fx_rates(usd_idr) VALUES ($1)", 16_250)
-    pathlib_path = __import__("pathlib").Path("/root/projects/aethinkai-gateway/.devkey")
+    pathlib_path = __import__("pathlib").Path(__file__).resolve().parent.parent / ".devkey"
     pathlib_path.write_text(raw)
     pathlib_path.chmod(0o600)
     print("API_KEY written to .devkey (len %d)" % len(raw))

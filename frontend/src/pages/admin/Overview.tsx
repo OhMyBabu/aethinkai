@@ -26,6 +26,7 @@ import { modelNames, toUsageEntry } from "@/lib/gateway-data";
 import { useLive } from "@/lib/live";
 import type { Range, UsageEntry } from "@/types";
 import { buildSeries, delta, seriesTotals } from "@/lib/series";
+import { failedCount, settle } from "@/lib/async";
 import { formatCompact, formatIDR, formatNumber, relativeTime } from "@/lib/format";
 
 export default function AdminOverviewPage() {
@@ -39,28 +40,33 @@ export default function AdminOverviewPage() {
   const [audit, setAudit] = useState<GwAudit[]>([]);
   const [ips, setIps] = useState<GwTrafficIp[]>([]);
   const [loading, setLoading] = useState(true);
+  const [partialFail, setPartialFail] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    Promise.all([
-      adminSummary(),
-      adminRequests(range, 500),
-      adminModels(),
-      adminUsers(),
-      modelNames(),
-      adminAudit(8),
-      adminTraffic(range, 20),
-    ])
+    // settle() per call: one dead endpoint must not blank the whole dashboard.
+    Promise.all(
+      [
+        settle(adminSummary()),
+        settle(adminRequests(range, 500)),
+        settle(adminModels()),
+        settle(adminUsers()),
+        settle(modelNames()),
+        settle(adminAudit(8)),
+        settle(adminTraffic(range, 20)),
+      ] as const,
+    )
       .then(([sum, reqs, modelList, userList, nameMap, logs, traffic]) => {
         if (cancelled) return;
-        setSummary(sum);
-        setUsage(reqs.requests.map(toUsageEntry));
-        setModels(modelList.models);
-        setUsers(userList.users);
-        setNames(nameMap);
-        setAudit(logs.entries);
-        setIps(traffic.ips);
+        setPartialFail(failedCount([sum, reqs, modelList, userList, nameMap, logs, traffic]));
+        if (sum) setSummary(sum);
+        if (reqs) setUsage(reqs.requests.map(toUsageEntry));
+        if (modelList) setModels(modelList.models);
+        if (userList) setUsers(userList.users);
+        if (nameMap) setNames(nameMap);
+        if (logs) setAudit(logs.entries);
+        if (traffic) setIps(traffic.ips);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -151,6 +157,12 @@ export default function AdminOverviewPage() {
           </>
         }
       />
+
+      {partialFail > 0 ? (
+        <div className="mb-4 rounded-xl border border-[#8a5a20]/45 bg-[#3a2a12]/40 px-4 py-2.5 text-[12px] text-[#e3b183]">
+          {partialFail} endpoint gagal dimuat — angka di bawah hanya dari data yang berhasil. Cek gateway lalu muat ulang.
+        </div>
+      ) : null}
 
       <div className="relative mb-4 overflow-hidden rounded-2xl border border-ash/20 bg-[linear-gradient(115deg,rgba(231,137,60,0.14),rgba(156,84,47,0.06)_40%,rgba(24,25,27,0)_70%)] p-5 sm:p-6">
         <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-flame/10 blur-3xl" />

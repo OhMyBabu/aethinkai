@@ -17,6 +17,7 @@ import { modelNames, toUsageEntry } from "@/lib/gateway-data";
 import { useLive } from "@/lib/live";
 import type { Range, UsageEntry } from "@/types";
 import { buildSeries, delta, seriesTotals } from "@/lib/series";
+import { failedCount, settle } from "@/lib/async";
 import { formatCompact, formatIDR, formatNumber, formatTime } from "@/lib/format";
 
 export default function UserOverviewPage() {
@@ -29,21 +30,36 @@ export default function UserOverviewPage() {
   const [activeKeys, setActiveKeys] = useState(0);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(true);
+  const [partialFail, setPartialFail] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    Promise.all([me(), meSummary(), meRequests(range, 200), listKeys(), modelNames()])
+    // settle() per call: a single failed endpoint must not zero the dashboard.
+    Promise.all(
+      [
+        settle(me()),
+        settle(meSummary()),
+        settle(meRequests(range, 200)),
+        settle(listKeys()),
+        settle(modelNames()),
+      ] as const,
+    )
       .then(([profile, sum, reqs, keys, nameMap]) => {
         if (cancelled) return;
-        setEmail(profile.user.email);
-        setSummary(sum);
-        setUsage(reqs.requests.map(toUsageEntry));
-        setNames({
-          ...nameMap,
-          ...Object.fromEntries(reqs.requests.map((r) => [r.model_id, r.display_name ?? r.model_id])),
-        });
-        setActiveKeys(keys.keys.filter((k) => !k.revoked_at).length);
+        setPartialFail(failedCount([profile, sum, reqs, keys, nameMap]));
+        if (profile) setEmail(profile.user.email);
+        if (sum) setSummary(sum);
+        if (reqs) setUsage(reqs.requests.map(toUsageEntry));
+        if (nameMap || reqs) {
+          setNames({
+            ...(nameMap ?? {}),
+            ...Object.fromEntries(
+              (reqs?.requests ?? []).map((r) => [r.model_id, r.display_name ?? r.model_id]),
+            ),
+          });
+        }
+        if (keys) setActiveKeys(keys.keys.filter((k) => !k.revoked_at).length);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -177,6 +193,12 @@ export default function UserOverviewPage() {
         breadcrumb={[{ label: "Workspace", to: "/app/overview" }, { label: "Overview" }]}
         actions={<DateRangeTabs value={range} onChange={setRange} />}
       />
+
+      {partialFail > 0 ? (
+        <div className="mb-4 rounded-xl border border-[#8a5a20]/45 bg-[#3a2a12]/40 px-4 py-2.5 text-[12px] text-[#e3b183]">
+          {partialFail} endpoint gagal dimuat — angka di bawah hanya dari data yang berhasil. Cek koneksi lalu muat ulang.
+        </div>
+      ) : null}
 
       <div className="relative mb-4 overflow-hidden rounded-2xl border border-flame/20 bg-[linear-gradient(120deg,rgba(231,137,60,0.16),rgba(156,84,47,0.08)_45%,rgba(24,25,27,0)_75%)] p-5 sm:p-6">
         <div
