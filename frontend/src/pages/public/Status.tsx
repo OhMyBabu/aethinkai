@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Activity, ArrowLeft, CircleDot, Gauge, Server, Timer } from "lucide-react";
 import type { LandingStatus } from "@/lib/landing-data";
+import { apiStream } from "@/lib/gw";
 import { cn } from "@/lib/cn";
 
 const BASE = "https://router.aethink.ai.id";
@@ -44,9 +45,13 @@ export default function StatusPage() {
       }
     };
     void pull();
-    const timer = window.setInterval(() => document.visibilityState === "visible" && void pull(), 15_000);
+    // push: the gateway emits `status` when traffic lands, so counters move within ~2s
+    const offStream = apiStream({ status: () => void pull() });
+    // polling stays as a net if the stream drops (proxy, sleep, mobile network)
+    const timer = window.setInterval(() => document.visibilityState === "visible" && void pull(), 30_000);
     return () => {
       alive = false;
+      offStream();
       window.clearInterval(timer);
     };
   }, []);
@@ -81,7 +86,8 @@ export default function StatusPage() {
           </div>
           <p className="mt-2 text-[13px] leading-6 text-[#85888B]">
             Verdikt diambil dari jendela {status?.window_minutes ?? 15} menit terakhir, bukan rata-rata 24 jam.
-            Halaman ini menyegarkan sendiri tiap 15 detik{at ? `, terakhir ${at.toLocaleTimeString("id-ID")}` : ""}.
+            Halaman ini menerima push dari gateway setiap ada request masuk (plus polling 30 detik sebagai cadangan)
+            {at ? `, terakhir ${at.toLocaleTimeString("id-ID")}` : ""}.
           </p>
         </header>
 

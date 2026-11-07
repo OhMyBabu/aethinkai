@@ -338,23 +338,39 @@ async def catalog_stream(request: Request):
     limits refresh after a route edit.
     """
     async def events():
-        last: float | None = None
+        catalog_version: float | None = None
+        status_version: float | None = None
         ticks = 0
         yield "retry: 3000\n\n"
         while True:
             if await request.is_disconnected():
                 break
             try:
-                version = await db.pool().fetchval(
+                catalog_v = await db.pool().fetchval(
                     """SELECT COALESCE(EXTRACT(EPOCH FROM max(updated_at)), 0)::float8
                          FROM model_prices""")
             except Exception:
-                version = None
-            if version is not None and version != last:
-                first = last is None
-                last = version
-                event = "hello" if first else "catalog"
-                yield f"event: {event}\ndata: {json.dumps({'version': version})}\n\n"
+                catalog_v = None
+            try:
+                # status changes when traffic happens: newest request + error count
+                row = await db.pool().fetchrow(
+                    """SELECT COALESCE(EXTRACT(EPOCH FROM max(created_at)), 0)::float8 AS ts,
+                              count(*) FILTER (WHERE status <> 'ok') AS bad
+                         FROM usage_events
+                        WHERE created_at > now() - interval '15 minutes'""")
+                status_v = float(f"{row['ts']:.3f}") + int(row["bad"] or 0) / 1_000_000 if row else None
+            except Exception:
+                status_v = None
+
+            if catalog_v is not None and catalog_v != catalog_version:
+                first = catalog_version is None
+                catalog_version = catalog_v
+                yield f"event: {'hello' if first else 'catalog'}\ndata: {json.dumps({'version': catalog_v})}\n\n"
+            if status_v is not None and status_v != status_version:
+                first = status_version is None
+                status_version = status_v
+                yield f"event: {'status_hello' if first else 'status'}\ndata: {json.dumps({'version': status_v})}\n\n"
+
             ticks += 1
             if ticks % 10 == 0:
                 yield ": ping\n\n"

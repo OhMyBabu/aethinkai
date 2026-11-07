@@ -139,16 +139,21 @@ export type PublicModel = {
  * Live catalogue channel. The gateway emits `catalog` when a price, name, state or
  * route limit changes, so open tabs update without a reload or a re-login.
  */
-export function catalogStream(onChange: () => void): () => void {
+export function apiStream(handlers: { catalog?: () => void; status?: () => void }): () => void {
   if (typeof window === "undefined" || typeof EventSource === "undefined") return () => {};
   let es: EventSource | null = null;
   try {
     es = new EventSource("/api/stream");
-    es.addEventListener("catalog", () => onChange());
+    if (handlers.catalog) es.addEventListener("catalog", handlers.catalog);
+    if (handlers.status) es.addEventListener("status", handlers.status);
   } catch {
     return () => {};
   }
   return () => es?.close();
+}
+
+export function catalogStream(onChange: () => void): () => void {
+  return apiStream({ catalog: onChange });
 }
 
 export async function publicModels() {
