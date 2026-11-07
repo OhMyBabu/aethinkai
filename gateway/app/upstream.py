@@ -20,8 +20,38 @@ def headers() -> dict[str, str]:
     return h
 
 
+# Fallback upstream: the local 9Router only serves providers the operator has
+# connected. A model it cannot serve answers 404 "No active credentials"; that is
+# not a customer error, so the same request is retried once against the backup
+# relay instead of failing the purchase.
+FALLBACK_BASE = (os.environ.get("UPSTREAM_FALLBACK_BASE_URL") or "").rstrip("/")
+FALLBACK_KEY = os.environ.get("UPSTREAM_FALLBACK_KEY") or ""
+
+
+def _fallback_headers() -> dict[str, str]:
+    h = {"Content-Type": "application/json"}
+    if FALLBACK_KEY:
+        h["Authorization"] = f"Bearer {FALLBACK_KEY}"
+    return h
+
+
+def _use_fallback(status: int, body: bytes) -> bool:
+    if not FALLBACK_BASE:
+        return False
+    if status in (404, 502, 503, 504):
+        return True
+    low = body[:600].lower()
+    return b"no active credentials" in low or b"model_not_found" in low
+
+
 def client() -> httpx.AsyncClient:
     return httpx.AsyncClient(base_url=UPSTREAM_BASE, timeout=httpx.Timeout(UPSTREAM_TIMEOUT, connect=10.0))
+
+
+async def _chat_once(base: str, hdrs: dict[str, str], payload: dict[str, Any]) -> tuple[int, bytes]:
+    async with httpx.AsyncClient(base_url=base, timeout=httpx.Timeout(UPSTREAM_TIMEOUT, connect=10.0)) as c:
+        r = await c.post("/chat/completions", json=payload, headers=hdrs)
+        return r.status_code, r.content
 
 
 async def list_models() -> dict[str, Any]:
@@ -56,15 +86,26 @@ async def stream_chat(payload: dict[str, Any]) -> AsyncIterator[bytes]:
         async with c.stream("POST", "/chat/completions", json=payload, headers=headers()) as r:
             if r.status_code >= 400:
                 body = await r.aread()
+                if _use_fallback(r.status_code, body):
+                    async with httpx.AsyncClient(base_url=FALLBACK_BASE,
+                                                 timeout=httpx.Timeout(UPSTREAM_TIMEOUT, connect=10.0)) as f:
+                        async with f.stream("POST", "/chat/completions", json=payload,
+                                            headers=_fallback_headers()) as fr:
+                            if fr.status_code >= 400:
+                                raise UpstreamError(fr.status_code, await fr.aread())
+                            async for chunk in fr.aiter_bytes():
+                                yield chunk
+                    return
                 raise UpstreamError(r.status_code, body)
             async for chunk in r.aiter_bytes():
                 yield chunk
 
 
 async def chat(payload: dict[str, Any]) -> tuple[int, bytes]:
-    async with client() as c:
-        r = await c.post("/chat/completions", json=payload, headers=headers())
-        return r.status_code, r.content
+    status, body = await _chat_once(UPSTREAM_BASE, headers(), payload)
+    if _use_fallback(status, body):
+        return await _chat_once(FALLBACK_BASE, _fallback_headers(), payload)
+    return status, body
 
 
 class UpstreamError(Exception):
