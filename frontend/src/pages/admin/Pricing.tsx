@@ -22,7 +22,7 @@ const emptyForm = {
   sku: "",
   name: "",
   price: "5000",
-  rpm: "30",
+  rpm: "60",
   blurb: "",
   kind: "plan" as "plan" | "topup",
   sort: "100",
@@ -196,7 +196,7 @@ export default function AdminPricingPage() {
       <PageHeader
         breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Paket" }]}
         title="Paket & RPM"
-        description="Harga, kredit, dan RPM per paket. Satu sumber data untuk landing, panduan, portal, dan bot."
+        description="Harga dan kredit per paket; RPM flat 60 untuk semua. Satu sumber data untuk landing, panduan, portal, dan bot."
         actions={
           <div className="flex gap-2">
             <Button variant="ghost" leadingIcon={<RefreshCw size={13} />} onClick={() => void load()}>
@@ -234,9 +234,9 @@ export default function AdminPricingPage() {
           </p>
         </Card>
         <Card className="p-4">
-          <p className="text-[10.5px] uppercase tracking-[0.12em] text-ash">RPM tertinggi</p>
+          <p className="text-[10.5px] uppercase tracking-[0.12em] text-ash">RPM</p>
           <p className="mt-1 text-[15px] text-warm">
-            {stats.bestRpm ? `${stats.bestRpm.name} · ${stats.bestRpm.rpm_limit} rpm` : "—"}
+            {stats.bestRpm ? `${stats.bestRpm.rpm_limit} rpm · flat semua paket` : "—"}
           </p>
         </Card>
       </div>
@@ -273,7 +273,9 @@ export default function AdminPricingPage() {
                     <span className="ml-1 text-[10px] text-flame">manual</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-[12px] text-warm">{pkg.rpm_limit}</td>
+                <td className="px-4 py-3 text-right font-mono text-[12px] text-warm">
+                  {pkg.rpm_limit} <span className="text-[10px] text-ash">flat</span>
+                </td>
                 <td className="px-4 py-3 text-right">
                   <button type="button" onClick={() => void toggleActive(pkg)} title="klik untuk ubah">
                     <StatusPill tone={pkg.active ? "success" : "neutral"}>{pkg.active ? "aktif" : "nonaktif"}</StatusPill>
@@ -359,13 +361,12 @@ export default function AdminPricingPage() {
           <Field label="Nama tampilan">
             {(id) => <TextInput id={id} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Starter Plus" />}
           </Field>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Harga (Rp)">
-              {(id) => <TextInput id={id} type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />}
-            </Field>
-            <Field label="RPM (request per menit)">
-              {(id) => <TextInput id={id} type="number" value={form.rpm} onChange={(e) => setForm({ ...form, rpm: e.target.value })} />}
-            </Field>
+          <Field label="Harga (Rp)">
+            {(id) => <TextInput id={id} type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />}
+          </Field>
+          <div className="rounded-xl border border-ash/20 bg-warm/[0.02] px-3 py-2.5 text-[11.5px] leading-5 text-ash">
+            RPM <span className="font-mono text-warm">60/menit</span> untuk semua paket — tidak diatur per paket.
+            Mau diubah? Set <span className="font-mono">AETHINK_RPM_LIMIT</span> atau ubah di DB, satu angka untuk semua.
           </div>
           <label className="flex items-center gap-2 text-[12px] text-ash">
             <input

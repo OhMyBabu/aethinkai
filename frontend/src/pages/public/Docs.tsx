@@ -234,7 +234,8 @@ curl -X POST ${BASE}/api/portal/session \\
 
           <Section title="Rate limit: RPM per key, plus pagar kapasitas" id="limits">
             <p>
-              RPM dihitung <strong>per key</strong> (per akun Telegram), sesuai paket yang dibeli — bukan per model, bukan per IP.
+              RPM <strong>flat 60/menit per key</strong> (per akun Telegram) — sama untuk paket mana pun, bukan per model,
+              bukan per IP. Mau lebih tinggi? Itu perubahan kebijakan gateway, bukan fitur paket.
               Di atas itu ada satu pagar global untuk kapasitas box: kalau gateway penuh, balasannya{" "}
               <code className="font-mono text-[12px]">429 gateway_busy</code> dan bukan limit paket kamu.
             </p>
@@ -271,8 +272,8 @@ curl -X POST ${BASE}/api/portal/session \\
               </table>
             </div>
             <p>
-              RPM milik <strong>akun</strong>: nilainya paket tertinggi yang pernah dibeli, dan tidak turun kalau kamu
-              beli paket lebih kecil lagi.{" "}
+              RPM milik <strong>akun</strong> dan nilainya <strong>60/menit untuk semua paket</strong> —
+              beli paket lebih besar tidak menaikkannya.{" "}
               {topup.enabled
                 ? `Top-up nominal bebas (minimal ${idr(topup.min_idr)}) hanya menambah saldo — RPM tidak berubah.`
                 : "Top-up nominal bebas sedang ditutup; pembelian lewat paket."}

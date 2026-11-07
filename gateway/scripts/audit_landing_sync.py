@@ -144,6 +144,9 @@ def main() -> int:
     check(all(int(p["rpm_limit"]) > 0 and int(p["price_idr"]) > 0 and int(p["credits_micro"]) > 0
               for p in api_pkgs.values()),
           "setiap paket punya harga, kredit, dan RPM", f"{len(api_pkgs)} paket")
+    rpms = {int(p["rpm_limit"]) for p in api_pkgs.values()}
+    check(len(rpms) <= 1, "RPM flat: semua paket memakai angka yang sama",
+          f"rpm={sorted(rpms)}")
     policy = shop.get("topup") or {}
     db_policy = (psql_json("SELECT min_idr, max_idr, enabled FROM topup_policy WHERE id = 1") or [{}])[0]
     check(bool(policy) and int(policy.get("min_idr", -1)) == int(db_policy.get("min_idr", -2))
