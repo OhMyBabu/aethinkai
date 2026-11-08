@@ -637,7 +637,7 @@ export function SiteHeader() {
             onClick={() => navigate(dashboardHref)}
             whileTap={{ scale: 0.985 }}
             transition={{ duration: 0.12 }}
-            className="nav-signin signin-halo hidden h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-[#E7893C] px-4 text-[13px] font-semibold text-[#18191B] transition-colors duration-200 hover:bg-[#F09A55] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7893C]/50 sm:inline-flex"
+            className="aethink-header-cta hidden cursor-pointer items-center sm:inline-flex"
           >
             <span className="flex items-center gap-1.5">
               {role ? "Open dashboard" : "Sign in"}
