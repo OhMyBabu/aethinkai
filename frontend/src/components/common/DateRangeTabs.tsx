@@ -28,7 +28,9 @@ export function DateRangeTabs({
             onClick={() => onChange(range)}
             className={cn(
               "h-11 rounded-lg px-3.5 text-[13px] font-medium transition active:scale-[0.98] sm:h-9 sm:px-3 sm:text-[12px]",
-              active ? "bg-flame text-[#1a1305]" : "text-ash hover:bg-warm/[0.06] hover:text-warm",
+              active
+                ? "bg-flame/14 text-flame shadow-[inset_0_0_0_1px_rgba(231,137,60,0.28)]"
+                : "text-ash hover:bg-warm/[0.06] hover:text-warm",
             )}
           >
             {range} days

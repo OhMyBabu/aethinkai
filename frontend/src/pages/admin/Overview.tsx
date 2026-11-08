@@ -145,7 +145,7 @@ export default function AdminOverviewPage() {
   return (
     <div>
       <PageHeader
-        title="Admin overview"
+        title="Overview"
         description="Aggregate view across every workspace on the gateway."
         breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Overview" }]}
         actions={
@@ -164,7 +164,7 @@ export default function AdminOverviewPage() {
         </div>
       ) : null}
 
-      <div className="relative mb-4 overflow-hidden rounded-2xl border border-ash/20 bg-[linear-gradient(115deg,rgba(231,137,60,0.14),rgba(156,84,47,0.06)_40%,rgba(24,25,27,0)_70%)] p-5 sm:p-6">
+      <div className="relative mb-4 overflow-hidden rounded-[18px] border border-ash/16 bg-[linear-gradient(115deg,rgba(231,137,60,0.10),rgba(156,84,47,0.045)_42%,rgba(24,25,27,0)_72%)] p-5 sm:p-6">
         <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-flame/10 blur-3xl" />
         <div className="relative flex flex-wrap items-end justify-between gap-5">
           <div className="min-w-0">
@@ -193,9 +193,6 @@ export default function AdminOverviewPage() {
             <StatusPill tone={(summary?.negative_wallets ?? 0) === 0 ? "active" : "warning"} dot={false}>
               saldo sehat
             </StatusPill>
-            <Button variant="primary" size="sm" leadingIcon={<Plus size={13} />} onClick={() => navigate("/admin/users")}>
-              Add user
-            </Button>
           </div>
         </div>
       </div>

@@ -14,24 +14,23 @@ const titles: Record<string, string> = {
   "/app/usage": "Usage & Logs",
   "/app/billing": "Credits & Billing",
   "/app/settings": "Settings",
-  "/admin/overview": "Admin Overview",
-  "/admin/access": "Access & Keys",
+  "/admin/overview": "Overview",
+  "/admin/access": "Access & keys",
   "/admin/users": "Users",
-  "/admin/models": "Katalog & Harga",
-  "/admin/pricing": "Packages & Pricing",
-  "/admin/api-keys": "Customer API Keys",
-  "/admin/monitor": "Key Monitor",
-  "/admin/model-live": "Model Monitor",
+  "/admin/models": "Katalog & harga",
+  "/admin/pricing": "Paket & RPM",
+  "/admin/api-keys": "Customer API keys",
+  "/admin/monitor": "Key monitor",
+  "/admin/model-live": "Model monitor",
   "/admin/bansos": "Bansos",
-  "/admin/routing": "Routing Provider",
-  "/admin/fallbacks": "Model Fallback",
-  "/admin/usage": "Usage Analytics",
-  "/admin/settings": "Admin Settings",
+  "/admin/routing": "Model routing",
+  "/admin/fallbacks": "Model fallback",
+  "/admin/usage": "Usage analytics",
+  "/admin/settings": "Admin settings",
 };
 
 export function AppShell({ role }: { role: Role }) {
   const [navOpen, setNavOpen] = useState(false);
-  const [query, setQuery] = useState("");
   const [balance, setBalance] = useState<number | null>(null);
   const { state, currentUser, logout } = useStore();
   const { toast } = useToast();
@@ -76,8 +75,6 @@ export function AppShell({ role }: { role: Role }) {
           onOpenNav={() => setNavOpen(true)}
           title={titles[location.pathname] ?? "AethinkAI"}
           role={role}
-          query={query}
-          onQuery={setQuery}
           onNotify={() => toast("You're all caught up", { description: "No new alerts for this workspace.", variant: "info" })}
         />
         <main className="safe-b relative min-w-0 flex-1 px-4 py-5 pb-16 sm:px-6 sm:py-8">

@@ -200,10 +200,10 @@ export default function UserOverviewPage() {
         </div>
       ) : null}
 
-      <div className="relative mb-4 overflow-hidden rounded-2xl border border-flame/20 bg-[linear-gradient(120deg,rgba(231,137,60,0.16),rgba(156,84,47,0.08)_45%,rgba(24,25,27,0)_75%)] p-5 sm:p-6">
+      <div className="relative mb-4 overflow-hidden rounded-[18px] border border-ash/16 bg-[linear-gradient(120deg,rgba(231,137,60,0.10),rgba(156,84,47,0.05)_45%,rgba(24,25,27,0)_75%)] p-5 sm:p-6">
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-flame/15 blur-3xl"
+          className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-flame/10 blur-3xl"
         />
         <div className="relative flex flex-wrap items-end justify-between gap-5">
           <div className="min-w-0">

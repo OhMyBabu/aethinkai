@@ -129,7 +129,7 @@ export default function AdminRoutingPage() {
     <div className="space-y-5">
       <PageHeader
         breadcrumb={[{ label: "Admin" }, { label: "Model Routing" }]}
-        title="Model Routing"
+        title="Model routing"
         description="Ini sisi belakang etalase: provider mana yang melayani tiap model. Urutan route = urutan percobaan; kalau yang pertama mati, yang berikutnya ambil alih tanpa pembeli sadar. Harga & status tayang ada di Katalog."
         actions={
           <div className="w-full max-w-[280px]">

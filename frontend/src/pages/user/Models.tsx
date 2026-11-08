@@ -10,6 +10,7 @@ import { Drawer } from "@/components/common/Drawer";
 import { Modal } from "@/components/common/Modal";
 import { EmptyState } from "@/components/common/EmptyState";
 import { catalogStream, publicModels } from "@/lib/gw";
+import type { Provider } from "@/types";
 import type { AIModel, ModelCategory } from "@/types";
 import { formatCompact, formatIDR } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -35,14 +36,24 @@ type LiveModel = {
   pricing_idr_per_1m: { input: number; output: number; cached_input: number };
 };
 
-const PROVIDER_MARKS: Array<[RegExp, "DeepSeek" | "Qwen" | "GLM" | "Kimi"]> = [
+const PROVIDER_MARKS: Array<[RegExp, string]> = [
   [/deepseek/i, "DeepSeek"],
-  [/qwen|minimax/i, "Qwen"],
   [/glm/i, "GLM"],
   [/kimi/i, "Kimi"],
+  [/claude|fable|sonnet|opus/i, "Anthropic"],
+  [/qwen|minimax/i, "Qwen"],
 ];
 
-const providerMark = (id: string) => PROVIDER_MARKS.find(([re]) => re.test(id))?.[1] ?? null;
+const providerMark = (id: string): Provider | null =>
+  (PROVIDER_MARKS.find(([re]) => re.test(id))?.[1] as Provider | undefined) ?? null;
+
+/** The gateway exposes a transport name ("openai-compatible"), not a brand. */
+const PROVIDER_NAMES: Provider[] = ["DeepSeek", "Qwen", "GLM", "Kimi", "Anthropic"];
+const providerName = (raw?: string): Provider => {
+  if (!raw) return "Gateway";
+  if (/openai-compatible|gateway|openrouter/i.test(raw)) return "Gateway";
+  return PROVIDER_NAMES.includes(raw as Provider) ? (raw as Provider) : "Gateway";
+};
 
 function toAIModel(m: LiveModel, index: number): AIModel {
   const caps = Object.keys(m.capabilities || {});
@@ -55,7 +66,7 @@ function toAIModel(m: LiveModel, index: number): AIModel {
     id: m.id,
     displayName: m.display_name,
     modelId: m.id,
-    provider: providerMark(m.id) ?? "DeepSeek",
+    provider: providerMark(m.id) ?? providerName(m.provider),
     category,
     description: `${m.display_name} — ${m.context_length ? `${formatCompact(m.context_length)} context` : "gateway model"}${caps.length ? ` · ${caps.slice(0, 3).join(", ")}` : ""}.`,
     contextWindow: m.context_length || 0,
@@ -227,7 +238,7 @@ export default function UserModelsPage() {
                   <div className="min-w-0">
                   <p className="truncate text-[15px] font-semibold text-warm">{model.displayName}</p>
                   <p className="mt-0.5 truncate text-[10.5px] text-ash">
-                    {model.contextWindow ? `${Math.round(model.contextWindow / 1000)}K context` : "Gateway model"}
+                    {model.contextWindow ? `${formatCompact(model.contextWindow)} context` : "Gateway model"}
                   </p>
                   </div>
                 </div>

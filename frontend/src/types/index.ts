@@ -2,7 +2,7 @@ export type Role = "user" | "admin";
 
 export type ModelCategory = "Reasoning" | "Coding" | "Multimodal";
 
-export type Provider = "DeepSeek" | "Qwen" | "GLM" | "Kimi" | "Anthropic";
+export type Provider = "DeepSeek" | "Qwen" | "GLM" | "Kimi" | "Anthropic" | "Gateway";
 
 export interface AIModel {
   id: string;

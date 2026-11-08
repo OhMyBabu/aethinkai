@@ -100,7 +100,7 @@ export default function AdminFallbacksPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Model Fallback"
+        title="Model fallback"
         description="Kalau provider utama error, request otomatis dialihkan ke model cadangan dari 9Router."
         actions={
           <Button leadingIcon={<Plus size={14} />} onClick={() => setOpen(true)}>

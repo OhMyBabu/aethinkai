@@ -206,10 +206,10 @@ export default function AdminBansosPage() {
         description="Kredit gratis untuk publik: atur nominal, model yang boleh dipakai, dan siapa penerimanya."
         actions={
           <>
-            <Button variant="secondary" leadingIcon={<Gift size={14} />} onClick={() => setGrantModal(true)}>
+            <Button variant="primary" leadingIcon={<Gift size={14} />} onClick={() => setGrantModal(true)}>
               Salurkan
             </Button>
-            <Button leadingIcon={<Plus size={14} />} onClick={openCreate}>
+            <Button variant="secondary" leadingIcon={<Plus size={14} />} onClick={openCreate}>
               Program
             </Button>
           </>

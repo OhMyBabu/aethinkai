@@ -124,8 +124,7 @@ export default function UserBillingPage() {
         breadcrumb={[{ label: "Workspace", to: "/app/overview" }, { label: "Billing" }]}
         actions={
           <div className="flex items-center gap-2">
-            <StatusPill tone="active">Credit balance</StatusPill>
-            <Button variant="ghost" size="sm" leadingIcon={<RefreshCw size={13} />} onClick={load} disabled={loading}>
+            <Button variant="secondary" size="sm" leadingIcon={<RefreshCw size={13} />} onClick={load} disabled={loading}>
               Refresh
             </Button>
           </div>
@@ -156,8 +155,8 @@ export default function UserBillingPage() {
                 { label: "Entries", value: String(ledger.length) },
               ].map((item) => (
                 <div key={item.label} className="rounded-xl border border-ash/15 bg-warm/[0.03] px-3 py-2">
-                  <p className="text-[9.5px] uppercase tracking-[0.1em] text-dim">{item.label}</p>
-                  <p className="mt-1 truncate text-[12.5px] tabular-nums text-warm">{item.value}</p>
+                  <p className="text-[10.5px] uppercase tracking-[0.1em] text-dim">{item.label}</p>
+                  <p className="mt-1 truncate text-[13px] tabular-nums text-warm">{item.value}</p>
                 </div>
               ))}
             </div>

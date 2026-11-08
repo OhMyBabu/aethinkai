@@ -40,13 +40,7 @@ export function PageHeader({
       {breadcrumb ? <Breadcrumb items={breadcrumb} /> : null}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <div className="mb-2 flex items-center gap-2">
-            <span aria-hidden className="h-[3px] w-7 rounded-full bg-gradient-to-r from-burnt to-flame" />
-            <span className="text-[10.5px] font-medium uppercase tracking-[0.18em] text-ash">
-              {breadcrumb?.length ? breadcrumb[0].label : "Workspace"}
-            </span>
-          </div>
-          <h1 className="text-[24px] font-semibold leading-tight tracking-[-0.025em] text-warm sm:text-[27px]">
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.03em] text-warm sm:text-[30px]">
             {title}
           </h1>
           {description ? (

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, ChevronDown, LogOut, Menu, Search, Settings, ShieldCheck } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Menu, Settings, ShieldCheck } from "lucide-react";
 import { useStore } from "@/data/store";
 import type { Role } from "@/types";
 
@@ -88,16 +88,12 @@ export function Topbar({
   onOpenNav,
   title,
   role,
-  query,
-  onQuery,
   onNotify,
 }: {
   onOpenNav: () => void;
   title: string;
   role: Role;
   onNotify?: () => void;
-  query?: string;
-  onQuery?: (value: string) => void;
 }) {
   return (
     <div className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-ash/12 bg-[#18191b]/85 px-4 backdrop-blur-md sm:px-6">
@@ -109,26 +105,9 @@ export function Topbar({
       >
         <Menu size={16} />
       </button>
-      <p className="hidden text-[13px] font-medium text-warm/85 sm:block">{title}</p>
+      <p className="hidden text-[13px] font-medium text-warm/85 sm:block lg:hidden">{title}</p>
 
       <div className="ml-auto flex items-center gap-2">
-        {onQuery ? (
-          <div className="relative hidden sm:block">
-            <Search
-              size={14}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ash"
-              aria-hidden
-            />
-            <input
-              value={query ?? ""}
-              onChange={(event) => onQuery(event.target.value)}
-              placeholder="Search anything…"
-              aria-label="Global search"
-              autoComplete="off"
-              className="h-11 w-56 rounded-xl border border-ash/20 bg-[#141518] pl-9 pr-3 text-[12.5px] text-warm outline-none placeholder:text-ash/60 focus:border-flame/50 focus:ring-2 focus:ring-flame/20 lg:h-9"
-            />
-          </div>
-        ) : null}
         <button
           type="button"
           onClick={() => onNotify?.()}

@@ -20,7 +20,7 @@ interface UsageChartProps {
 }
 
 const palette = {
-  requests: { primary: "#E7893C", secondary: "#9C542F" },
+  requests: { primary: "#E7893C", secondary: "#B4B6B9" },
   tokens: { primary: "#E7893C", secondary: "#FAF8F4" },
   cost: { primary: "#E7893C", secondary: "#85888B" },
 } as const;

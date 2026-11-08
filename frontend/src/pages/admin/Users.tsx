@@ -142,7 +142,7 @@ export default function AdminUsersPage() {
       align: "right",
       sortValue: (row) => Number(row.balance_micro),
       render: (row) => (
-        <span className="tabular-nums text-warm/90">{formatIDR(Number(row.balance_micro) / 1_000_000)}</span>
+        <span className="whitespace-nowrap tabular-nums text-warm/90">{formatIDR(Number(row.balance_micro) / 1_000_000)}</span>
       ),
     },
     {

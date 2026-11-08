@@ -89,7 +89,7 @@ export default function AdminModelLivePage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Model Monitor"
+        title="Model monitor"
         description="Model apa yang sedang dipakai, siapa yang pakai, dari IP mana, dan berapa token per request."
         actions={
           <>

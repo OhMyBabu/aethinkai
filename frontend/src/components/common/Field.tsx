@@ -2,7 +2,7 @@ import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type Selec
 import { cn } from "@/lib/cn";
 
 const baseField =
-  "w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 py-2.5 text-sm text-warm placeholder:text-ash/60 transition focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25 disabled:opacity-50";
+  "w-full rounded-xl border border-ash/18 bg-[#141416] px-3.5 py-2.5 text-sm text-warm placeholder:text-ash/60 transition focus:border-flame/55 focus:outline-none focus:ring-2 focus:ring-flame/20 disabled:opacity-50";
 
 interface FieldProps {
   label: string;

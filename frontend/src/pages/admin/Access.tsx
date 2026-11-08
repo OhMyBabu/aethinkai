@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { StatCard } from "@/components/common/StatCard";
+import { Button } from "@/components/common/Button";
 import {
   Ban,
   Check,
@@ -127,34 +130,22 @@ export default function AccessPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-flame">Access control</p>
-          <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.02em] text-warm">Pembeli, key & order</h1>
-          <p className="mt-1 text-[12.5px] text-ash">Bot yang menjual, gateway yang mencatat. Semua key aktif di sini.</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="flex h-9 items-center gap-1.5 rounded-lg border border-ash/25 px-3 text-[12.5px] text-ash transition hover:border-flame/40 hover:text-warm"
-        >
-          <RefreshCw size={13} className={busy ? "animate-spin" : undefined} /> Muat ulang
-        </button>
-      </div>
+      <PageHeader
+        title="Access & keys"
+        description="Bot yang menjual, gateway yang mencatat. Semua key aktif di sini."
+        breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Access" }]}
+        actions={
+          <Button variant="secondary" size="sm" leadingIcon={<RefreshCw size={13} />} onClick={() => void load()} disabled={busy}>
+            Muat ulang
+          </Button>
+        }
+      />
 
-      <div className="grid gap-3 sm:grid-cols-4">
-        {[
-          { icon: KeyRound, label: "Key aktif", value: String(totals.active) },
-          { icon: Ban, label: "Disuspend", value: String(totals.suspended) },
-          { icon: Wallet, label: "Pemakaian", value: idr(totals.spend) },
-          { icon: Users, label: "Request", value: totals.requests.toLocaleString("id-ID") },
-        ].map((s) => (
-          <div key={s.label} className="surface p-4">
-            <s.icon size={14} className="text-ash" />
-            <p className="mt-2 text-[19px] font-semibold tabular-nums text-warm">{s.value}</p>
-            <p className="mt-0.5 text-[10.5px] uppercase tracking-[0.1em] text-ash">{s.label}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <StatCard label="Key aktif" value={totals.active} icon={KeyRound} />
+        <StatCard label="Disuspend" value={totals.suspended} icon={Ban} />
+        <StatCard label="Pemakaian" value={totals.spend} format={(v) => idr(v)} icon={Wallet} />
+        <StatCard label="Request" value={totals.requests} icon={Users} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-b border-ash/15 pb-2">
@@ -275,7 +266,7 @@ export default function AccessPage() {
                           const v = Number(e.target.value);
                           if (v && v !== k.rpm_limit) void patch(k.id, { rpm_limit: v });
                         }}
-                        className="h-7 w-[70px] rounded-md border border-ash/25 bg-[#141518] px-2 text-[11.5px] tabular-nums text-warm focus:border-flame/50 focus:outline-none"
+                        className="h-8 w-[74px] rounded-md border border-ash/18 bg-[#101113] px-2 text-[11.5px] tabular-nums text-warm focus:border-flame/50 focus:outline-none"
                       />
                       {k.rpm_override ? (
                         <span
@@ -298,14 +289,14 @@ export default function AccessPage() {
                         <button
                           type="button"
                           onClick={() => void patch(k.id, { status: k.status === "active" ? "suspended" : "active" })}
-                          className="rounded-md border border-ash/25 px-2 py-1 text-[10.5px] text-ash transition hover:border-flame/40 hover:text-warm"
+                          className="h-8 rounded-md border border-ash/25 px-2 text-[11.5px] text-ash transition hover:border-flame/40 hover:text-warm"
                         >
                           {k.status === "active" ? "Suspend" : "Aktifkan"}
                         </button>
                         <button
                           type="button"
                           onClick={() => void rotate(k.id)}
-                          className="rounded-md border border-ash/25 px-2 py-1 text-[10.5px] text-ash transition hover:border-flame/40 hover:text-warm"
+                          className="h-8 rounded-md border border-ash/25 px-2 text-[11.5px] text-ash transition hover:border-flame/40 hover:text-warm"
                         >
                           Rotate
                         </button>

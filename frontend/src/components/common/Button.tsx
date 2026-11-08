@@ -16,7 +16,7 @@ const variants: Record<Variant, string> = {
   primary:
     "bg-flame text-[#1a1305] hover:bg-[#f09a52] active:bg-[#d9792f] border border-transparent shadow-[0_10px_24px_-16px_rgba(231,137,60,0.9)]",
   secondary:
-    "bg-warm/[0.06] text-warm border border-ash/25 hover:bg-warm/[0.1] hover:border-ash/40",
+    "bg-warm/[0.08] text-warm border border-ash/22 hover:bg-warm/[0.12] hover:border-ash/34",
   ghost: "text-ash hover:text-warm hover:bg-warm/[0.05] border border-transparent",
   outline: "border border-flame/45 text-flame hover:bg-flame/10",
   danger: "border border-[#c4633a]/50 text-[#e08a5f] hover:bg-[#c4633a]/12",

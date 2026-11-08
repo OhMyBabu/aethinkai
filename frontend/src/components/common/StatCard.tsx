@@ -32,17 +32,17 @@ export function StatCard({
     <div className={cn("surface lift group relative overflow-hidden p-4 sm:p-5", className)}>
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-flame/40 to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-warm/14 to-transparent"
       />
       <div className="flex items-start justify-between gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-ash">{label}</p>
+        <p className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-ash">{label}</p>
         {Icon ? (
           <span className="grid size-9 place-items-center rounded-xl border border-flame/20 bg-gradient-to-br from-flame/15 to-transparent text-flame/90 transition-transform duration-300 group-hover:-translate-y-0.5">
             <Icon size={15} aria-hidden />
           </span>
         ) : null}
       </div>
-      <p className="mt-3 font-sans text-[21px] font-semibold leading-none tracking-[-0.025em] text-warm tabular-nums sm:text-[27px]">
+      <p className="mt-3 font-sans text-[24px] font-semibold leading-none tracking-[-0.03em] text-warm tabular-nums sm:text-[28px]">
         {format ? format(animated) : animated.toLocaleString("en-US")}
       </p>
       <div className="mt-3 flex items-center gap-2 text-[12px]">
@@ -57,13 +57,9 @@ export function StatCard({
             {Math.abs(delta).toFixed(1)}%
           </span>
         ) : null}
-        <span className="text-ash">{deltaLabel}</span>
+        {typeof delta === "number" || hint ? <span className="text-ash">{deltaLabel}</span> : null}
       </div>
       {hint ? <p className="mt-2 text-[11px] leading-4 text-dim">{hint}</p> : null}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-burnt/0 via-flame/45 to-burnt/0 opacity-70"
-      />
     </div>
   );
 }

@@ -444,9 +444,9 @@ export default function PortalPage() {
         >
           <Link to="/" className="inline-flex"><Wordmark /></Link>
           <h1 className="mt-5 text-[22px] font-semibold tracking-[-0.02em] text-[#FAF8F4]">Masuk ke portal</h1>
-          <p className="mt-1.5 text-[13px] leading-6 text-[#85888B]">
-            Pakai Telegram — nggak ada email atau password. Akun otomatis kedetect dari bot,
-            dan semua pembelian tercatat di sana.
+          <p className="mt-1.5 text-[13px] leading-6 text-[#A1A3A7]">
+            Portal pembeli untuk melihat saldo, riwayat pembelian, dan API key. Masuk dengan akun
+            Telegram yang dipakai saat membeli.
           </p>
 
           <div className="mt-5">
@@ -457,7 +457,7 @@ export default function PortalPage() {
 
           <details className="mt-5 rounded-lg border border-[#3A3B3D] bg-[#141518]/60 p-3">
             <summary className="cursor-pointer text-[12px] text-[#85888B] marker:content-none">
-              Punya API key? Tempel di sini
+              Sudah punya API key? Masuk langsung
             </summary>
           <form onSubmit={openSession} className="mt-3 space-y-3">
             <label htmlFor="apikey" className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#85888B]">API key</label>
