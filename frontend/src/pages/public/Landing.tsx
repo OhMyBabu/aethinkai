@@ -115,14 +115,14 @@ export default function LandingPage() {
           <FullModelCatalog models={enabledModels} />
         </div>
 
-        <section className="border-t border-ash/12 bg-[#151619]">
-          <div className="mx-auto max-w-[1320px] px-4 py-10 sm:px-6">
+        <section className="border-t border-ash/10 bg-[linear-gradient(180deg,#101113_0%,#0C0D0F_100%)]">
+          <div className="mx-auto max-w-[1320px] px-4 py-12 sm:px-6 sm:py-14">
             <div className="flex flex-col items-start justify-between gap-5 min-[900px]:flex-row min-[900px]:items-center">
               <div>
                 <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-warm">
                   Ship your first routed request today
                 </h2>
-                <p className="mt-1.5 max-w-lg text-[13px] leading-6 text-ash">
+                <p className="mt-2 max-w-[52ch] text-[13px] leading-6 text-ash">
                   Create a key, send one request, and watch the spend land in your ledger — every provider behind
                   one endpoint.
                 </p>
@@ -130,7 +130,7 @@ export default function LandingPage() {
               <div className="flex shrink-0 items-center gap-3 max-[899px]:w-full max-[899px]:flex-col max-[899px]:items-stretch max-[899px]:gap-1">
                 <Button
                   variant="primary"
-                  className="cta-landing max-[899px]:w-full"
+                  className="cta-landing shrink-0 max-[899px]:w-full"
                   onClick={() => navigate("/login")}
                   trailingIcon={<ArrowRight size={15} />}
                 >
@@ -151,7 +151,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <footer className="mt-14 border-t border-ash/12">
+            <footer className="mt-10 border-t border-ash/10 sm:mt-12">
               <div className="flex flex-col gap-6 py-7 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   <Wordmark compact className="[&_span.block]:text-[15px]" />

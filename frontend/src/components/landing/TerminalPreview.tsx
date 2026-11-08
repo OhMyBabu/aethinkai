@@ -303,7 +303,7 @@ export function TerminalPreview({ className }: { className?: string }) {
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-ash/12 bg-[#151619] px-3 py-2 text-[10px] text-ash">
         <span className="inline-flex items-center gap-1.5">
           <span className="size-1.5 rounded-full bg-flame/80" aria-hidden />
-          Live key · masked in this preview
+          Example snippet · key masked
         </span>
         <Link to="/login" className="inline-flex items-center gap-1 font-medium text-flame hover:underline max-sm:h-11 max-sm:px-1">
           Open dashboard

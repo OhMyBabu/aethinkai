@@ -29,10 +29,14 @@ export function FeatureStrip() {
   return (
     <ul className="grid min-w-0 gap-3 sm:grid-cols-3">
       {features.map((feature) => (
-        <li key={feature.title} data-reveal className="surface p-4">
+        <li
+          key={feature.title}
+          data-reveal
+          className="feature-card surface flex h-full min-w-0 flex-col p-4 transition duration-200 hover:-translate-y-0.5 hover:border-ash/28 hover:bg-warm/[0.035] motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:p-5"
+        >
           <feature.icon size={16} className="text-flame" aria-hidden />
-          <p className="mt-2.5 text-[13px] font-semibold text-warm max-[899px]:text-[15px]">{feature.title}</p>
-          <p className="mt-1 text-[11.5px] leading-5 text-ash max-[899px]:text-[13px] max-[899px]:leading-6">{feature.text}</p>
+          <p className="mt-3 text-[13px] font-semibold text-warm max-[899px]:text-[15px]">{feature.title}</p>
+          <p className="mt-1.5 text-[11.5px] leading-5 text-ash max-[899px]:text-[13px] max-[899px]:leading-6">{feature.text}</p>
         </li>
       ))}
     </ul>
@@ -49,12 +53,16 @@ export function KpiStrip({ models, status }: { models: AIModel[]; status: Landin
   return (
     <div className="grid min-w-0 grid-cols-3 gap-2.5 sm:gap-3">
       {items.map((item) => (
-        <div key={item.label} data-reveal className="min-w-0 rounded-xl border border-ash/18 bg-warm/[0.025] px-3 py-3 max-[899px]:px-2.5">
-          <item.icon size={13} className="text-ash" aria-hidden />
-          <p className="mt-2 text-[17px] font-semibold leading-none tabular-nums text-warm max-[899px]:text-[18px] sm:text-[19px]">
+        <div
+          key={item.label}
+          data-reveal
+          className="flex min-w-0 flex-col justify-between rounded-xl border border-ash/16 bg-warm/[0.025] px-3 py-3 max-[899px]:px-2.5"
+        >
+          <item.icon size={13} className="text-ash/85" aria-hidden />
+          <p className="mt-2 whitespace-nowrap text-[17px] font-semibold leading-none tabular-nums text-warm max-[899px]:text-[18px] sm:text-[19px]">
             {item.value}
           </p>
-          <p className="mt-1 text-[10.5px] uppercase leading-4 tracking-[0.08em] text-ash sm:text-[10px] sm:tracking-[0.1em]">{item.label}</p>
+          <p className="mt-1.5 text-[10px] uppercase leading-4 tracking-[0.09em] text-ash/90">{item.label}</p>
         </div>
       ))}
     </div>
@@ -101,22 +109,42 @@ export function PopularModels({ models }: { models: AIModel[] }) {
           <li
             key={model.id}
             data-reveal
-            className="group flex min-w-0 items-center justify-between gap-3 overflow-hidden rounded-xl border border-ash/18 bg-[#1a1b1e]/70 px-3 py-2.5 transition hover:border-flame/30"
+            className="group min-w-0 rounded-xl border border-ash/18 bg-[#1a1b1e]/70 p-3 transition duration-200 hover:-translate-y-0.5 hover:border-flame/30 hover:bg-[#1d1e22] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
-            <div className="flex min-w-0 items-center gap-2">
-              <ModelMark modelId={model.modelId} provider={model.provider} size={14} className="text-warm/70" />
-              <div className="min-w-0">
-              <p className="truncate text-[14px] font-medium text-warm max-[899px]:text-[15px] sm:text-[12.5px]">{model.displayName}</p>
-              <p className="mt-0.5 truncate font-mono text-[11.5px] text-ash max-[899px]:text-[12.5px] sm:text-[9.5px]">{model.modelId}</p>
-              <p className="truncate text-[11.5px] text-dim sm:text-[9.5px]">
-                {model.category} · {ctxLabel(model.contextWindow)} ctx · {formatIDR(model.inputRate)} / {formatIDR(model.outputRate)} per 1M
-                {counts.get(model.id) ? ` · ${counts.get(model.id)} req` : ""}
-              </p>
+            <div className="flex items-start justify-between gap-2.5">
+              <div className="flex min-w-0 items-center gap-2">
+                <ModelMark modelId={model.modelId} provider={model.provider} size={14} className="shrink-0 text-warm/75" />
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-medium leading-5 text-warm max-[899px]:text-[15px]">{model.displayName}</p>
+                  <p className="truncate font-mono text-[10.5px] leading-4 text-ash" title={model.modelId}>
+                    {model.modelId}
+                  </p>
+                </div>
               </div>
+              <span className="shrink-0 rounded-md border border-ash/20 px-1.5 py-0.5 text-[9.5px] uppercase tracking-[0.08em] text-ash transition group-hover:border-flame/30 group-hover:text-flame">
+                {model.provider}
+              </span>
             </div>
-            <span className="shrink-0 rounded-md border border-ash/20 px-1.5 py-0.5 text-[11px] uppercase tracking-[0.08em] text-ash group-hover:border-flame/30 sm:text-[9.5px] group-hover:text-flame">
-              {model.provider}
-            </span>
+
+            <dl className="mt-2.5 grid grid-cols-2 gap-2 border-t border-ash/12 pt-2">
+              <div className="min-w-0">
+                <dt className="text-[9.5px] uppercase tracking-[0.08em] text-ash/85">Input / 1M</dt>
+                <dd className="mt-0.5 whitespace-nowrap text-[12.5px] font-medium leading-5 tabular-nums text-warm">
+                  {formatIDR(model.inputRate)}
+                </dd>
+              </div>
+              <div className="min-w-0 text-right">
+                <dt className="text-[9.5px] uppercase tracking-[0.08em] text-ash/85">Output / 1M</dt>
+                <dd className="mt-0.5 whitespace-nowrap text-[12.5px] font-medium leading-5 tabular-nums text-warm">
+                  {formatIDR(model.outputRate)}
+                </dd>
+              </div>
+            </dl>
+
+            <p className="mt-2 truncate text-[10.5px] text-dim">
+              {model.category} · {ctxLabel(model.contextWindow)} ctx
+              {counts.get(model.id) ? ` · ${counts.get(model.id)} req` : ""}
+            </p>
           </li>
         ))}
       </ul>
@@ -145,7 +173,8 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
         <div>
           <p className="text-[12px] uppercase tracking-[0.2em] text-flame sm:text-[11px]">Full catalogue</p>
           <h2 className="mt-1.5 text-[24px] font-semibold tracking-[-0.02em] text-warm sm:text-[30px]">
-            {models.length} model{maxContextLabel ? `, up to ${maxContextLabel} token` : ""}
+            {models.length} model{models.length === 1 ? "" : "s"}
+            {maxContextLabel ? `, up to ${maxContextLabel} token${maxContextLabel === "1" ? "" : "s"}` : ""}
           </h2>
           <p className="mt-1.5 max-w-xl text-[13px] leading-6 text-ash max-[899px]:text-[14px] max-[899px]:leading-6">
             Every model the gateway exposes, with context windows and per-million pricing.
@@ -170,7 +199,7 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
                     key={head}
                     scope="col"
                     className={cn(
-                      "whitespace-nowrap px-4 py-2.5 text-[10.5px] font-medium uppercase tracking-[0.12em] text-ash",
+                      "whitespace-nowrap px-4 py-3 text-[10.5px] font-medium uppercase tracking-[0.12em] text-ash/95",
                       i >= 4 && "text-right",
                     )}
                   >
@@ -219,7 +248,7 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
                       <span className="inline-flex items-center gap-1.5 text-[12px] text-flame sm:text-[11px]">
                         <span className="size-1.5 rounded-full bg-flame" aria-hidden />
                         {(model.availability ?? "on") === "maintenance"
-                          ? "gangguan"
+                          ? "maintenance"
                           : model.enabled
                             ? "online"
                             : "off"}
@@ -251,7 +280,7 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
               <span className="inline-flex shrink-0 items-center gap-1.5 pt-0.5 text-[12px] text-flame">
                 <span className="size-1.5 rounded-full bg-flame" aria-hidden />
                 {(model.availability ?? "on") === "maintenance"
-                  ? "gangguan"
+                  ? "maintenance"
                   : model.enabled
                     ? "online"
                     : "off"}
@@ -314,7 +343,7 @@ export function PricingPreview() {
             Pay as you go
           </h2>
           <p className="mt-1.5 max-w-xl text-[13px] leading-6 text-ash">
-            Buy credit once, spend it across every model. Rates per model are in the catalogue below.
+            Pick a credit amount, then spend it across every model. Rates per model are in the catalogue below.
           </p>
         </div>
         <Button variant="ghost" size="md" className="cta-landing-soft" trailingIcon={<ArrowRight size={14} />} onClick={() => window.location.assign("/login")}>
@@ -328,28 +357,46 @@ export function PricingPreview() {
             <Card
               key={pkg.sku}
               data-reveal
-              className={highlighted ? "border-flame/35 bg-flame/[0.05]" : undefined}
+              className={cn(
+                "flex h-full flex-col",
+                highlighted ? "border-flame/30 bg-flame/[0.04]" : "border-ash/15",
+              )}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <p className="text-[13px] font-semibold text-warm max-[899px]:text-[15px]">{pkg.name}</p>
                 {highlighted ? <StatusPill tone="active">Popular</StatusPill> : null}
               </div>
-              <p className="mt-3 text-[22px] font-semibold tabular-nums text-warm max-[899px]:text-[24px]">
+              <p className="mt-3 text-[22px] font-semibold leading-none tabular-nums text-warm max-[899px]:text-[24px]">
                 {formatIDR(pkg.price_idr)}
               </p>
-              <p className="mt-1 text-[12px] text-ash max-[899px]:text-[13px]">
-                {formatIDR(pkg.credits_micro / 1_000_000)} credit · {pkg.rpm_limit} req/min
-              </p>
-              {pkg.blurb ? <p className="mt-1.5 text-[11.5px] leading-5 text-dim">{pkg.blurb}</p> : null}
-              <Button
-                variant={highlighted ? "primary" : "secondary"}
-                size="md"
-                full
-                className={highlighted ? "cta-landing mt-4" : "cta-landing-soft mt-4"}
-                onClick={() => window.location.assign("/login")}
-              >
-                Buy {pkg.name}
-              </Button>
+              <p className="mt-1 text-[11.5px] text-ash max-[899px]:text-[12.5px]">one-time credit purchase</p>
+
+              <dl className="mt-3.5 space-y-1.5 border-t border-ash/12 pt-3 text-[12px]">
+                <div className="flex items-baseline justify-between gap-2">
+                  <dt className="text-ash">Saldo kredit</dt>
+                  <dd className="whitespace-nowrap tabular-nums text-warm/90">
+                    {formatIDR(pkg.credits_micro / 1_000_000)}
+                  </dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-2">
+                  <dt className="text-ash">Batas akun</dt>
+                  <dd className="whitespace-nowrap tabular-nums text-warm/90">{pkg.rpm_limit} req/min</dd>
+                </div>
+              </dl>
+
+              {pkg.blurb ? <p className="mt-2.5 text-[11.5px] leading-5 text-dim">{pkg.blurb}</p> : null}
+
+              <div className="mt-auto pt-5">
+                <Button
+                  variant={highlighted ? "primary" : "secondary"}
+                  size="md"
+                  full
+                  className={highlighted ? "cta-landing" : "cta-landing-soft"}
+                  onClick={() => window.location.assign("/login")}
+                >
+                  Buy {pkg.name}
+                </Button>
+              </div>
             </Card>
           );
         })}
