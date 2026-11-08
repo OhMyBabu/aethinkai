@@ -667,9 +667,9 @@ html[data-reduced-motion="true"] .lift:hover { transform: none; }
   align-items: center;
   justify-content: center;
   gap: 10px;
-  height: 58px;
-  min-height: 58px;
-  padding: 0 28px;
+  height: 52px;
+  min-height: 52px;
+  padding: 0 26px;
   border-radius: 10px;
   font-size: 16px;
   font-weight: 600;
