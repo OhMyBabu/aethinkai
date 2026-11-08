@@ -573,3 +573,79 @@ html[data-reduced-motion="true"] .lift:hover { transform: none; }
     filter: none;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/*  Login — Telegram CTA: 2.4s glow, 2.8s shimmer                      */
+/* ------------------------------------------------------------------ */
+.aethink-telegram-cta {
+  --login-glow-rgb: 231, 137, 60;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 9px;
+  animation: aethink-telegram-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes aethink-telegram-glow {
+  0%, 100% {
+    box-shadow:
+      0 8px 24px -8px rgba(231, 137, 60, 0.42),
+      0 0 0 0 rgba(231, 137, 60, 0.46);
+  }
+  50% {
+    box-shadow:
+      0 12px 32px -8px rgba(231, 137, 60, 0.58),
+      0 0 0 8px rgba(231, 137, 60, 0);
+  }
+}
+
+.aethink-telegram-cta::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.24), transparent);
+  pointer-events: none;
+  z-index: 1;
+  animation: aethink-telegram-shimmer 2.8s ease-in-out infinite;
+}
+
+@keyframes aethink-telegram-shimmer {
+  from { transform: translateX(-120%) skewX(-20deg); }
+  to { transform: translateX(220%) skewX(-20deg); }
+}
+
+.aethink-telegram-cta > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* the glow keeps going while idle; keyboard focus needs one clean ring */
+.aethink-telegram-cta:focus-visible {
+  outline: 2px solid rgba(231, 137, 60, 0.9);
+  outline-offset: 3px;
+  animation: none;
+}
+
+.aethink-telegram-cta:focus-visible::before {
+  animation: none;
+  opacity: 0;
+}
+
+.aethink-telegram-cta:disabled,
+.aethink-telegram-cta[aria-disabled="true"] {
+  animation: none;
+}
+
+.aethink-telegram-cta:disabled::before,
+.aethink-telegram-cta[aria-disabled="true"]::before {
+  animation: none;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aethink-telegram-cta,
+  .aethink-telegram-cta::before { animation: none; }
+}

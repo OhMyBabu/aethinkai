@@ -9,9 +9,11 @@ import { pollLink, startLink, type LinkStatus } from "@/lib/portal";
 export function TelegramConnect({
   onToken,
   compact = false,
+  pulse = false,
 }: {
   onToken: (token: string, status: LinkStatus) => void;
   compact?: boolean;
+  pulse?: boolean;
 }) {
   const [phase, setPhase] = useState<"idle" | "waiting" | "expired" | "error">("idle");
   const [link, setLink] = useState<{ code: string; deep_link: string; expires_in: number } | null>(null);
@@ -47,11 +49,11 @@ export function TelegramConnect({
           } else if (status.status === "consumed") {
             stop();
             setPhase("expired");
-            setError("Kode ini sudah dipakai. Buat kode baru.");
+            setError("Sesi masuk telah berakhir. Silakan hubungkan kembali akun Telegram Anda.");
           } else if (status.status === "expired") {
             stop();
             setPhase("expired");
-            setError("Kode kedaluwarsa. Buat kode baru.");
+            setError("Sesi masuk telah berakhir. Silakan hubungkan kembali akun Telegram Anda.");
           }
         } catch (err) {
           stop();
@@ -61,7 +63,12 @@ export function TelegramConnect({
       }, 2000);
     } catch (err) {
       setPhase("error");
-      setError(err instanceof Error ? err.message : "Gagal menghubungkan");
+      const detail = err instanceof Error ? err.message : "";
+      setError(
+        detail
+          ? `Gagal menghubungkan akun Telegram (${detail}). Periksa koneksi Anda, lalu coba kembali.`
+          : "Gagal menghubungkan akun Telegram. Periksa koneksi Anda, lalu coba kembali.",
+      );
     }
   }, [onToken, stop]);
 
@@ -72,7 +79,7 @@ export function TelegramConnect({
           <button
             type="button"
             onClick={() => void begin()}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#E7893C] text-[13.5px] font-semibold text-[#18191B] transition-colors hover:bg-[#F09A55]"
+            className={`flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#E7893C] text-[13.5px] font-semibold text-[#18191B] transition-colors hover:bg-[#F09A55]${pulse ? " aethink-telegram-cta" : ""}`}
           >
             <Send size={15} /> Hubungkan Telegram
           </button>
@@ -83,6 +90,12 @@ export function TelegramConnect({
             </p>
           ) : null}
         </>
+      ) : null}
+
+      {phase === "waiting" && !link ? (
+        <p className="flex h-11 items-center justify-center gap-2 rounded-lg border border-[#3A3B3D] text-[13px] text-[#85888B]" role="status">
+          <Loader2 size={14} className="animate-spin" /> Menghubungkan ke Telegram…
+        </p>
       ) : null}
 
       {phase === "waiting" && link ? (
