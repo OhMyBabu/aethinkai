@@ -46,19 +46,6 @@ export default function LoginTelegramPage() {
         <p className="mt-3 text-[11.5px] leading-5 text-[#85888B]">
           Masuk dengan Telegram tanpa email atau kata sandi.
         </p>
-
-        <div className="mt-6 border-t border-white/[0.07] pt-4">
-          <p className="text-[11.5px] leading-5 text-[#85888B]">
-            Administrator?{" "}
-            <Link
-              to="/admin/login"
-              className="-my-1 inline-flex items-center py-1 text-[#9A9DA0] underline decoration-white/15 underline-offset-2 transition hover:text-[#FAF8F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flame/40"
-            >
-              Masuk ke panel admin
-            </Link>
-            .
-          </p>
-        </div>
       </motion.div>
     </div>
   );
