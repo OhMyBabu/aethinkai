@@ -338,7 +338,8 @@ html[data-reduced-motion="true"] .lift:hover { transform: none; }
 /* ------------------------------------------------------------------ */
 .aethink-header-cta {
   position: relative;
-  display: inline-flex;
+  /* display is owned by the component (`hidden sm:inline-flex`); setting it
+     here would beat Tailwind's `hidden` and drop the CTA onto mobile. */
   align-items: center;
   justify-content: center;
   gap: 8px;
