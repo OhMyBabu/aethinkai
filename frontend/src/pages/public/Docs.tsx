@@ -17,11 +17,11 @@ function ctxLabel(tokens: number): string {
     const m = Math.round((tokens / 1_000_000) * 10) / 10;
     return `${m % 1 === 0 ? m.toFixed(0) : m}M`;
   }
-  if (tokens >= 1_000) return `${Math.round(tokens / 1000)}K`;
+  if (tokens >= 1000) return `${Math.round(tokens / 1000)}K`;
   return String(tokens);
 }
 
-function CopyBlock({ code, label }: { code: string; label: string }) {
+function CopyBlock({ code, label, copyLabel = "Salin kode" }: { code: string; label: string; copyLabel?: string }) {
   const [done, setDone] = useState(false);
   return (
     <div className="relative rounded-xl border border-[#3A3B3D] bg-[#141518]">
@@ -34,9 +34,13 @@ function CopyBlock({ code, label }: { code: string; label: string }) {
             setDone(true);
             window.setTimeout(() => setDone(false), 1400);
           }}
+          aria-label={done ? "Kode berhasil disalin" : copyLabel}
           className="inline-flex items-center gap-1 rounded-md border border-[#3A3B3D] px-2 py-1 text-[10.5px] text-[#FAF8F4]/80 transition hover:bg-[#22242a]"
         >
-          {done ? <Check size={11} /> : <Copy size={11} />} {done ? "tersalin" : "salin"}
+          {done ? <Check size={11} /> : <Copy size={11} />} {done ? "Tersalin" : copyLabel}
+          <span aria-live="polite" className="sr-only">
+            {done ? "Kode berhasil disalin" : ""}
+          </span>
         </button>
       </div>
       <pre className="overflow-x-auto px-3 py-3 font-mono text-[11.5px] leading-5 text-[#d7d3cc]">{code}</pre>
@@ -53,17 +57,17 @@ function Section({ title, children, id }: { title: string; children: React.React
   );
 }
 
-const ERRORS = [
-  ["401", "invalid_api_key", "Key salah, dicabut, atau statusnya suspended."],
-  ["402", "insufficient_balance", "Saldo tidak cukup untuk hold request ini. Isi ulang lewat paket."],
-  ["403", "model_not_allowed", "Model sedang off (tidak dijual) atau belum ada di katalog."],
-  ["400", "context_too_long", "Prompt melebihi context window model."],
-  ["400", "invalid_json / missing_model", "Body bukan JSON valid, atau field model kosong."],
-  ["404", "model_not_found", "Nama model tidak ada di katalog aktif."],
-  ["429", "rate_limited", "RPM key terlampaui. Lihat header Retry-After."],
-  ["429", "gateway_busy", "Kapasitas gateway penuh sesaat (bukan limit paket kamu)."],
-  ["503", "model_maintenance", "Model sedang gangguan: tampil di katalog tapi belum bisa dipakai."],
-  ["502", "upstream_unavailable", "Provider sedang gagal. Coba lagi atau pakai model lain — saldo tidak terpotong."],
+const ERRORS: [string, string, string][] = [
+  ["400", "invalid_json / missing_model", "Format JSON tidak valid atau parameter model belum disertakan."],
+  ["400", "context_too_long", "Input melebihi batas konteks model. Kurangi panjang percakapan atau prompt."],
+  ["401", "invalid_api_key", "API key tidak valid, telah dicabut, atau akun sedang ditangguhkan."],
+  ["402", "insufficient_balance", "Saldo tidak mencukupi untuk memproses permintaan."],
+  ["403", "model_not_allowed", "Model tidak diizinkan untuk akun Anda atau sedang dinonaktifkan."],
+  ["404", "model_not_found", "ID model tidak ditemukan dalam katalog aktif."],
+  ["429", "rate_limited", "Batas permintaan akun telah tercapai. Periksa Retry-After."],
+  ["429", "gateway_busy", "Gateway sedang mencapai batas kapasitas. Coba kembali setelah beberapa saat."],
+  ["502", "upstream_unavailable", "Provider tidak tersedia atau gagal memproses permintaan. Coba lagi atau gunakan model lain."],
+  ["503", "model_maintenance", "Model sedang dalam pemeliharaan atau mengalami gangguan sementara."],
 ];
 
 export default function DocsPage() {
@@ -100,16 +104,14 @@ export default function DocsPage() {
     };
   }, []);
 
-  const cheapest = useMemo(
-    () => (models.length ? models.reduce((a, b) => (a.pricing_idr_per_1m.input < b.pricing_idr_per_1m.input ? a : b)) : null),
-    [models],
-  );
+  const solidModels = useMemo(() => models.filter((m) => (m.status ?? "on") === "on"), [models]);
+  const quickModel = solidModels[0]?.id ?? models[0]?.id ?? "glm-5.3";
 
   const curl = `curl ${BASE}/v1/chat/completions \\
   -H "Authorization: Bearer sk-aeth_..." \\
   -H "Content-Type: application/json" \\
   -d '{
-    "model": "${models[0]?.id ?? "glm-5.3"}",
+    "model": "${quickModel}",
     "messages": [{"role": "user", "content": "Halo"}],
     "max_tokens": 256
   }'`;
@@ -117,97 +119,115 @@ export default function DocsPage() {
   return (
     <div className="min-h-screen bg-[#18191B] text-[#FAF8F4]">
       <div className="mx-auto max-w-[900px] px-4 py-10 sm:px-6">
-        <div className="flex items-center justify-between">
-          <Link to="/" className="inline-flex items-center gap-1.5 text-[12.5px] text-[#85888B] transition hover:text-[#E7893C]">
-            <ArrowLeft size={13} /> Beranda
-          </Link>
-          <Link
-            to="/status"
-            className="inline-flex h-8 items-center rounded-lg border border-[#3A3B3D] px-3 text-[12px] text-[#FAF8F4]/80 transition hover:bg-[#22242a]"
-          >
-            Status live
-          </Link>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-4">
+            <Link to="/" className="inline-flex items-center gap-1.5 text-[12.5px] text-[#85888B] transition hover:text-[#E7893C]">
+              <ArrowLeft size={13} /> Beranda
+            </Link>
+            <Link to="/status" className="text-[12.5px] text-[#85888B] transition hover:text-[#E7893C]">
+              Status Layanan
+            </Link>
+          </div>
+          <span className="text-[12px] text-[#FAF8F4]/70">Dokumentasi</span>
         </div>
 
         <header className="mt-8">
           <p className="text-[11px] uppercase tracking-[0.2em] text-[#E7893C]">Dokumentasi</p>
-          <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.02em]">Satu API untuk semua model</h1>
+          <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.02em]">Satu API untuk Berbagai Model AI</h1>
           <p className="mt-2 max-w-[640px] text-[14px] leading-7 text-[#a9a49c]">
-            Gateway ini OpenAI-compatible: ganti <code className="rounded bg-[#22242a] px-1 py-0.5 font-mono text-[12px]">base_url</code> dan{" "}
-            <code className="rounded bg-[#22242a] px-1 py-0.5 font-mono text-[12px]">api_key</code>, sisanya jalan seperti biasa.
-            Bayar pakai saldo (pay as you go) — tidak ada langganan bulanan dan tidak ada biaya per model.
+            Akses berbagai model AI melalui satu endpoint yang kompatibel dengan OpenAI API. Gunakan{" "}
+            <code className="rounded bg-[#22242a] px-1 py-0.5 font-mono text-[12px]">base_url</code> dan{" "}
+            <code className="rounded bg-[#22242a] px-1 py-0.5 font-mono text-[12px]">api_key</code> AethinkAI pada
+            aplikasi yang sudah mendukung OpenAI API.
+          </p>
+          <p className="mt-2 max-w-[640px] text-[13.5px] leading-7 text-[#85888B]">
+            Pembayaran menggunakan saldo prabayar dengan sistem <strong className="text-[#a9a49c]">Pay As You Go (PAYG)</strong>.
+            Tidak ada biaya langganan bulanan atau biaya aktivasi model. Biaya penggunaan mengikuti jumlah token dan
+            tarif masing-masing model.
           </p>
         </header>
 
         <div className="mt-8 space-y-8">
           <section className="rounded-2xl border border-[#3A3B3D] bg-[#1B1C1F] p-5">
-            <div className="grid gap-3 sm:grid-cols-3">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-[#85888B]">Informasi Koneksi</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
               <div>
                 <p className="text-[10.5px] uppercase tracking-[0.14em] text-[#85888B]">Base URL</p>
-                <p className="mt-1 font-mono text-[12.5px] text-[#FAF8F4]">{BASE}/v1</p>
+                <p className="mt-1 break-all font-mono text-[12.5px] text-[#FAF8F4]">{BASE}/v1</p>
               </div>
               <div>
-                <p className="text-[10.5px] uppercase tracking-[0.14em] text-[#85888B]">Auth</p>
-                <p className="mt-1 font-mono text-[12.5px] text-[#FAF8F4]">Authorization: Bearer sk-aeth_…</p>
+                <p className="text-[10.5px] uppercase tracking-[0.14em] text-[#85888B]">Autentikasi</p>
+                <p className="mt-1 break-all font-mono text-[12.5px] text-[#FAF8F4]">Authorization: Bearer sk-aeth_...</p>
               </div>
               <div>
                 <p className="text-[10.5px] uppercase tracking-[0.14em] text-[#85888B]">Format</p>
-                <p className="mt-1 font-mono text-[12.5px] text-[#FAF8F4]">OpenAI chat/completions</p>
+                <p className="mt-1 font-mono text-[12.5px] text-[#FAF8F4]">OpenAI-compatible Chat Completions</p>
               </div>
             </div>
           </section>
 
-          <Section title="Request pertama" id="quickstart">
-            <p>Key dikirim sekali lewat chat bot. Simpan di secret manager, jangan di repo.</p>
-            <CopyBlock label="curl" code={curl} />
+          <Section title="Mulai Integrasi" id="quickstart">
+            <p>Kirim permintaan pertama menggunakan cURL atau OpenAI SDK untuk Python.</p>
+            <p>
+              API key diberikan melalui bot Telegram. Simpan dengan aman di environment variable atau secret manager.
+              Jangan menaruh kredensial di repository, kode frontend, atau dokumen publik.
+            </p>
+            <CopyBlock label="cURL" code={curl} />
             <CopyBlock
-              label="python (openai sdk)"
+              label="Python (OpenAI SDK)"
               code={`from openai import OpenAI
 
-client = OpenAI(base_url="${BASE}/v1", api_key="sk-aeth_...")
-r = client.chat.completions.create(
-    model="${models[0]?.id ?? "glm-5.3"}",
-    messages=[{"role": "user", "content": "Halo"}],
+client = OpenAI(
+    base_url="${BASE}/v1",
+    api_key="sk-aeth_..."
 )
-print(r.choices[0].message.content)`}
+
+response = client.chat.completions.create(
+    model="${quickModel}",
+    messages=[{"role": "user", "content": "Halo"}]
+)
+
+print(response.choices[0].message.content)`}
             />
+            <p className="text-[12.5px] text-[#6f6a63]">
+              Pastikan ID model masih tersedia dalam katalog aktif sebelum menjalankan contoh.
+            </p>
           </Section>
 
-          <Section title="Model & harga" id="models">
+          <Section title="Katalog Model dan Tarif" id="models">
             <p>
-              Harga di bawah adalah harga jual per <strong>1 juta token</strong>, berlaku saat request selesai.{" "}
-              {cheapest ? <>Termurah saat ini: <strong>{cheapest.display_name}</strong> {idr(cheapest.pricing_idr_per_1m.input)} in.</> : null}{" "}
-              Context window diambil dari provider, bukan angka marketing.
+              Tarif dihitung per 1 juta token untuk input, output, dan input yang dilayani dari cache. Biaya aktual
+              ditentukan berdasarkan pemakaian token serta tarif model yang berlaku saat permintaan diselesaikan.
             </p>
             {err ? <p className="text-[#e08a5f]">Katalog gagal dimuat: {err}</p> : null}
             <div className="overflow-x-auto rounded-xl border border-[#3A3B3D]">
-              <table className="w-full min-w-[620px] text-left">
+              <table className="w-full min-w-[720px] text-left">
                 <thead>
                   <tr className="border-b border-[#2A2B2E] text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
-                    <th className="px-3 py-2 font-medium">Model (id)</th>
-                    <th className="px-3 py-2 font-medium">Context</th>
-                    <th className="px-3 py-2 text-right font-medium">in / 1M</th>
-                    <th className="px-3 py-2 text-right font-medium">out / 1M</th>
-                    <th className="px-3 py-2 text-right font-medium">cache / 1M</th>
+                    <th className="px-3 py-2 font-medium">Model / ID</th>
+                    <th className="px-3 py-2 font-medium">Context Window</th>
+                    <th className="px-3 py-2 text-right font-medium">Input / 1 Juta</th>
+                    <th className="px-3 py-2 text-right font-medium">Output / 1 Juta</th>
+                    <th className="px-3 py-2 text-right font-medium">Cache / 1 Juta</th>
                     <th className="px-3 py-2 text-right font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#23252A] font-mono text-[11.5px]">
                   {models.map((m) => {
-                    const bad = (m.status ?? "on") !== "on";
+                    const status = m.status ?? "on";
                     return (
-                      <tr key={m.id} className={cn(bad && "opacity-60")}>
+                      <tr key={m.id} className={cn(status !== "on" && "opacity-60")}>
                         <td className="px-3 py-2 text-[#FAF8F4]">
-                          {m.id}
-                          <span className="ml-2 font-sans text-[10.5px] text-[#85888B]">{m.display_name}</span>
+                          {m.display_name}
+                          <span className="ml-2 font-sans text-[10.5px] text-[#85888B]">{m.id}</span>
                         </td>
                         <td className="px-3 py-2 text-[#a9a49c]">{ctxLabel(m.context_length)}</td>
                         <td className="px-3 py-2 text-right text-[#FAF8F4]">{m.pricing_idr_per_1m.input.toLocaleString("id-ID")}</td>
                         <td className="px-3 py-2 text-right text-[#a9a49c]">{m.pricing_idr_per_1m.output.toLocaleString("id-ID")}</td>
                         <td className="px-3 py-2 text-right text-[#a9a49c]">{m.pricing_idr_per_1m.cached_input.toLocaleString("id-ID")}</td>
-                        <td className="px-3 py-2 text-right">
-                          <span className={cn("rounded px-1.5 py-0.5 text-[10px]", bad ? "bg-[#c4633a]/15 text-[#e79c78]" : "bg-[#E7893C]/12 text-[#E7893C]")}>
-                            {(m.status ?? "on") === "on" ? "on" : m.status === "maintenance" ? "gangguan" : "off"}
+                        <td className="px-3 py-2 text-right font-sans">
+                          <span className={cn("rounded px-1.5 py-0.5 text-[10px]", status !== "on" ? "bg-[#c4633a]/15 text-[#e79c78]" : "bg-[#E7893C]/12 text-[#E7893C]")}>
+                            {status === "on" ? "Aktif" : status === "maintenance" ? "Pemeliharaan" : "Tidak tersedia"}
                           </span>
                         </td>
                       </tr>
@@ -215,27 +235,57 @@ print(r.choices[0].message.content)`}
                   })}
                   {!models.length && !err ? (
                     <tr>
-                      <td colSpan={6} className="px-3 py-6 text-center text-[#85888B]">memuat katalog…</td>
+                      <td colSpan={6} className="px-3 py-6 text-center font-sans text-[#85888B]">Memuat katalog…</td>
                     </tr>
                   ) : null}
                 </tbody>
               </table>
             </div>
-            <p className="text-[12.5px] text-[#85888B]">
-              Harga berubah kapan saja dari sisi admin; halaman ini dan balasan API selalu membaca angka yang sama.
+            <p className="text-[12.5px] text-[#6f6a63]">
+              Semua tarif dalam Rupiah (IDR). Harga dan ketersediaan model dapat berubah sesuai konfigurasi layanan.
+              Data yang ditampilkan mengikuti katalog gateway aktif.
             </p>
           </Section>
 
-          <Section title="Cara bayar: kredit PAYG" id="billing">
-            <ul className="list-disc space-y-1.5 pl-5">
-              <li>Saldo dibeli per paket (QRIS). Saldo masuk ke <strong>akun</strong>, bukan ke key.</li>
-              <li>Setiap request: gateway menahan (hold) perkiraan biaya, lalu menyelesaikan biaya nyata setelah token dihitung.</li>
-              <li>Saldo kurang → <code className="font-mono text-[12px]">402 insufficient_balance</code>. Upgrade paket atau isi ulang.</li>
-              <li>Provider gagal → <code className="font-mono text-[12px]">502</code>, hold dilepas, saldo tidak berkurang.</li>
-              <li>Tidak ada biaya bulanan, tidak ada biaya per model. Semua model bisa dipakai selama saldo ada.</li>
-            </ul>
+          <Section title="Pembayaran dan Penggunaan Saldo" id="billing">
+            <p>
+              AethinkAI menggunakan saldo prabayar. Anda dapat mengisi saldo melalui QRIS dan menggunakannya untuk
+              membayar permintaan API sesuai tarif model yang dipilih.
+            </p>
+            <ol className="list-decimal space-y-1.5 pl-5">
+              <li>
+                <strong className="text-[#d7d3cc]">Isi saldo.</strong> Pilih paket kredit atau lakukan top-up sesuai
+                ketentuan yang berlaku. Saldo tersimpan pada akun, bukan pada API key.
+              </li>
+              <li>
+                <strong className="text-[#d7d3cc]">Kirim permintaan.</strong> Gateway mencadangkan perkiraan biaya
+                sebelum memproses request.
+              </li>
+              <li>
+                <strong className="text-[#d7d3cc]">Hitung penggunaan.</strong> Setelah request selesai, biaya aktual
+                dihitung berdasarkan token yang digunakan.
+              </li>
+              <li>
+                <strong className="text-[#d7d3cc]">Sesuaikan saldo.</strong> Biaya akhir dibebankan dan selisih dana
+                yang dicadangkan dikembalikan sesuai hasil perhitungan.
+              </li>
+            </ol>
+            <p>
+              Jika saldo tidak cukup, API mengembalikan <code className="font-mono text-[12px]">402 insufficient_balance</code>.
+              Isi ulang saldo sebelum mengirim permintaan baru.
+            </p>
+            <p>
+              Jika gateway mengembalikan <code className="font-mono text-[12px]">502 upstream_unavailable</code> untuk
+              permintaan yang gagal diproses, reservasi biaya dilepaskan sesuai mekanisme billing yang berlaku.
+            </p>
+            <p>
+              Tidak ada biaya langganan bulanan. Akses model tetap mengikuti status model, izin akun, dan ketersediaan
+              saldo.
+            </p>
+            <h3 className="pt-1 text-[14px] font-semibold text-[#FAF8F4]">Cek Saldo dan Pemakaian</h3>
+            <p>Lihat saldo, riwayat penggunaan, dan informasi akun melalui Portal AethinkAI.</p>
             <CopyBlock
-              label="cek saldo & pemakaian"
+              label="Periksa akun · Buat sesi portal"
               code={`curl ${BASE}/api/portal/me \\
   -H "Authorization: Bearer <token-portal>"
 
@@ -246,15 +296,13 @@ curl -X POST ${BASE}/api/portal/session \\
             />
           </Section>
 
-          <Section title="Rate limit: RPM per key, plus pagar kapasitas" id="limits">
+          <Section title="Paket Kredit dan Rate Limit" id="limits">
             <p>
-              RPM <strong>flat 60/menit per key</strong> (per akun Telegram) — sama untuk paket mana pun, bukan per model,
-              bukan per IP. Kalau butuh lebih, ajukan ke admin: pengecualian di-set per akun dan tidak ditimpa pembelian paket.
-              Di atas itu ada satu pagar global untuk kapasitas box: kalau gateway penuh, balasannya{" "}
-              <code className="font-mono text-[12px]">429 gateway_busy</code> dan bukan limit paket kamu.
+              Semua paket menggunakan batas standar <strong className="text-[#d7d3cc]">60 permintaan per menit (RPM) per akun Telegram</strong>.
+              Paket dengan nilai lebih besar menambah saldo, bukan meningkatkan batas RPM secara otomatis.
             </p>
             <div className="overflow-x-auto rounded-xl border border-[#3A3B3D]">
-              <table className="w-full min-w-[420px] text-left text-[12.5px]">
+              <table className="w-full min-w-[440px] text-left text-[12.5px]">
                 <thead>
                   <tr className="border-b border-[#2A2B2E] text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
                     <th className="px-3 py-2 font-medium">Paket</th>
@@ -285,28 +333,44 @@ curl -X POST ${BASE}/api/portal/session \\
                 </tbody>
               </table>
             </div>
-            <p>
-              RPM milik <strong>akun</strong> dan nilainya <strong>60/menit untuk semua paket</strong> —
-              beli paket lebih besar tidak menaikkannya.{" "}
+            <p className="text-[12.5px] text-[#6f6a63]">
+              Batas standar tetap 60 RPM untuk seluruh paket.{" "}
               {topup.enabled
-                ? `Top-up nominal bebas (minimal ${idr(topup.min_idr)}) hanya menambah saldo — RPM tidak berubah.`
-                : "Top-up nominal bebas sedang ditutup; pembelian lewat paket."}
+                ? `Top-up mulai ${idr(topup.min_idr)} menambah saldo tanpa mengubah RPM.`
+                : "Top-up sedang ditutup; pembelian lewat paket."}
             </p>
             <p>
+              Jika memerlukan RPM lebih tinggi, hubungi administrator untuk mengajukan penyesuaian khusus pada akun.
+              Penyesuaian tersebut tidak otomatis berubah ketika Anda membeli paket lain.
+            </p>
+
+            <h3 className="pt-1 text-[14px] font-semibold text-[#FAF8F4]">Respons Saat Batas Tercapai</h3>
+            <ul className="list-disc space-y-1.5 pl-5">
+              <li>
+                <code className="font-mono text-[12px]">429 rate_limited</code> — batas RPM akun telah tercapai.
+              </li>
+              <li>
+                <code className="font-mono text-[12px]">429 gateway_busy</code> — kapasitas gateway sedang penuh.
+                Kondisi ini tidak berarti kuota RPM akun Anda habis.
+              </li>
+            </ul>
+            <p>
               Setiap balasan membawa <code className="font-mono text-[12px]">X-RateLimit-Limit</code>,{" "}
-              <code className="font-mono text-[12px]">X-RateLimit-Remaining</code>, <code className="font-mono text-[12px]">X-RateLimit-Reset</code>.
-              Kalau kena 429, tunggu sesuai <code className="font-mono text-[12px]">Retry-After</code> — jangan retry buta.
+              <code className="font-mono text-[12px]">X-RateLimit-Remaining</code>, dan{" "}
+              <code className="font-mono text-[12px]">X-RateLimit-Reset</code>. Jika menerima HTTP 429, ikuti nilai{" "}
+              <code className="font-mono text-[12px]">Retry-After</code> jika disertakan. Hindari pengiriman ulang tanpa jeda.
             </p>
           </Section>
 
-          <Section title="Error yang perlu ditangani" id="errors">
+          <Section title="Kode Error API" id="errors">
+            <p>Gunakan status HTTP dan kode error untuk mengenali penyebab kegagalan serta menentukan tindakan berikutnya.</p>
             <div className="overflow-x-auto rounded-xl border border-[#3A3B3D]">
-              <table className="w-full min-w-[560px] text-left text-[12.5px]">
+              <table className="w-full min-w-[600px] text-left text-[12.5px]">
                 <thead>
                   <tr className="border-b border-[#2A2B2E] text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
                     <th className="px-3 py-2 font-medium">HTTP</th>
-                    <th className="px-3 py-2 font-medium">code</th>
-                    <th className="px-3 py-2 font-medium">Artinya</th>
+                    <th className="px-3 py-2 font-medium">Kode</th>
+                    <th className="px-3 py-2 font-medium">Keterangan</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#23252A]">
@@ -322,29 +386,40 @@ curl -X POST ${BASE}/api/portal/session \\
             </div>
           </Section>
 
-          <Section title="Invoice & rotasi key" id="invoice">
+          <Section title="Invoice dan Pengelolaan API Key" id="invoice">
+            <h3 className="text-[14px] font-semibold text-[#FAF8F4]">Riwayat Transaksi</h3>
             <p>
-              Setiap pembelian punya nomor invoice <code className="font-mono text-[12px]">AETH-YYYYMMDD-XXXX</code> (tanggal + 4 karakter).
-              Invoice bisa dilihat di portal: paket, harga, kredit, saldo setelahnya, dan pemakaian sejak invoice terbit.
+              Setiap pembelian kredit memiliki nomor invoice unik dengan format{" "}
+              <code className="font-mono text-[12px]">AETH-YYYYMMDD-XXXX</code>. Informasi transaksi, kredit yang
+              diterima, dan saldo setelah pembelian dapat dilihat melalui portal pengguna.
+            </p>
+            <h3 className="pt-1 text-[14px] font-semibold text-[#FAF8F4]">Rotasi API Key</h3>
+            <p>
+              Setiap akun Telegram memiliki satu API key aktif. Pembelian paket atau top-up berikutnya menambahkan saldo
+              ke akun yang sama tanpa membuat API key baru.
             </p>
             <p>
-              Satu akun Telegram = satu key aktif. Beli paket lagi <strong>tidak</strong> membuat key baru, saldo cuma bertambah.
-              Kalau key bocor: rotasi dari portal (kode verifikasi dikirim ke chat bot) atau ketik{" "}
-              <code className="font-mono text-[12px]">/rotate</code> langsung di bot. Saldo tetap, key lama langsung mati.
+              Jika API key hilang atau diduga bocor, lakukan rotasi melalui Portal AethinkAI dengan verifikasi bot
+              Telegram, atau gunakan perintah <code className="font-mono text-[12px]">/rotate</code> di bot. Setelah
+              rotasi berhasil, API key lama tidak dapat digunakan lagi. Saldo dan riwayat transaksi akun tetap tersimpan.
             </p>
+          </Section>
+
+          <Section title="Siap Menggunakan AethinkAI?" id="cta">
+            <p>Kelola API key, pantau saldo, dan tinjau penggunaan API dari satu portal.</p>
             <div className="flex flex-wrap gap-2 pt-1">
               <Link to="/portal" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#E7893C] px-3 text-[12.5px] font-semibold text-[#18191B]">
-                <Terminal size={13} /> Buka portal
+                <Terminal size={13} /> Buka Portal
               </Link>
               <Link to="/status" className="inline-flex h-9 items-center rounded-lg border border-[#3A3B3D] px-3 text-[12.5px] text-[#FAF8F4]/85">
-                Lihat status layanan
+                Lihat Status Layanan
               </Link>
             </div>
           </Section>
         </div>
 
         <p className="mt-10 border-t border-[#2A2B2E] pt-5 text-[11.5px] text-[#6f6a63]">
-          Angka di halaman ini ditarik langsung dari gateway dan ikut berubah saat admin mengedit harga atau paket — tidak ada yang di-hardcode.
+          Informasi harga, paket, dan ketersediaan model mengikuti konfigurasi gateway yang aktif.
         </p>
       </div>
     </div>
