@@ -61,11 +61,11 @@ export default function LandingPage() {
                 visibility — without wiring four providers into your stack.
               </p>
 
-              <div className="mt-6 flex flex-wrap items-center gap-2.5 max-[899px]:mt-7 max-[899px]:flex-col max-[899px]:items-stretch max-[899px]:gap-2.5">
+              <div className="aethink-hero-cta-row mt-6 max-[899px]:mt-7 max-[899px]:flex-col max-[899px]:items-stretch max-[899px]:gap-2.5">
                 <Button
                   variant="primary"
                   size="lg"
-                  className="cta-landing max-[899px]:w-full"
+                  className="aethink-hero-cta aethink-hero-cta--primary max-[899px]:w-full"
                   trailingIcon={<ArrowRight size={16} />}
                   onClick={() => navigate("/login")}
                 >
@@ -74,7 +74,7 @@ export default function LandingPage() {
                 <Button
                   variant="secondary"
                   size="lg"
-                  className="cta-landing-soft max-[899px]:w-full"
+                  className="aethink-hero-cta aethink-hero-cta--secondary max-[899px]:w-full"
                   leadingIcon={<Boxes size={15} />}
                   onClick={() => document.getElementById("models")?.scrollIntoView({ behavior: "smooth" })}
                 >

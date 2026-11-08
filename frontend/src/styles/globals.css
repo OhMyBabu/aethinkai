@@ -649,3 +649,132 @@ html[data-reduced-motion="true"] .lift:hover { transform: none; }
   .aethink-telegram-cta,
   .aethink-telegram-cta::before { animation: none; }
 }
+
+/* ------------------------------------------------------------------ */
+/*  Hero CTA — 58px pair, 9remote finishing, orange pulse + shimmer    */
+/* ------------------------------------------------------------------ */
+.aethink-hero-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  overflow: visible;
+}
+
+.aethink-hero-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 58px;
+  min-height: 58px;
+  padding: 0 28px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    transform 200ms ease;
+}
+
+.aethink-hero-cta--primary {
+  min-width: 176px;
+  background: #e7893c;
+  color: #18191b;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  isolation: isolate;
+  /* clips the shimmer; the outer box-shadow is painted outside the border */
+  overflow: hidden;
+  animation: aethink-hero-glow 2.4s ease-in-out infinite;
+}
+
+.aethink-hero-cta--primary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 50%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  pointer-events: none;
+  transform: translateX(-120%) skewX(-20deg);
+  animation: aethink-hero-shimmer 2.8s ease-in-out infinite;
+}
+
+.aethink-hero-cta--primary > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes aethink-hero-glow {
+  0%, 100% {
+    box-shadow:
+      0 8px 24px -8px rgba(231, 137, 60, 0.42),
+      0 0 0 0 rgba(231, 137, 60, 0.45);
+  }
+  50% {
+    box-shadow:
+      0 12px 32px -8px rgba(231, 137, 60, 0.6),
+      0 0 0 7px rgba(231, 137, 60, 0);
+  }
+}
+
+@keyframes aethink-hero-shimmer {
+  from { transform: translateX(-120%) skewX(-20deg); }
+  to { transform: translateX(220%) skewX(-20deg); }
+}
+
+.aethink-hero-cta--secondary {
+  min-width: 205px;
+  background: #1e1f22;
+  color: #faf8f4;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.aethink-hero-cta--primary:hover {
+  background: #f09a52;
+}
+
+.aethink-hero-cta--secondary:hover {
+  background: #26282c;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.aethink-hero-cta:active {
+  transform: translateY(1px);
+}
+
+/* keyboard only — never a permanent ring */
+.aethink-hero-cta:focus-visible {
+  outline: 2px solid rgba(241, 176, 114, 0.95);
+  outline-offset: 3px;
+}
+
+/* arrow nudge */
+.aethink-hero-cta--primary:hover svg {
+  transform: translateX(3px);
+}
+
+.aethink-hero-cta--primary svg {
+  transition: transform 200ms ease;
+}
+
+@media (max-width: 480px) {
+  .aethink-hero-cta-row { gap: 10px; }
+  .aethink-hero-cta { height: 48px; min-height: 48px; font-size: 14px; padding: 0 18px; }
+  .aethink-hero-cta--primary,
+  .aethink-hero-cta--secondary { min-width: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aethink-hero-cta--primary,
+  .aethink-hero-cta--primary::before { animation: none; }
+  .aethink-hero-cta { transition: none; }
+}
