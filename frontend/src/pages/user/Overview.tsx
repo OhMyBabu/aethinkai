@@ -195,15 +195,15 @@ export default function UserOverviewPage() {
       />
 
       {partialFail > 0 ? (
-        <div className="mb-4 rounded-xl border border-[#8a5a20]/45 bg-[#3a2a12]/40 px-4 py-2.5 text-[12px] text-[#e3b183]">
+        <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-[12px] text-warm/80">
           {partialFail} endpoint gagal dimuat — angka di bawah hanya dari data yang berhasil. Cek koneksi lalu muat ulang.
         </div>
       ) : null}
 
-      <div className="relative mb-4 overflow-hidden rounded-[18px] border border-ash/16 bg-[linear-gradient(120deg,rgba(231,137,60,0.10),rgba(156,84,47,0.05)_45%,rgba(24,25,27,0)_75%)] p-5 sm:p-6">
+      <div className="relative mb-4 overflow-hidden rounded-[18px] border border-white/8 bg-[radial-gradient(120%_100%_at_16%_0%,rgba(255,255,255,0.055),transparent_62%)] p-5 sm:p-6">
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-flame/10 blur-3xl"
+          className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-white/5 blur-3xl"
         />
         <div className="relative flex flex-wrap items-end justify-between gap-5">
           <div className="min-w-0">

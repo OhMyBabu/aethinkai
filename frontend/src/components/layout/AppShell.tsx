@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { AppAmbient } from "@/components/layout/AppAmbient";
 import { Topbar } from "@/components/layout/Topbar";
 import { useToast } from "@/components/common/Toast";
 import { useStore } from "@/data/store";
@@ -56,7 +57,8 @@ export function AppShell({ role }: { role: Role }) {
   const user = currentUser ?? state.users[0];
 
   return (
-    <div className="flex min-h-screen bg-charcoal">
+    <div className="relative isolate flex min-h-screen bg-charcoal">
+      <AppAmbient />
       <Sidebar
         role={role}
         open={navOpen}
@@ -78,15 +80,11 @@ export function AppShell({ role }: { role: Role }) {
           onNotify={() => toast("You're all caught up", { description: "No new alerts for this workspace.", variant: "info" })}
         />
         <main className="safe-b relative min-w-0 flex-1 px-4 py-5 pb-16 sm:px-6 sm:py-8">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(60%_100%_at_50%_0%,rgba(231,137,60,0.07),transparent_70%)]"
-          />
           <div key={location.pathname} className="page-enter mx-auto w-full max-w-[1240px]">
             <Outlet />
           </div>
         </main>
-        <footer className="border-t border-ash/10 px-6 py-4 text-[11px] text-dim">
+        <footer className="border-t border-white/6 px-6 py-4 text-[11px] text-dim">
           AethinkAI Gateway · router.aethink.ai.id · v0.1.0
         </footer>
       </div>

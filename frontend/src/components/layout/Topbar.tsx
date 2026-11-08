@@ -45,7 +45,7 @@ function AccountMenu({ role }: { role: Role }) {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-11 z-50 w-[248px] overflow-hidden rounded-xl border border-ash/20 bg-[#1b1c1f] shadow-[0_18px_50px_-20px_rgba(0,0,0,0.9)]"
+          className="absolute right-0 top-11 z-50 w-[248px] overflow-hidden rounded-xl border border-white/10 bg-[#151516] shadow-[0_18px_50px_-20px_rgba(0,0,0,0.9)]"
         >
           <div className="border-b border-ash/12 px-3.5 py-3">
             <p className="truncate text-[12.5px] font-medium text-warm">{currentUser.name}</p>
@@ -96,7 +96,7 @@ export function Topbar({
   onNotify?: () => void;
 }) {
   return (
-    <div className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-ash/12 bg-[#18191b]/85 px-4 backdrop-blur-md sm:px-6">
+    <div className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-white/8 bg-[#0A0A0A]/72 px-4 backdrop-blur-xl sm:px-6">
       <button
         type="button"
         onClick={onOpenNav}

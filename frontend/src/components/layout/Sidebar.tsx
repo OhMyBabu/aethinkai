@@ -75,7 +75,7 @@ export function Sidebar({
       ) : null}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col border-r border-ash/15 bg-[#151619] transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col border-r border-white/8 bg-[#0A0A0A]/55 backdrop-blur-2xl transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
         aria-label={`${role} navigation`}
@@ -114,7 +114,7 @@ export function Sidebar({
                 cn(
                   "relative flex items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-medium transition lg:py-2.5 lg:text-[13px]",
                   isActive
-                    ? "bg-gradient-to-r from-flame/[0.18] via-flame/[0.07] to-transparent text-warm shadow-[inset_0_0_0_1px_rgba(231,137,60,0.25)] before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[2px] before:-translate-y-1/2 before:rounded-full before:bg-flame"
+                    ? "bg-white/[0.06] text-warm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[2px] before:-translate-y-1/2 before:rounded-full before:bg-flame"
                     : "text-ash hover:bg-warm/[0.045] hover:text-warm",
                 )
               }

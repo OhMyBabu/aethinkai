@@ -55,7 +55,7 @@ export function Drawer({
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "panel-enter relative flex h-full w-full flex-col border-l border-ash/20 bg-[#1b1c1f] shadow-[-30px_0_80px_-40px_rgba(0,0,0,0.9)]",
+          "panel-enter relative flex h-full w-full flex-col border-l border-ash/20 bg-[#171717] shadow-[-30px_0_80px_-40px_rgba(0,0,0,0.9)]",
           width,
         )}
       >
@@ -75,7 +75,7 @@ export function Drawer({
         </div>
         <div className="flex-1 overflow-y-auto px-5 py-5">{children}</div>
         {footer ? (
-          <div className="flex flex-col-reverse gap-2 border-t border-ash/12 bg-[#17181a] px-5 py-3.5 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 border-t border-ash/12 bg-[#121213] px-5 py-3.5 sm:flex-row sm:justify-end">
             {footer}
           </div>
         ) : null}

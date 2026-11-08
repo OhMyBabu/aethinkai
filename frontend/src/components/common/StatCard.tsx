@@ -37,7 +37,7 @@ export function StatCard({
       <div className="flex items-start justify-between gap-3">
         <p className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-ash">{label}</p>
         {Icon ? (
-          <span className="grid size-9 place-items-center rounded-xl border border-flame/20 bg-gradient-to-br from-flame/15 to-transparent text-flame/90 transition-transform duration-300 group-hover:-translate-y-0.5">
+          <span className="grid size-9 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-warm/70 transition-transform duration-300 group-hover:-translate-y-0.5">
             <Icon size={15} aria-hidden />
           </span>
         ) : null}

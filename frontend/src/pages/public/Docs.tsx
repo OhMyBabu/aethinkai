@@ -25,7 +25,7 @@ function CopyBlock({ code, label, copyLabel = "Salin kode" }: { code: string; la
   const [done, setDone] = useState(false);
   return (
     <div className="relative rounded-xl border border-[#3A3B3D] bg-[#141518]">
-      <div className="flex items-center justify-between border-b border-[#2A2B2E] px-3 py-2">
+      <div className="flex items-center justify-between border-b border-white/8 px-3 py-2">
         <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-[#85888B]">{label}</span>
         <button
           type="button"
@@ -50,7 +50,7 @@ function CopyBlock({ code, label, copyLabel = "Salin kode" }: { code: string; la
 
 function Section({ title, children, id }: { title: string; children: React.ReactNode; id?: string }) {
   return (
-    <section id={id} className="scroll-mt-24 border-t border-[#2A2B2E] pt-8">
+    <section id={id} className="scroll-mt-24 border-t border-white/8 pt-8">
       <h2 className="text-[19px] font-semibold tracking-[-0.01em] text-[#FAF8F4]">{title}</h2>
       <div className="mt-3 space-y-3 text-[13.5px] leading-7 text-[#a9a49c]">{children}</div>
     </section>
@@ -117,7 +117,7 @@ export default function DocsPage() {
   }'`;
 
   return (
-    <div className="min-h-screen bg-[#18191B] text-[#FAF8F4]">
+    <div className="min-h-screen bg-[#0A0A0A] text-[#FAF8F4]">
       <div className="mx-auto max-w-[900px] px-4 py-10 sm:px-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-4">
@@ -203,7 +203,7 @@ print(response.choices[0].message.content)`}
             <div className="overflow-x-auto rounded-xl border border-[#3A3B3D]">
               <table className="w-full min-w-[720px] text-left">
                 <thead>
-                  <tr className="border-b border-[#2A2B2E] text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
+                  <tr className="border-b border-white/8 text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
                     <th className="px-3 py-2 font-medium">Model / ID</th>
                     <th className="px-3 py-2 font-medium">Context Window</th>
                     <th className="px-3 py-2 text-right font-medium">Input / 1 Juta</th>
@@ -304,7 +304,7 @@ curl -X POST ${BASE}/api/portal/session \\
             <div className="overflow-x-auto rounded-xl border border-[#3A3B3D]">
               <table className="w-full min-w-[440px] text-left text-[12.5px]">
                 <thead>
-                  <tr className="border-b border-[#2A2B2E] text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
+                  <tr className="border-b border-white/8 text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
                     <th className="px-3 py-2 font-medium">Paket</th>
                     <th className="px-3 py-2 text-right font-medium">Harga</th>
                     <th className="px-3 py-2 text-right font-medium">Kredit</th>
@@ -367,7 +367,7 @@ curl -X POST ${BASE}/api/portal/session \\
             <div className="overflow-x-auto rounded-xl border border-[#3A3B3D]">
               <table className="w-full min-w-[600px] text-left text-[12.5px]">
                 <thead>
-                  <tr className="border-b border-[#2A2B2E] text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
+                  <tr className="border-b border-white/8 text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
                     <th className="px-3 py-2 font-medium">HTTP</th>
                     <th className="px-3 py-2 font-medium">Kode</th>
                     <th className="px-3 py-2 font-medium">Keterangan</th>
@@ -418,7 +418,7 @@ curl -X POST ${BASE}/api/portal/session \\
           </Section>
         </div>
 
-        <p className="mt-10 border-t border-[#2A2B2E] pt-5 text-[11.5px] text-[#6f6a63]">
+        <p className="mt-10 border-t border-white/8 pt-5 text-[11.5px] text-[#6f6a63]">
           Informasi harga, paket, dan ketersediaan model mengikuti konfigurasi gateway yang aktif.
         </p>
       </div>

@@ -86,7 +86,7 @@ export function TelegramConnect({
           {!compact ? (
             <p className="text-[11.5px] leading-5 text-[#85888B]">
               Tanpa email, tanpa password. Akun diambil dari Telegram, jadi pembelian dan API key
-              selalu nyambung ke chat lu.
+              selalu terhubung ke chat Anda.
             </p>
           ) : null}
         </>

@@ -73,7 +73,7 @@ export default function StatusPage() {
   const uptimeMinutes = Math.floor((uptime % 3600) / 60);
 
   return (
-    <div className="min-h-screen bg-[#18191B] text-[#FAF8F4]">
+    <div className="min-h-screen bg-[#0A0A0A] text-[#FAF8F4]">
       <div className="mx-auto max-w-[900px] px-4 py-10 sm:px-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-4">
@@ -192,7 +192,7 @@ export default function StatusPage() {
         </section>
 
         <section className="mt-6 overflow-hidden rounded-xl border border-[#3A3B3D] bg-[#1B1C1F]">
-          <div className="border-b border-[#2A2B2E] px-4 py-3">
+          <div className="border-b border-white/8 px-4 py-3">
             <h2 className="text-[13px] font-semibold text-[#FAF8F4]">Aktivitas per Model</h2>
             <p className="mt-1 text-[11.5px] text-[#6f6a63]">
               Ringkasan permintaan, penggunaan token, kegagalan, dan latensi setiap model dalam 24 jam terakhir.
@@ -204,7 +204,7 @@ export default function StatusPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[600px] text-left">
               <thead>
-                <tr className="border-b border-[#2A2B2E] text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
+                <tr className="border-b border-white/8 text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
                   <th className="px-4 py-2 font-medium">Model</th>
                   <th className="px-4 py-2 text-right font-medium">Permintaan</th>
                   <th className="px-4 py-2 text-right font-medium">Token</th>
@@ -236,7 +236,7 @@ export default function StatusPage() {
               </tbody>
             </table>
           </div>
-          <p className="border-t border-[#2A2B2E] px-4 py-2.5 text-[11px] text-[#6f6a63]">
+          <p className="border-t border-white/8 px-4 py-2.5 text-[11px] text-[#6f6a63]">
             Statistik mengikuti permintaan yang tercatat dan diperbarui secara otomatis.
           </p>
         </section>

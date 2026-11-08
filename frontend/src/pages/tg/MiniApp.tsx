@@ -96,7 +96,7 @@ export default function MiniAppPage() {
 
   if (phase === "boot") {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#18191B] text-[#85888B]">
+      <div className="grid min-h-screen place-items-center bg-[#0A0A0A] text-[#85888B]">
         <div className="flex flex-col items-center gap-3">
           <span className="grid size-12 place-items-center rounded-2xl border border-[#E7893C]/40 bg-[#9C542F]/20 text-[18px] font-bold text-[#E7893C]">A</span>
           <span className="inline-flex items-center gap-2 text-[12.5px]"><Loader2 size={14} className="animate-spin" /> Menyiapkan control center…</span>
@@ -107,7 +107,7 @@ export default function MiniAppPage() {
 
   if (phase === "no-telegram" || phase === "error") {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#18191B] px-5">
+      <div className="grid min-h-screen place-items-center bg-[#0A0A0A] px-5">
         <div className="w-full max-w-[380px] rounded-2xl border border-[#383A3E] bg-[#232426] p-6">
           <span className="grid size-11 place-items-center rounded-xl border border-[#E7893C]/40 bg-[#9C542F]/20 text-[16px] font-bold text-[#E7893C]">A</span>
           <h1 className="mt-4 text-[19px] font-semibold text-[#FAF8F4]">Buka lewat Telegram</h1>
@@ -134,7 +134,7 @@ export default function MiniAppPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#18191B] pb-[86px] text-[#FAF8F4]">
+    <div className="min-h-screen bg-[#0A0A0A] pb-[86px] text-[#FAF8F4]">
       <div className="mx-auto w-full max-w-[440px] px-5 pt-4">
         <BrandRow me={me} onRefresh={() => void refresh()} busy={busy} />
 
@@ -163,7 +163,7 @@ export default function MiniAppPage() {
         ) : null}
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[#2B2D30] bg-[#18191B]/95 backdrop-blur-md">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[#2B2D30] bg-[#0A0A0A]/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-[440px] items-stretch justify-between px-3 pb-[max(env(safe-area-inset-bottom),6px)] pt-2">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
@@ -692,7 +692,7 @@ function ModelSheet({ model, onClose }: { model: CatalogModel; onClose: () => vo
           { label: "Output / 1M", value: price1m(model.pricing_idr_per_1m.output) },
           { label: "Cached / 1M", value: price1m(model.pricing_idr_per_1m.cached_input) },
         ].map((p) => (
-          <div key={p.label} className="rounded-xl border border-[#383A3E] bg-[#18191B] p-2.5">
+          <div key={p.label} className="rounded-xl border border-[#383A3E] bg-[#0A0A0A] p-2.5">
             <p className="text-[9.5px] uppercase tracking-[0.08em] text-[#85888B]">{p.label}</p>
             <p className="mt-0.5 text-[12px] font-semibold tabular-nums">{p.value}</p>
           </div>

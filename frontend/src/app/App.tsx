@@ -64,7 +64,7 @@ function RequireRole({ role, children }: { role: "user" | "admin"; children: Rea
   }, [remembered, signIn, state.currentUserId]);
 
   if (!ready && (!state.role || !state.currentUserId)) {
-    return <div className="grid min-h-screen place-items-center bg-[#18191B] text-[12.5px] text-[#85888B]">Memuat sesi…</div>;
+    return <div className="grid min-h-screen place-items-center bg-[#0A0A0A] text-[12.5px] text-[#85888B]">Memuat sesi…</div>;
   }
   if (!state.role || !state.currentUserId) {
     return <Navigate to="/login" replace state={{ next: location.pathname }} />;

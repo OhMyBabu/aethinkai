@@ -493,8 +493,8 @@ export default function PortalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#18191B]">
-      <header className="sticky top-0 z-20 border-b border-[#2A2B2E] bg-[#18191B]/90 backdrop-blur-md">
+    <div className="min-h-screen bg-[#0A0A0A]">
+      <header className="sticky top-0 z-20 border-b border-white/8 bg-[#0A0A0A]/85 backdrop-blur-md">
         <div className="mx-auto flex h-[64px] max-w-[1180px] items-center justify-between gap-3 px-4 sm:px-6">
           <Link to="/"><Wordmark /></Link>
           <div className="flex items-center gap-2">
@@ -590,7 +590,7 @@ export default function PortalPage() {
 
         <div className="grid gap-5 lg:grid-cols-2">
           <section className="rounded-xl border border-[#3A3B3D] bg-[#1B1C1F]">
-            <h2 className="border-b border-[#2A2B2E] px-4 py-3 text-[13px] font-semibold text-[#FAF8F4]">Per model</h2>
+            <h2 className="border-b border-white/8 px-4 py-3 text-[13px] font-semibold text-[#FAF8F4]">Per model</h2>
             <div className="divide-y divide-[#2A2B2E]">
               {(models?.models ?? []).length ? models!.models.map((m) => (
                 <div key={m.model_id} className="flex items-center justify-between px-4 py-2.5">
@@ -605,7 +605,7 @@ export default function PortalPage() {
           </section>
 
           <section className="rounded-xl border border-[#3A3B3D] bg-[#1B1C1F]">
-            <h2 className="border-b border-[#2A2B2E] px-4 py-3 text-[13px] font-semibold text-[#FAF8F4]">Key saya</h2>
+            <h2 className="border-b border-white/8 px-4 py-3 text-[13px] font-semibold text-[#FAF8F4]">Key saya</h2>
             <div className="divide-y divide-[#2A2B2E]">
               {(me?.keys ?? []).map((k) => (
                 <div key={k.id} className="flex items-center justify-between px-4 py-2.5">
@@ -619,7 +619,7 @@ export default function PortalPage() {
                 </div>
               ))}
             </div>
-            <div className="border-t border-[#2A2B2E] p-4">
+            <div className="border-t border-white/8 p-4">
               {rotStep === "idle" ? (
                 <button
                   type="button"
@@ -669,11 +669,11 @@ export default function PortalPage() {
         </div>
 
         <section className="overflow-hidden rounded-xl border border-[#3A3B3D] bg-[#1B1C1F]">
-          <h2 className="border-b border-[#2A2B2E] px-4 py-3 text-[13px] font-semibold text-[#FAF8F4]">Request terakhir</h2>
+          <h2 className="border-b border-white/8 px-4 py-3 text-[13px] font-semibold text-[#FAF8F4]">Request terakhir</h2>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left">
               <thead>
-                <tr className="border-b border-[#2A2B2E] text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
+                <tr className="border-b border-white/8 text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
                   <th className="px-4 py-2 font-medium">Waktu</th>
                   <th className="px-4 py-2 font-medium">Model</th>
                   <th className="px-4 py-2 text-right font-medium">Token</th>
@@ -685,7 +685,7 @@ export default function PortalPage() {
               </thead>
               <tbody>
                 {(requests?.requests ?? []).map((r) => (
-                  <tr key={r.request_id} className="border-b border-[#2A2B2E]/60 text-[12px] last:border-0">
+                  <tr key={r.request_id} className="border-b border-white/8/60 text-[12px] last:border-0">
                     <td className="whitespace-nowrap px-4 py-2 text-[#85888B]">{when(r.created_at)}</td>
                     <td className="px-4 py-2 font-mono text-[11.5px] text-[#FAF8F4]">{r.model_id}</td>
                     <td className="px-4 py-2 text-right tabular-nums text-[#85888B]">{r.tokens_in}/{r.tokens_out}</td>

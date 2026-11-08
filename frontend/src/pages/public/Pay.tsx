@@ -76,8 +76,8 @@ export default function PayPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-[#18191B] text-[#FAF8F4]">
-      <header className="border-b border-[#2A2B2E]">
+    <div className="min-h-dvh bg-[#0A0A0A] text-[#FAF8F4]">
+      <header className="border-b border-white/8">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
           <Wordmark />
           <Link to="/portal" className="flex items-center gap-1.5 text-[12px] text-[#85888B] transition hover:text-[#FAF8F4]">
@@ -173,7 +173,7 @@ export default function PayPage() {
             </div>
           ) : null}
 
-          <p className="mt-6 flex items-start gap-1.5 border-t border-[#2A2B2E] pt-4 text-[10.5px] leading-4 text-[#85888B]">
+          <p className="mt-6 flex items-start gap-1.5 border-t border-white/8 pt-4 text-[10.5px] leading-4 text-[#85888B]">
             <ShieldCheck size={12} className="mt-0.5 shrink-0" />
             Status pembayaran diverifikasi langsung ke penyedia QRIS, bukan dari browser. Key hanya
             dikirim ke Telegram pemilik akun.
