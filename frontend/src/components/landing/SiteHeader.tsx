@@ -647,7 +647,7 @@ export function SiteHeader() {
           <button
             type="button"
             style={{ borderColor: "#3A3B3D" }}
-            className="grid size-10 place-items-center rounded-lg border text-[#FAF8F4]/80 transition-colors duration-200 hover:bg-[#292B2E] hover:text-[#FAF8F4] lg:hidden"
+            className="grid size-11 place-items-center rounded-lg border text-[#FAF8F4]/80 transition-colors duration-200 hover:bg-[#292B2E] hover:text-[#FAF8F4] lg:hidden"
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((value) => !value)}

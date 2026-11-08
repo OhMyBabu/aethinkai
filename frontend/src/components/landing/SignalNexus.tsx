@@ -440,9 +440,9 @@ export function SignalNexus({ className, routes }: { className?: string; routes?
         </motion.div>
       </div>
 
-      {/* Mobile intentionally has no diagram: at 390px it reads as clutter,
-          and every route is already listed under Popular models + catalogue. */}
-      <div className="hidden">
+      {/* Mobile keeps the same topology as a compact stack: core plate, then the
+          four routes on one rail. No scaled-down SVG, no missing context. */}
+      <div className="min-[900px]:hidden">
         <div className="rounded-2xl border border-[#FAF8F4]/[0.08] bg-[linear-gradient(180deg,#1F2024,#17181B)] px-4 py-3.5 shadow-[inset_0_1px_0_rgba(250,248,244,0.06)]">
           <div className="flex items-center gap-2.5">
             <BrandLogo size={26} />
@@ -451,7 +451,7 @@ export function SignalNexus({ className, routes }: { className?: string; routes?
               <p className="text-[10px] uppercase tracking-[0.22em] text-ash">OpenAI-compatible</p>
             </div>
             <span className="ml-auto rounded-full border border-[#E7893C]/25 bg-[#E7893C]/[0.09] px-2.5 py-1 text-[11px] font-medium text-flame">
-              {activeModels} live
+              {routes ?? activeModels} routes live
             </span>
           </div>
         </div>

@@ -83,7 +83,7 @@ Fixtures are seeded by a deterministic PRNG, so charts and tables never shift be
 
 - `src/styles/globals.css` — tokens, motion primitives, `prefers-reduced-motion` handling
 - `src/components/landing/SignalNexus.tsx` — hub-and-spoke hero, GSAP DrawSVG lanes + MotionPath packets
-- `src/components/landing/TerminalPreview.tsx` — cURL / Python / Node slides against `https://api.aethink.ai/v1`
+- `src/components/landing/TerminalPreview.tsx` — cURL / Python / Node slides against `https://router.aethink.ai.id/v1`
 - `src/components/brand/ModelLogo.tsx` — official DeepSeek, Qwen, GLM, Kimi marks (mono in hero, brand in catalogue)
 - `src/components/layout/BrandLogo.tsx` — supplied app icon, also backing favicon + manifest icons
 

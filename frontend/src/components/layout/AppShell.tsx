@@ -90,7 +90,7 @@ export function AppShell({ role }: { role: Role }) {
           </div>
         </main>
         <footer className="border-t border-ash/10 px-6 py-4 text-[11px] text-dim">
-          AethinkAI Gateway · api.aethink.ai · v0.1.0
+          AethinkAI Gateway · router.aethink.ai.id · v0.1.0
         </footer>
       </div>
     </div>

@@ -179,17 +179,17 @@ export function TerminalPreview({ className }: { className?: string }) {
       onBlurCapture={() => setHovered(false)}
     >
       {/* window chrome */}
-      <div className="flex items-center gap-2 border-b border-ash/14 bg-[#17181B] px-3 py-2 shadow-[inset_0_1px_0_rgba(250,248,244,0.05)]">
+      <div className="flex flex-wrap items-center gap-2 border-b border-ash/14 bg-[#17181B] px-3 py-2 shadow-[inset_0_1px_0_rgba(250,248,244,0.05)]">
         <span className="flex gap-1.5" aria-hidden>
           <span className="size-2.5 rounded-full bg-ash/35" />
           <span className="size-2.5 rounded-full bg-ash/25" />
           <span className="size-2.5 rounded-full bg-flame/70" />
         </span>
-        <p className="ml-1 flex items-center gap-1.5 text-[10.5px] font-medium text-ash">
+        <p className="ml-1 flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-ash max-sm:flex-1 sm:text-[10.5px]">
           <TerminalSquare size={11} aria-hidden />
-          aethinkai — quickstart
+          <span className="truncate">aethinkai — quickstart</span>
         </p>
-        <div className="ml-auto flex items-center gap-1 rounded-lg border border-ash/15 bg-[#101113] p-0.5" role="tablist" aria-label="Code language">
+        <div className="ml-auto flex items-center gap-1 rounded-lg border border-ash/15 bg-[#101113] p-0.5 max-sm:order-3 max-sm:ml-0 max-sm:w-full max-sm:justify-between" role="tablist" aria-label="Code language">
           {snippets.map((snippet, i) => (
             <button
               key={snippet.id}

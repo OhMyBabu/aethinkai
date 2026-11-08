@@ -61,7 +61,7 @@ export default function LandingPage() {
                 visibility — without wiring four providers into your stack.
               </p>
 
-              <div className="aethink-hero-cta-row mt-6 max-[899px]:mt-7 max-[899px]:flex-col max-[899px]:items-stretch max-[899px]:gap-2.5">
+              <div className="aethink-hero-cta-row mt-6 max-[899px]:mt-7 max-[899px]:flex-col max-[899px]:items-stretch max-[899px]:gap-3">
                 <Button
                   variant="primary"
                   size="lg"
@@ -82,7 +82,7 @@ export default function LandingPage() {
                 </Button>
               </div>
 
-              <p className="mt-3 text-[11.5px] text-dim">
+              <p className="mt-3 text-[12px] text-ash/85 sm:text-[11.5px] sm:text-dim">
                 Pay as you go · QRIS · API key issued in Telegram
               </p>
             </div>
@@ -187,7 +187,7 @@ export default function LandingPage() {
                 </nav>
               </div>
               <div className="flex flex-col gap-1 border-t border-ash/10 py-4 text-[11px] text-dim sm:flex-row sm:items-center sm:justify-between">
-                <span className="font-mono">api.aethink.ai/v1</span>
+                <span className="font-mono">router.aethink.ai.id/v1</span>
                 <span>Jakarta · WIB · UTC+7</span>
               </div>
             </footer>

@@ -42,7 +42,7 @@ export function AuthShell({
             <p className="text-ash">
               <span className="text-flame">curl</span> -X POST \
             </p>
-            <p className="pl-4 text-ash">https://api.aethink.ai/v1/chat/completions \</p>
+            <p className="pl-4 text-ash">https://router.aethink.ai.id/v1/chat/completions \</p>
             <p className="pl-4 text-ash">
               -H <span className="text-warm/80">"Authorization: Bearer sk-•••"</span> \
             </p>

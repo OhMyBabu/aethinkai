@@ -61,7 +61,7 @@ export function KpiStrip({ models, status }: { models: AIModel[]; status: Landin
           <p className="mt-2 whitespace-nowrap text-[17px] font-semibold leading-none tabular-nums text-warm max-[899px]:text-[18px] sm:text-[19px]">
             {item.value}
           </p>
-          <p className="mt-1.5 text-[10px] uppercase leading-4 tracking-[0.09em] text-ash/90">{item.label}</p>
+          <p className="mt-1.5 text-[10.5px] uppercase leading-4 tracking-[0.09em] text-ash/90 sm:text-[10px]">{item.label}</p>
         </div>
       ))}
     </div>
@@ -99,7 +99,7 @@ export function PopularModels({ models }: { models: AIModel[] }) {
     <div>
       <div className="mb-2.5 flex items-center justify-between">
         <h3 className="text-[12px] font-medium uppercase tracking-[0.16em] text-ash">Popular models</h3>
-        <a href="#catalog" className="flex items-center gap-1 text-[11.5px] text-flame active:opacity-70">
+        <a href="#catalog" className="inline-flex h-11 items-center gap-1 text-[12px] text-flame active:opacity-70 sm:h-auto sm:text-[11.5px]">
           Top 4{windowDays ? ` · last ${windowDays}d` : ""} <ArrowRight size={11} aria-hidden />
         </a>
       </div>
@@ -120,27 +120,27 @@ export function PopularModels({ models }: { models: AIModel[] }) {
                   </p>
                 </div>
               </div>
-              <span className="shrink-0 rounded-md border border-ash/20 px-1.5 py-0.5 text-[9.5px] uppercase tracking-[0.08em] text-ash transition group-hover:border-flame/30 group-hover:text-flame">
+              <span className="shrink-0 rounded-md border border-ash/20 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.08em] text-ash transition group-hover:border-flame/30 group-hover:text-flame sm:text-[9.5px]">
                 {model.provider}
               </span>
             </div>
 
             <dl className="mt-2.5 grid grid-cols-2 gap-2 border-t border-ash/12 pt-2">
               <div className="min-w-0">
-                <dt className="text-[9.5px] uppercase tracking-[0.08em] text-ash/85">Input / 1M</dt>
-                <dd className="mt-0.5 whitespace-nowrap text-[12.5px] font-medium leading-5 tabular-nums text-warm">
+                <dt className="text-[10.5px] uppercase tracking-[0.08em] text-ash/85 sm:text-[9.5px]">Input / 1M</dt>
+                <dd className="mt-0.5 whitespace-nowrap text-[13px] font-medium leading-5 tabular-nums text-warm sm:text-[12.5px]">
                   {formatIDR(model.inputRate)}
                 </dd>
               </div>
               <div className="min-w-0 text-right">
-                <dt className="text-[9.5px] uppercase tracking-[0.08em] text-ash/85">Output / 1M</dt>
-                <dd className="mt-0.5 whitespace-nowrap text-[12.5px] font-medium leading-5 tabular-nums text-warm">
+                <dt className="text-[10.5px] uppercase tracking-[0.08em] text-ash/85 sm:text-[9.5px]">Output / 1M</dt>
+                <dd className="mt-0.5 whitespace-nowrap text-[13px] font-medium leading-5 tabular-nums text-warm sm:text-[12.5px]">
                   {formatIDR(model.outputRate)}
                 </dd>
               </div>
             </dl>
 
-            <p className="mt-2 truncate text-[10.5px] text-dim">
+            <p className="mt-2 truncate text-[11.5px] text-dim sm:text-[10.5px]">
               {model.category} · {ctxLabel(model.contextWindow)} ctx
               {counts.get(model.id) ? ` · ${counts.get(model.id)} req` : ""}
             </p>
