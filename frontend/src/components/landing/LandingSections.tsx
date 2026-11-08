@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -13,7 +13,6 @@ import {
 import { Card } from "@/components/common/Card";
 import { fetchShop, type Pkg, type TopupPolicy } from "@/lib/portal";
 import { Button } from "@/components/common/Button";
-import { StatusPill } from "@/components/common/StatusPill";
 import type { AIModel } from "@/types";
 import { cn } from "@/lib/cn";
 import { ModelMark } from "@/components/brand/ModelMark";
@@ -350,21 +349,27 @@ export function PricingPreview() {
           Get started
         </Button>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-3 sm:gap-5 lg:gap-6">
         {packages.map((pkg, index) => {
           const highlighted = packages.length > 2 ? index === 1 : index === 0;
+          const trackPointer = (event: MouseEvent<HTMLDivElement>) => {
+            const rect = event.currentTarget.getBoundingClientRect();
+            event.currentTarget.style.setProperty("--mx", `${event.clientX - rect.left}px`);
+            event.currentTarget.style.setProperty("--my", `${event.clientY - rect.top}px`);
+          };
           return (
             <Card
               key={pkg.sku}
               data-reveal
+              onMouseMove={trackPointer}
               className={cn(
-                "flex h-full flex-col",
-                highlighted ? "border-flame/30 bg-flame/[0.04]" : "border-ash/15",
+                "aethink-pricing-card",
+                highlighted && "aethink-pricing-card--featured",
               )}
             >
               <div className="flex items-center justify-between gap-2">
                 <p className="text-[13px] font-semibold text-warm max-[899px]:text-[15px]">{pkg.name}</p>
-                {highlighted ? <StatusPill tone="active">Popular</StatusPill> : null}
+                {highlighted ? <span className="aethink-pricing-badge">Popular</span> : null}
               </div>
               <p className="mt-3 text-[22px] font-semibold leading-none tabular-nums text-warm max-[899px]:text-[24px]">
                 {formatIDR(pkg.price_idr)}
@@ -391,7 +396,11 @@ export function PricingPreview() {
                   variant={highlighted ? "primary" : "secondary"}
                   size="md"
                   full
-                  className={highlighted ? "cta-landing" : "cta-landing-soft"}
+                  className={
+                    highlighted
+                      ? "aethink-pricing-btn aethink-pricing-btn--featured"
+                      : "aethink-pricing-btn aethink-pricing-btn--default"
+                  }
                   onClick={() => window.location.assign("/login")}
                 >
                   Buy {pkg.name}
