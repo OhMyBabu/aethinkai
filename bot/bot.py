@@ -367,12 +367,12 @@ def short_name(name: str, width: int = 24) -> str:
 
 
 def price_cell(value) -> str:
-    """Compact Rupiah: thousands collapse to K so the cell never runs long."""
+    """Compact Rupiah: 'Rp 96.5K' — currency stays visible, digits stay short."""
     n = float(value or 0)
     if n >= 1000:
         text = f"{n / 1000:.1f}".rstrip("0").rstrip(".")
-        return f"{text}K"
-    return f"{int(n)}"
+        return f"Rp {text}K"
+    return f"Rp {int(n)}"
 
 
 def api_base() -> str:
