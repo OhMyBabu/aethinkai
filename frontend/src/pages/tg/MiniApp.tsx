@@ -9,6 +9,7 @@ import {
   type CatalogModel, type KeyRow, type Me, type ModelUse, type Order, type Pkg, type Usage,
 } from "@/lib/tg";
 import { cn } from "@/lib/cn";
+import { AppAmbient } from "@/components/layout/AppAmbient";
 
 type Tab = "home" | "models" | "usage" | "account";
 
@@ -57,8 +58,9 @@ export default function MiniAppPage() {
         const app = await waitForWebApp();
         app?.ready?.();
         app?.expand?.();
-        app?.setHeaderColor?.("#18191B");
-        app?.setBackgroundColor?.("#18191B");
+        app?.setHeaderColor?.("#0A0A0A");
+        app?.setBackgroundColor?.("#0A0A0A");
+        (app as { setBottomBarColor?: (c: string) => void } | null)?.setBottomBarColor?.("#0A0A0A");
         let t = readToken();
         if (app?.initData) {
           const s = await tgSession(app.initData);
@@ -108,7 +110,7 @@ export default function MiniAppPage() {
   if (phase === "no-telegram" || phase === "error") {
     return (
       <div className="grid min-h-screen place-items-center bg-[#0A0A0A] px-5">
-        <div className="w-full max-w-[380px] rounded-2xl border border-[#383A3E] bg-[#232426] p-6">
+        <div className="w-full max-w-[380px] rounded-2xl border border-white/10 bg-[#171717] p-6">
           <span className="grid size-11 place-items-center rounded-xl border border-[#E7893C]/40 bg-[#9C542F]/20 text-[16px] font-bold text-[#E7893C]">A</span>
           <h1 className="mt-4 text-[19px] font-semibold text-[#FAF8F4]">Buka lewat Telegram</h1>
           <p className="mt-1.5 text-[12.5px] leading-6 text-[#A1A3A7]">
@@ -118,7 +120,7 @@ export default function MiniAppPage() {
           <a href="https://t.me/AethinkBot" className="mt-4 flex h-11 items-center justify-center gap-2 rounded-xl bg-[#E7893C] text-[13px] font-semibold text-[#18191B]">
             <Send size={14} /> Buka @AethinkBot
           </a>
-          <a href="/portal" className="mt-2 flex h-11 items-center justify-center rounded-xl border border-[#383A3E] text-[12.5px] text-[#FAF8F4]">
+          <a href="/portal" className="mt-2 flex h-11 items-center justify-center rounded-xl border border-white/10 text-[12.5px] text-[#FAF8F4]">
             Masuk lewat web portal
           </a>
         </div>
@@ -134,8 +136,9 @@ export default function MiniAppPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] pb-[86px] text-[#FAF8F4]">
-      <div className="mx-auto w-full max-w-[440px] px-5 pt-4">
+    <div className="relative isolate min-h-screen bg-[#0A0A0A] pb-[112px] text-[#FAF8F4]">
+      <AppAmbient />
+      <div className="mx-auto w-full max-w-[440px] px-5">
         <BrandRow me={me} onRefresh={() => void refresh()} busy={busy} />
 
         {tab === "home" ? (
@@ -163,7 +166,7 @@ export default function MiniAppPage() {
         ) : null}
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[#2B2D30] bg-[#0A0A0A]/95 backdrop-blur-md">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/8 bg-[#0A0A0A]/72 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-[440px] items-stretch justify-between px-3 pb-[max(env(safe-area-inset-bottom),6px)] pt-2">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
@@ -197,7 +200,7 @@ export default function MiniAppPage() {
 
 function BrandRow({ me, onRefresh, busy }: { me: Me | null; onRefresh: () => void; busy: boolean }) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="sticky top-0 z-20 -mx-5 mb-1 flex items-center justify-between border-b border-white/6 bg-[#0A0A0A]/72 px-5 py-3 backdrop-blur-xl">
       <div className="flex items-center gap-2.5">
         <span className="grid size-9 place-items-center rounded-xl border border-[#E7893C]/35 bg-[#9C542F]/25 text-[13px] font-bold text-[#E7893C]">A</span>
         <div className="leading-tight">
@@ -207,10 +210,10 @@ function BrandRow({ me, onRefresh, busy }: { me: Me | null; onRefresh: () => voi
       </div>
       <div className="flex items-center gap-2">
         <button type="button" onClick={onRefresh} aria-label="Muat ulang"
-          className="grid size-8 place-items-center rounded-lg border border-[#383A3E] text-[#A1A3A7] transition hover:bg-[#2B2D30] hover:text-[#FAF8F4]">
+          className="grid size-8 place-items-center rounded-lg border border-white/10 text-[#A1A3A7] transition hover:bg-[#1E1E20] hover:text-[#FAF8F4]">
           <RefreshCw size={13} className={busy ? "animate-spin" : undefined} />
         </button>
-        <span className="grid size-8 place-items-center rounded-full bg-[#2B2D30] text-[11px] font-semibold text-[#FAF8F4]">
+        <span className="grid size-8 place-items-center rounded-full bg-[#1E1E20] text-[11px] font-semibold text-[#FAF8F4]">
           {initials(me)}
         </span>
       </div>
@@ -235,13 +238,13 @@ function HomeScreen({ me, usage, used, catalog, weekRequests, spend, delta, onTo
     <div className="mt-5">
       <p className="text-[13px] text-[#A1A3A7]">{greeting()} 👋</p>
       <h1 className="mt-1 text-[27px] font-semibold leading-[1.15] tracking-[-0.03em]">
-        Control center AI lu.
+        Control center kamu.
       </h1>
 
-      <div className="mt-4 rounded-[22px] border border-[#9C542F]/35 bg-[linear-gradient(160deg,#2A211C_0%,#232426_58%,#232426_100%)] p-5">
+      <div className="mt-4 rounded-[22px] border border-white/8 bg-[radial-gradient(120%_100%_at_16%_0%,rgba(255,255,255,0.055),transparent_62%)] p-5">
         <div className="flex items-center justify-between">
           <p className="text-[12px] text-[#A1A3A7]">Saldo tersedia</p>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E7893C]/30 bg-[#E7893C]/10 px-2 py-0.5 text-[10px] text-[#E7C9A8]">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] text-[#C9CBCF]">
             <span className="size-1.5 rounded-full bg-[#E7893C]" /> Wallet aktif
           </span>
         </div>
@@ -266,8 +269,8 @@ function HomeScreen({ me, usage, used, catalog, weekRequests, spend, delta, onTo
           { label: "Billing", icon: BarChart3, action: () => onTab("usage") },
         ].map(({ label, icon: Icon, action }) => (
           <button key={label} type="button" onClick={action}
-            className="flex flex-col items-center gap-2 rounded-2xl border border-[#383A3E] bg-[#232426] px-1 py-3 text-[10.5px] text-[#FAF8F4] transition hover:bg-[#2B2D30] active:scale-[0.98]">
-            <Icon size={17} className="text-[#E7893C]" />
+            className="flex flex-col items-center gap-2 rounded-[16px] border border-white/8 bg-[#171717] px-1 py-3 text-[10.5px] text-[#FAF8F4] transition hover:border-white/14 hover:bg-[#1B1B1C] active:scale-[0.98]">
+            <Icon size={17} className="text-[#C9CBCF]" />
             {label}
           </button>
         ))}
@@ -275,11 +278,11 @@ function HomeScreen({ me, usage, used, catalog, weekRequests, spend, delta, onTo
 
       <div className="mt-6 flex items-baseline justify-between">
         <h2 className="text-[15px] font-semibold">Ringkasan pemakaian</h2>
-        <button type="button" onClick={() => onTab("usage")} className="inline-flex items-center gap-1 text-[11.5px] text-[#E7893C]">
+        <button type="button" onClick={() => onTab("usage")} className="inline-flex items-center gap-1 text-[11.5px] text-[#A1A3A7] transition hover:text-[#FAF8F4]">
           Lihat detail <ArrowUpRight size={12} />
         </button>
       </div>
-      <div className="mt-2.5 rounded-[22px] border border-[#383A3E] bg-[#232426] p-4">
+      <div className="mt-2.5 rounded-[22px] border border-white/10 bg-[#171717] p-4">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-[11.5px] text-[#A1A3A7]">Request 7 hari terakhir</p>
@@ -298,14 +301,14 @@ function HomeScreen({ me, usage, used, catalog, weekRequests, spend, delta, onTo
 
       <div className="mt-6 flex items-baseline justify-between">
         <h2 className="text-[15px] font-semibold">Model populer</h2>
-        <button type="button" onClick={() => onTab("models")} className="inline-flex items-center gap-1 text-[11.5px] text-[#E7893C]">
+        <button type="button" onClick={() => onTab("models")} className="inline-flex items-center gap-1 text-[11.5px] text-[#A1A3A7] transition hover:text-[#FAF8F4]">
           Katalog <ArrowUpRight size={12} />
         </button>
       </div>
       <div className="mt-2.5 space-y-2">
         {top.map((m) => (
           <button key={m.id} type="button" onClick={() => onModel(m)}
-            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[#383A3E] bg-[#232426] px-3.5 py-3 text-left transition hover:bg-[#2B2D30]">
+            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#171717] px-3.5 py-3 text-left transition hover:bg-[#1E1E20]">
             <div className="min-w-0">
               <p className="truncate text-[12.5px] font-semibold">{m.display_name}</p>
               <p className="text-[10.5px] text-[#85888B]">{m.provider} · in {price1m(m.pricing_idr_per_1m.input)} / out {price1m(m.pricing_idr_per_1m.output)}</p>
@@ -323,6 +326,13 @@ const prevWeekGuard = (delta: number) => Number.isFinite(delta) && delta !== 0;
 
 function Sparkline({ points }: { points: number[] }) {
   const series = points.length ? points : [0, 0, 0, 0, 0, 0, 0];
+  if (!series.some((v) => v > 0)) {
+    return (
+      <div className="mt-3 grid h-[68px] place-items-center rounded-xl border border-dashed border-white/10 text-[11px] text-[#85888B]">
+        Belum ada request di periode ini
+      </div>
+    );
+  }
   const w = 320, h = 68;
   const max = Math.max(1, ...series);
   const step = series.length > 1 ? w / (series.length - 1) : w;
@@ -368,7 +378,7 @@ function ModelsScreen({ catalog, used, onModel }: { catalog: CatalogModel[]; use
       <h1 className="text-[24px] font-semibold tracking-[-0.03em]">Jelajahi model</h1>
       <p className="mt-1 text-[12px] leading-5 text-[#A1A3A7]">Harga transparan per 1 juta token, satu endpoint API.</p>
 
-      <div className="mt-3 flex items-center gap-2 rounded-xl border border-[#383A3E] bg-[#232426] px-3">
+      <div className="mt-3 flex items-center gap-2 rounded-xl border border-white/10 bg-[#171717] px-3">
         <Search size={14} className="text-[#85888B]" />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari model atau kemampuan…"
           className="h-10 w-full bg-transparent text-[12.5px] text-[#FAF8F4] placeholder:text-[#85888B]/70 focus:outline-none" />
@@ -379,7 +389,7 @@ function ModelsScreen({ catalog, used, onModel }: { catalog: CatalogModel[]; use
         {FILTERS.map((f) => (
           <button key={f} type="button" onClick={() => setFilter(f)}
             className={cn("shrink-0 rounded-full border px-3 py-1.5 text-[11px] transition",
-              filter === f ? "border-[#9C542F] bg-[#9C542F]/25 text-[#F1D3B8]" : "border-[#383A3E] text-[#A1A3A7] hover:text-[#FAF8F4]")}>
+              filter === f ? "border-[#E7893C]/35 bg-[#E7893C]/12 text-[#F0B27A]" : "border-white/10 text-[#A1A3A7] hover:text-[#FAF8F4]")}>
             {f}
           </button>
         ))}
@@ -389,7 +399,7 @@ function ModelsScreen({ catalog, used, onModel }: { catalog: CatalogModel[]; use
         {rows.map((m) => {
           const caps = Object.entries(m.capabilities).filter(([, v]) => v).map(([k]) => CAP_LABEL[k] ?? k).slice(0, 3);
           return (
-            <div key={m.id} className="rounded-2xl border border-[#383A3E] bg-[#232426] p-3.5">
+            <div key={m.id} className="rounded-2xl border border-white/10 bg-[#171717] p-3.5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2.5">
                   <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#9C542F]/25 text-[12px] font-bold text-[#E7893C]">
@@ -415,14 +425,14 @@ function ModelsScreen({ catalog, used, onModel }: { catalog: CatalogModel[]; use
                   <p className="text-[12.5px] font-semibold tabular-nums">{price1m(m.pricing_idr_per_1m.output)}</p>
                 </div>
               </div>
-              <button type="button" onClick={() => onModel(m)} className="mt-2.5 inline-flex items-center gap-1 text-[11px] text-[#E7893C]">
+              <button type="button" onClick={() => onModel(m)} className="mt-2.5 inline-flex items-center gap-1 text-[11px] text-[#A1A3A7] transition hover:text-[#FAF8F4]">
                 Lihat detail <ArrowRight size={12} />
                 {usageById.get(m.id) ? <span className="ml-1 text-[#85888B]">· {usageById.get(m.id)} req</span> : null}
               </button>
             </div>
           );
         })}
-        {!rows.length ? <p className="rounded-xl border border-[#383A3E] bg-[#232426] p-4 text-[11.5px] text-[#85888B]">Tidak ada model yang cocok.</p> : null}
+        {!rows.length ? <p className="rounded-xl border border-white/10 bg-[#171717] p-4 text-[11.5px] text-[#85888B]">Tidak ada model yang cocok.</p> : null}
       </div>
     </div>
   );
@@ -444,7 +454,7 @@ function UsageScreen({ usage, usage30, used, spend }: { usage: Usage | null; usa
         {[7, 30].map((d) => (
           <button key={d} type="button" onClick={() => setDays(d as 7 | 30)}
             className={cn("rounded-full border px-3 py-1.5 text-[11px]",
-              days === d ? "border-[#9C542F] bg-[#9C542F]/25 text-[#F1D3B8]" : "border-[#383A3E] text-[#A1A3A7]")}>
+              days === d ? "border-[#9C542F] bg-[#9C542F]/25 text-[#F1D3B8]" : "border-white/10 text-[#A1A3A7]")}>
             {d} hari
           </button>
         ))}
@@ -457,14 +467,14 @@ function UsageScreen({ usage, usage30, used, spend }: { usage: Usage | null; usa
           { label: "Token in", value: compact(totals?.tokens_in ?? 0) },
           { label: "Token out", value: compact(totals?.tokens_out ?? 0) },
         ].map((s) => (
-          <div key={s.label} className="rounded-2xl border border-[#383A3E] bg-[#232426] p-3.5">
+          <div key={s.label} className="rounded-2xl border border-white/10 bg-[#171717] p-3.5">
             <p className="text-[10.5px] text-[#85888B]">{s.label}</p>
             <p className="mt-0.5 text-[17px] font-semibold tabular-nums">{s.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="mt-3 rounded-2xl border border-[#383A3E] bg-[#232426] p-4">
+      <div className="mt-3 rounded-2xl border border-white/10 bg-[#171717] p-4">
         <p className="text-[11.5px] text-[#A1A3A7]">Request per hari</p>
         <Sparkline points={(data?.daily ?? []).map((d) => d.requests)} />
         <div className="mt-1 flex justify-between text-[10px] text-[#85888B]">
@@ -477,7 +487,7 @@ function UsageScreen({ usage, usage30, used, spend }: { usage: Usage | null; usa
         {used.slice(0, 6).map((m) => {
           const maxCost = Math.max(1, ...used.map((x) => x.cost_micro));
           return (
-            <div key={m.model_id} className="rounded-xl border border-[#383A3E] bg-[#232426] p-3">
+            <div key={m.model_id} className="rounded-xl border border-white/10 bg-[#171717] p-3">
               <div className="flex items-baseline justify-between gap-2">
                 <p className="truncate text-[12px] font-medium">{m.model_id}</p>
                 <p className="shrink-0 text-[11px] tabular-nums text-[#A1A3A7]">{idr(m.cost_micro)}</p>
@@ -489,7 +499,7 @@ function UsageScreen({ usage, usage30, used, spend }: { usage: Usage | null; usa
             </div>
           );
         })}
-        {!used.length ? <p className="rounded-xl border border-[#383A3E] bg-[#232426] p-4 text-[11.5px] text-[#85888B]">Belum ada pemakaian.</p> : null}
+        {!used.length ? <p className="rounded-xl border border-white/10 bg-[#171717] p-4 text-[11.5px] text-[#85888B]">Belum ada pemakaian.</p> : null}
       </div>
     </div>
   );
@@ -522,7 +532,7 @@ function AccountScreen({ me, orders, token, onRotated, onTopUp }: {
   return (
     <div className="mt-5">
       <div className="flex items-center gap-3">
-        <span className="grid size-12 place-items-center rounded-2xl bg-[#2B2D30] text-[15px] font-semibold">{initials(me)}</span>
+        <span className="grid size-12 place-items-center rounded-2xl bg-[#1E1E20] text-[15px] font-semibold">{initials(me)}</span>
         <div className="min-w-0">
           <p className="truncate text-[15px] font-semibold">{me?.buyer.name || "Tanpa nama"}</p>
           <p className="truncate text-[11.5px] text-[#85888B]">
@@ -532,13 +542,13 @@ function AccountScreen({ me, orders, token, onRotated, onTopUp }: {
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2.5">
-        <button type="button" onClick={onTopUp} className="rounded-2xl border border-[#383A3E] bg-[#232426] p-3.5 text-left transition hover:bg-[#2B2D30]">
-          <Wallet size={15} className="text-[#E7893C]" />
+        <button type="button" onClick={onTopUp} className="rounded-2xl border border-white/10 bg-[#171717] p-3.5 text-left transition hover:bg-[#1E1E20]">
+          <Wallet size={15} className="text-[#C9CBCF]" />
           <p className="mt-2 text-[12px] font-medium">Tambah saldo</p>
-          <p className="text-[10.5px] text-[#85888B]">{idr(me?.balance_micro ?? 0)}</p>
+          <p className="text-[10.5px] text-[#85888B]">Saldo {idr(me?.balance_micro ?? 0)}</p>
         </button>
-        <a href="/portal" className="rounded-2xl border border-[#383A3E] bg-[#232426] p-3.5 transition hover:bg-[#2B2D30]">
-          <ArrowUpRight size={15} className="text-[#E7893C]" />
+        <a href="/portal" className="rounded-2xl border border-white/10 bg-[#171717] p-3.5 transition hover:bg-[#1E1E20]">
+          <ArrowUpRight size={15} className="text-[#C9CBCF]" />
           <p className="mt-2 text-[12px] font-medium">Portal lengkap</p>
           <p className="text-[10.5px] text-[#85888B]">Dashboard web</p>
         </a>
@@ -547,17 +557,17 @@ function AccountScreen({ me, orders, token, onRotated, onTopUp }: {
       <h2 className="mt-5 text-[15px] font-semibold">API keys</h2>
       <div className="mt-2 space-y-2">
         {(me?.keys ?? []).map((k: KeyRow) => (
-          <div key={k.id} className="rounded-xl border border-[#383A3E] bg-[#232426] p-3">
+          <div key={k.id} className="rounded-xl border border-white/10 bg-[#171717] p-3">
             <div className="flex items-center justify-between gap-2">
               <p className="font-mono text-[11.5px] text-[#FAF8F4]">{k.prefix}••••••••</p>
               <span className={cn("rounded-md px-1.5 py-0.5 text-[10px]",
-                k.status === "active" ? "bg-[#3E5E46]/35 text-[#9FD3A9]" : "bg-[#5E3E3E]/35 text-[#D3A9A9]")}>{k.status}</span>
+                k.status === "active" ? "bg-[#3E5E46]/35 text-[#9FD3A9]" : "bg-[#5E3E3E]/35 text-[#D3A9A9]")}>{k.status === "active" ? "aktif" : k.status}</span>
             </div>
-            <p className="mt-1 text-[10.5px] text-[#85888B]">{k.rpm_limit} req/menit · terakhir dipakai {when(k.last_used_at)}</p>
+            <p className="mt-1 text-[10.5px] text-[#85888B]">{k.rpm_limit} req/menit · terakhir dipakai: {when(k.last_used_at)}</p>
           </div>
         ))}
         {!(me?.keys ?? []).length ? (
-          <p className="rounded-xl border border-[#383A3E] bg-[#232426] p-4 text-[11.5px] text-[#85888B]">
+          <p className="rounded-xl border border-white/10 bg-[#171717] p-4 text-[11.5px] text-[#85888B]">
             Belum ada key. Selesaikan pembelian — key dikirim ke chat bot.
           </p>
         ) : null}
@@ -584,13 +594,13 @@ function AccountScreen({ me, orders, token, onRotated, onTopUp }: {
               className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#E7893C] text-[12px] font-semibold text-[#18191B] disabled:opacity-60">
               {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Ya, rotasi
             </button>
-            <button type="button" onClick={() => setConfirm(false)} className="h-10 flex-1 rounded-xl border border-[#383A3E] text-[12px] text-[#FAF8F4]">
+            <button type="button" onClick={() => setConfirm(false)} className="h-10 flex-1 rounded-xl border border-white/10 text-[12px] text-[#FAF8F4]">
               Batal
             </button>
           </div>
         ) : (
           <button type="button" onClick={() => setConfirm(true)}
-            className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#383A3E] text-[12px] text-[#FAF8F4] transition hover:bg-[#2B2D30]">
+            className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/10 text-[12px] text-[#FAF8F4] transition hover:bg-[#1E1E20]">
             <RefreshCw size={13} /> Rotasi key
           </button>
         )
@@ -599,13 +609,13 @@ function AccountScreen({ me, orders, token, onRotated, onTopUp }: {
       <h2 className="mt-5 text-[15px] font-semibold">Pembelian</h2>
       <div className="mt-2 space-y-2">
         {orders.slice(0, 5).map((o) => (
-          <div key={o.id} className="flex items-center justify-between gap-2 rounded-xl border border-[#383A3E] bg-[#232426] px-3 py-2.5">
+          <div key={o.id} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#171717] px-3 py-2.5">
             <div className="min-w-0">
               <p className="truncate font-mono text-[10.5px]">{o.id}</p>
               <p className="text-[10px] text-[#85888B]">{o.sku} · {idr(o.price_idr * 1_000_000)}</p>
             </div>
             <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 text-[10px]",
-              o.status === "granted" ? "bg-[#3E5E46]/35 text-[#9FD3A9]" : "bg-[#FAF8F4]/6 text-[#A1A3A7]")}>{o.status}</span>
+              o.status === "granted" ? "bg-[#3E5E46]/35 text-[#9FD3A9]" : "bg-[#FAF8F4]/6 text-[#A1A3A7]")}>{o.status === "granted" ? "dibayar" : o.status}</span>
           </div>
         ))}
         {!orders.length ? <p className="text-[11.5px] text-[#85888B]">Belum ada pembelian.</p> : null}
@@ -614,7 +624,7 @@ function AccountScreen({ me, orders, token, onRotated, onTopUp }: {
       {msg ? <p className="mt-3 text-[11.5px] text-[#E7893C]">{msg}</p> : null}
 
       <button type="button" onClick={() => { clearToken(); window.location.reload(); }}
-        className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#383A3E] text-[12px] text-[#A1A3A7]">
+        className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/10 text-[12px] text-[#A1A3A7]">
         <LogOut size={13} /> Keluar dari sesi ini
       </button>
     </div>
@@ -663,7 +673,7 @@ function TopUpSheet({ packages, token, onClose, onDone }: {
         <div className="space-y-2">
           {packages.map((p) => (
             <button key={p.sku} type="button" disabled={busy !== null} onClick={() => void pick(p.sku)}
-              className="flex w-full items-center justify-between rounded-xl border border-[#383A3E] bg-[#232426] px-3 py-3 text-left transition hover:bg-[#2B2D30] disabled:opacity-60">
+              className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-[#171717] px-3 py-3 text-left transition hover:bg-[#1E1E20] disabled:opacity-60">
               <div>
                 <p className="text-[12.5px] font-semibold">{p.name}</p>
                 <p className="text-[10.5px] text-[#85888B]">{p.rpm} req/menit · {p.blurb}</p>
@@ -692,7 +702,7 @@ function ModelSheet({ model, onClose }: { model: CatalogModel; onClose: () => vo
           { label: "Output / 1M", value: price1m(model.pricing_idr_per_1m.output) },
           { label: "Cached / 1M", value: price1m(model.pricing_idr_per_1m.cached_input) },
         ].map((p) => (
-          <div key={p.label} className="rounded-xl border border-[#383A3E] bg-[#0A0A0A] p-2.5">
+          <div key={p.label} className="rounded-xl border border-white/10 bg-[#0A0A0A] p-2.5">
             <p className="text-[9.5px] uppercase tracking-[0.08em] text-[#85888B]">{p.label}</p>
             <p className="mt-0.5 text-[12px] font-semibold tabular-nums">{p.value}</p>
           </div>
@@ -704,12 +714,12 @@ function ModelSheet({ model, onClose }: { model: CatalogModel; onClose: () => vo
       </dl>
       {caps.length ? (
         <div className="mt-2.5 flex flex-wrap gap-1.5">
-          {caps.map((c) => <span key={c} className="rounded-full border border-[#383A3E] px-2 py-0.5 text-[10px] text-[#A1A3A7]">{c}</span>)}
+          {caps.map((c) => <span key={c} className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-[#A1A3A7]">{c}</span>)}
         </div>
       ) : null}
       <button type="button"
         onClick={() => { navigator.clipboard?.writeText(model.id).catch(() => undefined); setCopied(true); window.setTimeout(() => setCopied(false), 1500); }}
-        className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#383A3E] text-[12px] text-[#FAF8F4]">
+        className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/10 text-[12px] text-[#FAF8F4]">
         {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? "Model ID disalin" : "Salin model ID"}
       </button>
       <p className="mt-2 text-[10.5px] leading-5 text-[#85888B]">
@@ -723,13 +733,13 @@ function Sheet({ children, onClose, title }: { children: React.ReactNode; onClos
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 p-0" onClick={onClose} role="presentation">
       <div
-        className="w-full max-w-[440px] rounded-t-[22px] border border-[#383A3E] bg-[#1B1C1F] px-5 pb-[max(env(safe-area-inset-bottom),18px)] pt-4"
+        className="w-full max-w-[440px] rounded-t-[22px] border border-white/10 bg-[#141414] px-5 pb-[max(env(safe-area-inset-bottom),18px)] pt-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#383A3E]" />
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/15" />
         <div className="flex items-center justify-between">
           <h3 className="text-[14px] font-semibold">{title}</h3>
-          <button type="button" onClick={onClose} aria-label="Tutup" className="grid size-7 place-items-center rounded-lg border border-[#383A3E] text-[#A1A3A7]">
+          <button type="button" onClick={onClose} aria-label="Tutup" className="grid size-7 place-items-center rounded-lg border border-white/10 text-[#A1A3A7]">
             <X size={13} />
           </button>
         </div>

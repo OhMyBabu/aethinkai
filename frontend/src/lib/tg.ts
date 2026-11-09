@@ -72,14 +72,20 @@ export const buy = (t: string, sku: string) =>
 export const rotateKey = (t: string) =>
   req<{ api_key: string; rpm_limit: number }>("/api/portal/keys/rotate", t, { method: "POST" });
 
-/** micro-IDR -> "Rp24.999.823" */
+/** micro-IDR -> "Rp 24.999.823" */
 export function idr(micro: number): string {
   const rp = Math.round((micro ?? 0) / 1_000_000);
-  return "Rp" + rp.toLocaleString("id-ID");
+  return "Rp " + rp.toLocaleString("id-ID");
 }
 
+/** per-1M price -> "Rp 96.5K" so a phone row never wraps the number. */
 export function price1m(v: number): string {
-  return "Rp" + Math.round(v ?? 0).toLocaleString("id-ID");
+  const n = Math.round(v ?? 0);
+  if (n >= 1000) {
+    const text = (n / 1000).toFixed(1).replace(/\.0$/, "");
+    return `Rp ${text}K`;
+  }
+  return `Rp ${n}`;
 }
 
 export function compact(n: number): string {
