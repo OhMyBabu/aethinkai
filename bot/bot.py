@@ -327,21 +327,53 @@ def home_text(user: dict | None = None, snap: dict | None = None) -> str:
     )
 
 
+def text_table(headers: list[str], rows: list[list[str]], right: tuple[int, ...] = ()) -> str:
+    """Monospace table for Telegram <pre>: pad every cell to the widest value.
+
+    Telegram has no native table, so the alignment has to be computed here; the
+    caller wraps the result in <pre> and the client renders it in a fixed font.
+    """
+    widths = [max(len(str(r[i])) for r in [headers, *rows]) for i in range(len(headers))]
+
+    def line(cells: list[str]) -> str:
+        out = []
+        for i, cell in enumerate(cells):
+            text = str(cell)
+            out.append(text.rjust(widths[i]) if i in right else text.ljust(widths[i]))
+        return "  ".join(out).rstrip()
+
+    rule = "  ".join("─" * w for w in widths)
+    return "\n".join([line(headers), rule, *(line([str(c) for c in row]) for row in rows)])
+
+
+def short_name(name: str, width: int = 24) -> str:
+    return name if len(name) <= width else name[: width - 1].rstrip() + "…"
+
+
+def price_cell(value) -> str:
+    """Plain digits with dot separators — the header already says Rupiah."""
+    return f"{int(value or 0):,}".replace(",", ".")
+
+
 def models_text() -> str:
     models = catalog_models()
-    lines = ["◈ <b>Models</b>\n", "Harga per 1 juta token (IDR), satu endpoint OpenAI-compatible.\n"]
     if not models:
-        lines.append("Katalog belum tersedia. Coba lagi sebentar.")
-        return "\n".join(lines)
+        return ("◈ <b>Model &amp; tarif</b>\n\n"
+                "Katalog belum tersedia. Coba lagi sebentar.")
+
+    rows = []
     for m in models:
         price = m.get("pricing_idr_per_1m") or {}
-        caps = [k for k, v in (m.get("capabilities") or {}).items() if v][:2]
-        tag = f" · {', '.join(caps)}" if caps else ""
-        lines.append(f"<b>{html.escape(m.get('display_name') or m.get('id',''))}</b>{tag}\n"
-                     f"   in <code>{amount(price.get('input', 0))}</code> · "
-                     f"out <code>{amount(price.get('output', 0))}</code>")
-    lines.append("\nPakai model ID di body request: <code>\"model\": \"…\"</code>")
-    return "\n".join(lines)
+        name = short_name(m.get("display_name") or m.get("id", ""))
+        rows.append([name, price_cell(price.get("input", 0)), price_cell(price.get("output", 0))])
+
+    table = text_table(["MODEL", "IN /1M", "OUT /1M"], rows, right=(1, 2))
+    return (
+        "◈ <b>Model &amp; tarif</b>\n"
+        "<i>Rupiah per 1 juta token · satu endpoint OpenAI-compatible</i>\n\n"
+        f"<pre>{html.escape(table)}</pre>\n"
+        "Pakai model ID di body request: <code>\"model\": \"…\"</code>"
+    )
 
 
 def models_keyboard() -> list:
