@@ -219,6 +219,22 @@ def edit(chat_id: int, message_id: int, text: str, keyboard: list | None = None)
     tg("editMessageText", **params)
 
 
+def send_rich(chat_id: int, markdown: str, keyboard: list | None = None) -> dict:
+    """Native rich message: Telegram renders headings, tables, quotes client-side."""
+    params: dict[str, Any] = {"chat_id": chat_id, "rich_message": {"markdown": markdown}}
+    if keyboard:
+        params["reply_markup"] = {"inline_keyboard": keyboard}
+    return tg("sendRichMessage", **params)
+
+
+def edit_rich(chat_id: int, message_id: int, markdown: str, keyboard: list | None = None) -> bool:
+    params: dict[str, Any] = {"chat_id": chat_id, "message_id": message_id,
+                              "rich_message": {"markdown": markdown}}
+    if keyboard:
+        params["reply_markup"] = {"inline_keyboard": keyboard}
+    return bool(tg("editMessageText", **params))
+
+
 def ack(cb_id: str, text: str = "") -> None:
     tg("answerCallbackQuery", callback_query_id=cb_id, text=text[:190])
 
@@ -374,6 +390,29 @@ def models_text() -> str:
         f"<pre>{html.escape(table)}</pre>\n"
         "Pakai model ID di body request: <code>\"model\": \"…\"</code>"
     )
+
+
+def models_markdown() -> str:
+    """Same catalogue rendered as a native rich table (Bot API 10.1+)."""
+    models = catalog_models()
+    if not models:
+        return "## Model & tarif\n\nKatalog belum tersedia. Coba lagi sebentar."
+
+    lines = [
+        "## Model & tarif",
+        "_Rupiah per 1 juta token · satu endpoint OpenAI-compatible_",
+        "",
+        "| Model | In / 1M | Out / 1M |",
+        "|:--|--:|--:|",
+    ]
+    for m in models:
+        price = m.get("pricing_idr_per_1m") or {}
+        name = (m.get("display_name") or m.get("id", "")).replace("|", "\\|")
+        pin = amount(price.get("input", 0)).replace("Rp", "Rp ", 1)
+        pout = amount(price.get("output", 0)).replace("Rp", "Rp ", 1)
+        lines.append(f"| {name} | {pin} | {pout} |")
+    lines += ["", "Pakai model ID di body request: `\"model\": \"…\"`"]
+    return "\n".join(lines)
 
 
 def models_keyboard() -> list:
@@ -807,7 +846,9 @@ def handle_callback(cb: dict) -> None:
 
     if data == "m:models":
         ack(cb_id)
-        edit(chat_id, mid, models_text(), models_keyboard())
+        if not edit_rich(chat_id, mid, models_markdown(), models_keyboard()):
+            # older clients/servers: keep the monospace table rather than nothing
+            edit(chat_id, mid, models_text(), models_keyboard())
         return
 
     if data == "m:usage":
