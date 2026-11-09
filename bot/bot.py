@@ -367,8 +367,17 @@ def short_name(name: str, width: int = 24) -> str:
 
 
 def price_cell(value) -> str:
-    """Plain digits with dot separators — the header already says Rupiah."""
-    return f"{int(value or 0):,}".replace(",", ".")
+    """Compact Rupiah: thousands collapse to K so the cell never runs long."""
+    n = float(value or 0)
+    if n >= 1000:
+        text = f"{n / 1000:.1f}".rstrip("0").rstrip(".")
+        return f"{text}K"
+    return f"{int(n)}"
+
+
+def api_base() -> str:
+    env = os.environ.get("API_BASE_URL", "").strip()
+    return (env or portal_url()).rstrip("/") + "/v1"
 
 
 def models_text() -> str:
@@ -388,7 +397,7 @@ def models_text() -> str:
         "◈ <b>Model &amp; tarif</b>\n"
         "<i>Rupiah per 1 juta token · satu endpoint OpenAI-compatible</i>\n\n"
         f"<pre>{html.escape(table)}</pre>\n"
-        "Pakai model ID di body request: <code>\"model\": \"…\"</code>"
+        f"Base URL · <code>{html.escape(api_base())}</code>"
     )
 
 
@@ -408,10 +417,8 @@ def models_markdown() -> str:
     for m in models:
         price = m.get("pricing_idr_per_1m") or {}
         name = (m.get("display_name") or m.get("id", "")).replace("|", "\\|")
-        pin = amount(price.get("input", 0)).replace("Rp", "Rp ", 1)
-        pout = amount(price.get("output", 0)).replace("Rp", "Rp ", 1)
-        lines.append(f"| {name} | {pin} | {pout} |")
-    lines += ["", "Pakai model ID di body request: `\"model\": \"…\"`"]
+        lines.append(f"| {name} | {price_cell(price.get('input', 0))} | {price_cell(price.get('output', 0))} |")
+    lines += ["", f"Base URL · `{api_base()}`"]
     return "\n".join(lines)
 
 
