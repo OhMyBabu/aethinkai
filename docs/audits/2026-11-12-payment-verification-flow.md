@@ -85,6 +85,22 @@ lookups.
   clears a stale pending order through the new cancel endpoint first).
 - `journalctl -u aethink-gateway --since "1 hour ago" | grep -ci wijayapay` = 0.
 
+## Transaction list stays live
+
+The order list refreshes itself so a status change never waits for a page load:
+
+- The pending poll runs every 5s against the local status endpoint; on granted it
+  closes the panel, bumps a refresh key and reloads the dashboard figures.
+- The transaction list polls every 12s while the tab is visible, and on window
+  focus / visibilitychange, so a grant from the bot or a webhook lands without a
+  manual reload.
+- Order creation and cancellation still bump the same key immediately.
+
+Verified with a QA buyer, no reload involved: order created from the UI, granted
+through the internal bot endpoint, list switched from `Menunggu Pembayaran` to
+`Kredit Ditambahkan` on the next beat, the pending bar and panel disappeared, the
+"Pembayaran diterima" notice appeared, and the balance KPI showed the new credit.
+
 ## Not covered
 
 - The provider round trip itself was not exercised: Bang tests real payments.

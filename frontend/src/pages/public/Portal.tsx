@@ -171,6 +171,23 @@ function StorePanel({
 
   useEffect(() => { void refresh(); }, [refresh, refreshKey]);
 
+  // The bot or the webhook can grant an order while this page is open. Poll the
+  // list on a slow beat and whenever the tab regains focus, so the transaction
+  // status never needs a manual reload.
+  useEffect(() => {
+    const beat = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    const id = window.setInterval(beat, 12000);
+    window.addEventListener("focus", beat);
+    document.addEventListener("visibilitychange", beat);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", beat);
+      document.removeEventListener("visibilitychange", beat);
+    };
+  }, [refresh]);
+
   useEffect(() => {
     if (!receipt) return;
     const onKey = (event: KeyboardEvent) => {
@@ -650,6 +667,7 @@ export default function PortalPage() {
           setPending(null);
           setPayOpen(false);
           setPayNotice("Pembayaran diterima. Saldo dan kredit sudah diperbarui.");
+          setOrdersKey((key) => key + 1);
           void load();
         } else if (s.status === "cancelled" || s.status === "expired") {
           setPending(null);
@@ -659,7 +677,7 @@ export default function PortalPage() {
         /* transient network error: next tick retries */
       }
     };
-    const id = window.setInterval(() => void tick(), 8000);
+    const id = window.setInterval(() => void tick(), 5000);
     return () => { alive = false; window.clearInterval(id); };
   }, [load, pending, token]);
 
