@@ -298,49 +298,59 @@ def gateway_status() -> dict:
 
 # ---------------------------------------------------------------- views
 def home_keyboard(uid: int) -> list:
+    """Two doors, then utilities. Nothing else lives on the root panel."""
     rows = [
-        [btn("💳 Top Up", "m:buy"), btn("🔑 API Keys", "m:keys")],
-        [btn("◈ Models", "m:models"), btn("📊 Usage", "m:usage")],
-        [btn("🎁 Rewards", "m:rewards"), btn("💬 Support", "m:support")],
+        [btn("Digital Store", "ui:st:home")],
+        [btn("AethinkAI Gateway", "ui:gw:home")],
+        [btn("Aktivitas Saya", "ui:activity"), btn("Bantuan", "ui:help")],
     ]
-    mini = miniapp_link()
-    if mini:
-        rows.append([web_app_btn("🌐 Buka Dashboard", mini)])
-    else:
-        rows.append([url_btn("🌐 Buka Dashboard", f"{portal_url()}/portal")])
     if uid in ADMINS:
-        rows.append([btn("🛠 Admin Panel", "m:admin")])
+        rows.append([btn("Admin Panel", "m:admin")])
     return rows
 
 
 def home_text(user: dict | None = None, snap: dict | None = None) -> str:
-    """One clean panel: balance first, then key/request counters, then honest gateway state."""
-    name = html.escape((user or {}).get("first_name") or "")
-    hello = f"Halo, <b>{name}</b> 👋" if name else "Halo 👋"
-
-    if snap:
-        balance = idr(int(snap.get("balance_micro") or 0))
-        keys = len([k for k in (snap.get("keys") or []) if k.get("status") == "active"])
-        usage = snap.get("usage") or {}
-        req24 = int(usage.get("requests_24h") or 0)
-        body = (f"💰 <b>Saldo tersedia</b>\n<code>{balance}</code>\n\n"
-                f"🔑 <b>{keys}</b> key aktif · 📊 <b>{req24}</b> request 24 jam\n")
-    else:
-        body = ("💰 <b>Saldo tersedia</b>\n<code>Rp 0</code>\n\n"
-                "Belum ada pembelian — pilih <b>Top Up</b> buat mulai.\n")
-
-    st = gateway_status()
-    if st.get("status") == "operational":
-        state = f"🟢 Gateway operational · update {time.strftime('%H:%M')}"
-    else:
-        state = f"🟡 Status gateway: {html.escape(str(st.get('status') or 'tidak diketahui'))}"
-
+    """Root: two services, nothing transactional, no balance leak in groups."""
     return (
-        "◈ <b>AethinkAI Gateway</b> · <i>Control Center</i>\n\n"
-        f"{hello}\n\n"
-        f"{body}"
-        f"{state}\n"
+        "✦ <b>AethinkAI Store</b>\n"
+        "<code>Digital Products · AI Gateway</code>\n\n"
+        "Selamat datang. Pilih layanan yang ingin Anda gunakan.\n\n"
+        "<b>Digital Store</b>\n"
+        "Akun premium dan produk digital dengan pemesanan langsung melalui bot.\n\n"
+        "<b>AethinkAI Gateway</b>\n"
+        "Akses berbagai model AI melalui satu API key dengan sistem kredit prabayar.\n\n"
+        "Pilih salah satu layanan di bawah untuk melanjutkan."
     )
+
+
+def rupiah(value: int | float) -> str:
+    """UI money: Rp25.000, never Rp 25.000 or 25k inside the bot panels."""
+    return "Rp" + f"{int(round(float(value or 0))):,}".replace(",", ".")
+
+
+def page_chunks(items: list, size: int) -> list[list]:
+    if not items:
+        return [[]]
+    return [items[i:i + size] for i in range(0, len(items), size)]
+
+
+def page_of(items: list, size: int, page: int) -> tuple[list, int, int]:
+    pages = page_chunks(items, size)
+    page = max(0, min(page, len(pages) - 1))
+    return pages[page], page, len(pages)
+
+
+ORDER_STATUS_ID = {
+    "pending": "Menunggu pembayaran",
+    "granted": "Kredit Ditambahkan",
+    "expired": "Kedaluwarsa",
+    "cancelled": "Dibatalkan",
+    "failed": "Gagal",
+}
+
+
+def model_status_id(status: str) -> str:
+    return {"on": "Tersedia", "maintenance": "Gangguan sementara"}.get((status or "").lower(), "Tidak diketahui")
 
 
 def text_table(headers: list[str], rows: list[list[str]], right: tuple[int, ...] = ()) -> str:
@@ -431,6 +441,295 @@ def models_keyboard() -> list:
     return rows
 
 
+# ---------------------------------------------------------------- store & gateway panels
+def store_catalog() -> list[dict]:
+    """Store products live behind their own service. Until that service is wired the
+    panel shows an honest empty state instead of invented products."""
+    return []
+
+
+def store_home() -> tuple[str, list]:
+    text = (
+        "✦ <b>Digital Store</b>\n"
+        "<code>AethinkAI Store / Digital Products</code>\n\n"
+        "Jelajahi produk digital yang tersedia. Pilih kategori untuk melihat produk, "
+        "harga, dan informasi pembelian.\n\n"
+        "<b>Layanan</b>\n"
+        "◦ Katalog produk\n"
+        "◦ Riwayat pesanan\n"
+        "◦ Bantuan pembelian"
+    )
+    kb = [
+        [btn("Lihat Kategori Produk", "ui:st:cats")],
+        [btn("Pesanan Saya", "ui:st:orders:0"), btn("Bantuan", "ui:help:st")],
+        [btn("‹ Menu Utama", "ui:home")],
+    ]
+    return text, kb
+
+
+def store_category_names() -> list[str]:
+    cats: list[str] = []
+    for p in store_catalog():
+        if p.get("category") and p["category"] not in cats:
+            cats.append(p["category"])
+    return cats
+
+
+def store_categories() -> tuple[str, list]:
+    products = store_catalog()
+    if not products:
+        text = (
+            "<b>Kategori Produk</b>\n\n"
+            "Katalog Digital Store belum tersedia.\n\n"
+            "Produk akan muncul di sini setelah katalog diisi."
+        )
+        return text, [[btn("‹ Digital Store", "ui:st:home")]]
+    cats = store_category_names()
+    rows = [[btn(str(c), f"ui:st:prods:{i}:0")] for i, c in enumerate(cats[:6])]
+    rows.append([btn("‹ Digital Store", "ui:st:home")])
+    return "<b>Kategori Produk</b>\nPilih kategori yang ingin Anda jelajahi.", rows
+
+
+def store_products(cat: int, page: int) -> tuple[str, list]:
+    products = store_catalog()
+    cats = store_category_names()
+    if products and cats and 0 <= cat < len(cats):
+        products = [p for p in products if p.get("category") == cats[cat]]
+    if not products:
+        return (
+            "<b>Belum ada produk</b>\n\n"
+            "Produk untuk kategori ini belum tersedia saat ini.",
+            [[btn("‹ Digital Store", "ui:st:home")]],
+        )
+    chunk, page, pages = page_of(products, 4, page)
+    lines = ["<b>Katalog Produk</b>", f"<code>Produk {page * 4 + 1}–{page * 4 + len(chunk)} dari {len(products)} · Halaman {page + 1}/{pages}</code>", ""]
+    rows = []
+    for i, p in enumerate(chunk):
+        price = p.get("price_from") or 0
+        lines.append(f"<b>{page * 4 + i + 1:02d} · {html.escape(str(p.get('name', '')))}</b>")
+        lines.append(f"Harga mulai <b>{rupiah(price)}</b>\n")
+        rows.append([btn(f"{page * 4 + i + 1:02d} · {short_name(str(p.get('name', '')), 22)}",
+                         f"ui:st:product:{p.get('id')}:{cat}:{page}")])
+    nav = []
+    if page > 0:
+        nav.append(btn("‹ Sebelumnya", f"ui:st:prods:{cat}:{page - 1}"))
+    if page < pages - 1:
+        nav.append(btn("Berikutnya ›", f"ui:st:prods:{cat}:{page + 1}"))
+    if nav:
+        rows.append(nav)
+    rows.append([btn("‹ Kategori", "ui:st:cats"), btn("Menu Utama", "ui:home")])
+    return "\n".join(lines), rows
+
+
+def store_product(pid: str, cat: int, page: int) -> tuple[str, list]:
+    product = next((p for p in store_catalog() if str(p.get("id")) == str(pid)), None)
+    if not product:
+        return store_products(cat, page)
+    variants = product.get("variants") or []
+    cheapest = min((v.get("price_idr", 0) for v in variants), default=product.get("price_from") or 0)
+    in_stock = bool(product.get("in_stock", bool(variants)))
+    lines = [
+        f"<b>{html.escape(str(product.get('name', '')))}</b>",
+        f"<code>{html.escape(str(product.get('id', '')))}</code>",
+        "",
+        html.escape(str(product.get("description") or "Deskripsi produk belum tersedia.")),
+        "",
+        "<b>Informasi</b>",
+        f"Durasi       : {html.escape(str(product.get('duration') or 'sesuai varian'))}",
+        f"Harga        : {rupiah(cheapest)}",
+        f"Ketersediaan : {'Tersedia' if in_stock else 'Stok habis'}",
+        "",
+        "Periksa pilihan produk sebelum melanjutkan pembelian." if in_stock else
+        "Produk ini sedang tidak tersedia.",
+    ]
+    kb = []
+    if in_stock and variants:
+        kb.append([btn("Pilih Varian / Beli", f"ui:st:buy:{pid}")])
+    kb.append([btn("‹ Daftar Produk", f"ui:st:prods:{cat}:{page}"), btn("Menu Utama", "ui:home")])
+    return "\n".join(lines), kb
+
+
+def store_orders(page: int) -> tuple[str, list]:
+    text = (
+        "<b>Pesanan Saya</b>\n\n"
+        "<b>Belum ada pesanan</b>\n\n"
+        "Pesanan Digital Store yang Anda buat akan muncul di sini."
+    )
+    kb = [[btn("Jelajahi Produk", "ui:st:cats")], [btn("‹ Digital Store", "ui:st:home")]]
+    return text, kb
+
+
+def gateway_home(uid: int) -> tuple[str, list]:
+    snap = buyer_snapshot(uid)
+    if snap:
+        account = (f"Saldo API: <b>{rupiah((snap.get('balance_micro') or 0) / 1_000_000)}</b>\n"
+                   f"Batas akun: {snap.get('rpm_limit') or 60} RPM")
+    else:
+        account = "Belum terhubung."
+    text = (
+        "✦ <b>AethinkAI Gateway</b>\n"
+        "<code>One API · Multiple Models</code>\n\n"
+        "Gunakan satu endpoint untuk mengakses model AI yang tersedia. Kelola kredit, "
+        "cek harga model, dan lihat panduan integrasi.\n\n"
+        f"<b>Akun</b>\n{account}"
+    )
+    kb = [
+        [btn("Beli Kredit API", "ui:gw:credits")],
+        [url_btn("Dashboard AethinkAI", f"{portal_url()}/portal")],
+        [btn("Model & Harga", "ui:gw:models:0"), url_btn("Panduan API", f"{portal_url()}/panduan")],
+        [btn("‹ Menu Utama", "ui:home")],
+    ]
+    return text, kb
+
+
+def gateway_credits() -> tuple[str, list]:
+    pkgs = sorted(PKG.values(), key=lambda p: p.get("sort", 0) or p.get("idr", 0))
+    lines = [
+        "<b>Isi Kredit API</b>",
+        "",
+        "Pilih nominal kredit untuk menambah saldo AethinkAI Gateway. Kredit digunakan "
+        "sesuai pemakaian model, tanpa langganan bulanan.",
+        "",
+        "<b>Paket Kredit</b>",
+    ]
+    rows = []
+    row = []
+    for p in pkgs[:3]:
+        lines.append(f"{html.escape(str(p.get('name', p.get('sku'))))} · <b>{rupiah(p.get('idr', 0))}</b>")
+        row.append(btn(str(p.get("name", p.get("sku", ""))), f"buy:{p.get('sku')}"))
+    if row:
+        rows.append(row)
+    lines += ["", "<b>Catatan</b>", "Seluruh paket mengikuti batas penggunaan akun yang berlaku."]
+    rows.append([url_btn("Nominal Lainnya", f"{portal_url()}/portal#isi-saldo")])
+    rows.append([btn("‹ AethinkAI Gateway", "ui:gw:home")])
+    return "\n".join(lines), rows
+
+
+def gateway_models(page: int) -> tuple[str, list]:
+    models = catalog_models()
+    if not models:
+        return ("<b>Model & Harga</b>\n\nData belum dapat dimuat. Coba beberapa saat lagi.",
+                [[btn("‹ AethinkAI Gateway", "ui:gw:home")]])
+    chunk, page, pages = page_of(models, 4, page)
+    lines = ["<b>Model & Harga</b>", f"<code>Halaman {page + 1}/{pages}</code>", ""]
+    rows = []
+    for offset, m in enumerate(chunk):
+        idx = page * 4 + offset
+        price = m.get("pricing_idr_per_1m") or {}
+        name = html.escape(str(m.get("display_name") or m.get("id")))
+        lines.append(f"<b>{name}</b>")
+        lines.append(f"Input: {rupiah(price.get('input', 0))} / 1M token")
+        lines.append(f"Output: {rupiah(price.get('output', 0))} / 1M token\n")
+        rows.append([btn(f"Detail · {short_name(str(m.get('display_name') or m.get('id')), 20)}",
+                         f"ui:gw:model:{idx}:{page}")])
+    nav = []
+    if page > 0:
+        nav.append(btn("‹ Sebelumnya", f"ui:gw:models:{page - 1}"))
+    if page < pages - 1:
+        nav.append(btn("Berikutnya ›", f"ui:gw:models:{page + 1}"))
+    if nav:
+        rows.append(nav)
+    lines.append("Harga mengikuti katalog aktif AethinkAI Gateway.")
+    rows.append([btn("‹ AethinkAI Gateway", "ui:gw:home")])
+    return "\n".join(lines), rows
+
+
+def gateway_model(idx: int, page: int) -> tuple[str, list]:
+    models = catalog_models()
+    if not models or idx < 0 or idx >= len(models):
+        return ("<b>Model tidak ditemukan</b>\n\nDaftar model sudah berubah. Buka ulang daftar.",
+                [[btn("‹ Model & Harga", "ui:gw:models:0")]])
+    m = models[idx]
+    price = m.get("pricing_idr_per_1m") or {}
+    ctx = m.get("context_length") or 0
+    ctx_text = f"{ctx // 1_000_000}M" if ctx and ctx % 1_000_000 == 0 else (f"{ctx // 1000}K" if ctx else "belum tersedia")
+    lines = [
+        f"<b>{html.escape(str(m.get('display_name') or m.get('id')))}</b>",
+        f"<code>{html.escape(str(m.get('id')))}</code>",
+        "",
+        f"Status        : {model_status_id(str(m.get('status') or ''))}",
+        f"Context       : {ctx_text}",
+        f"Input / 1M    : {rupiah(price.get('input', 0))}",
+        f"Output / 1M   : {rupiah(price.get('output', 0))}",
+    ]
+    if price.get("cached_input"):
+        lines.append(f"Cache / 1M    : {rupiah(price['cached_input'])}")
+    lines += ["", "Gunakan ID model di atas saat mengirim permintaan API."]
+    kb = [
+        [url_btn("Buka Panduan API", f"{portal_url()}/panduan")],
+        [btn("‹ Model & Harga", f"ui:gw:models:{page}")],
+    ]
+    return "\n".join(lines), kb
+
+
+def activity_home() -> tuple[str, list]:
+    text = ("<b>Aktivitas Saya</b>\n\n"
+            "Pilih layanan untuk melihat aktivitas terkait akun Anda.")
+    kb = [
+        [btn("Pesanan Digital Store", "ui:activity:st:0")],
+        [btn("Transaksi Kredit Gateway", "ui:activity:gw:0")],
+        [btn("‹ Menu Utama", "ui:home")],
+    ]
+    return text, kb
+
+
+def activity_gateway(uid: int, page: int) -> tuple[str, list]:
+    snap = buyer_snapshot(uid)
+    orders = (snap or {}).get("orders") or []
+    if not orders:
+        return ("<b>Transaksi Kredit Gateway</b>\n\nBelum ada transaksi yang tercatat.",
+                [[btn("‹ Aktivitas Saya", "ui:activity")], [btn("Menu Utama", "ui:home")]])
+    chunk, page, pages = page_of(orders, 5, page)
+    lines = ["<b>Transaksi Kredit Gateway</b>", f"<code>Halaman {page + 1}/{pages}</code>", ""]
+    for o in chunk:
+        lines.append(f"<b>#{html.escape(str(o.get('id', '')).split('-')[-1])}</b> · {html.escape(str(o.get('sku', '')))}")
+        when = str(o.get("created_at") or "")[:10]
+        lines.append(f"{when} · {ORDER_STATUS_ID.get(str(o.get('status')), str(o.get('status')))} · {rupiah(o.get('price_idr', 0))}\n")
+    nav = []
+    if page > 0:
+        nav.append(btn("‹ Sebelumnya", f"ui:activity:gw:{page - 1}"))
+    if page < pages - 1:
+        nav.append(btn("Berikutnya ›", f"ui:activity:gw:{page + 1}"))
+    kb = ([nav] if nav else []) + [[btn("‹ Aktivitas Saya", "ui:activity")], [btn("Menu Utama", "ui:home")]]
+    return "\n".join(lines), kb
+
+
+def activity_store(page: int) -> tuple[str, list]:
+    return ("<b>Pesanan Digital Store</b>\n\nBelum ada pesanan yang tercatat.",
+            [[btn("Jelajahi Produk", "ui:st:home")], [btn("‹ Aktivitas Saya", "ui:activity")]])
+
+
+def help_home() -> tuple[str, list]:
+    text = ("<b>Pusat Bantuan</b>\n\n"
+            "Pilih topik bantuan sesuai layanan yang Anda gunakan.")
+    kb = [
+        [btn("Bantuan Digital Store", "ui:help:st")],
+        [btn("Bantuan AethinkAI Gateway", "ui:help:gw")],
+        [btn("‹ Menu Utama", "ui:home")],
+    ]
+    return text, kb
+
+
+def help_store() -> tuple[str, list]:
+    text = ("<b>Bantuan Digital Store</b>\n\n"
+            "Pesanan digital dikirim langsung ke chat ini setelah pembayaran terkonfirmasi. "
+            "Kalau ada kendala, hubungi admin.")
+    kb = [[btn("Chat Admin", "s:ping")], [btn("‹ Bantuan", "ui:help")], [btn("Menu Utama", "ui:home")]]
+    return text, kb
+
+
+def help_gateway() -> tuple[str, list]:
+    text = ("<b>Bantuan AethinkAI Gateway</b>\n\n"
+            "Satu API key untuk seluruh model. Kelola kredit lewat bot, pantau pemakaian "
+            "dan transaksi di dashboard.")
+    kb = [
+        [url_btn("Panduan API", f"{portal_url()}/panduan"), url_btn("Dashboard", f"{portal_url()}/portal")],
+        [btn("Kelola API Key", "m:keys"), btn("Chat Admin", "s:ping")],
+        [btn("‹ Bantuan", "ui:help")],
+    ]
+    return text, kb
+
+
 def usage_text(uid: int) -> str:
     snap = buyer_snapshot(uid)
     if not snap:
@@ -496,35 +795,36 @@ def create_payment(order_id: str) -> dict | None:
 
 def invoice_text(order_id: str, pkg: dict, pay: dict | None = None) -> str:
     head = (
-        f"🧾 <b>Order</b> <code>{order_id}</code>\n"
+        f"<b>Invoice</b> <code>{order_id}</code>\n"
         f"Paket: <b>{pkg['name']}</b>\n"
-        f"Kredit masuk: <b>{idr(pkg['idr'] * 1_000_000)}</b>\n"
-        f"Rate limit: <b>{pkg['rpm']} request/menit</b>\n"
+        f"Kredit masuk: <b>{rupiah(pkg['idr'])}</b>\n"
+        f"Batas akun: <b>{pkg['rpm']} RPM</b>\n"
     )
     if pay:
         total = int(pay.get("total_bayar") or pkg["idr"])
         fee = int(pay.get("fee_idr") or 0)
         exp = (pay.get("expires_at") or "").replace("T", " ")[:16]
-        body = (f"\nBayar: <b>{idr(total * 1_000_000)}</b>"
-                + (f" <i>(termasuk biaya QRIS {idr(fee * 1_000_000)})</i>" if fee else "")
+        body = (f"\nBayar: <b>{rupiah(total)}</b>"
+                + (f" <i>(termasuk biaya QRIS {rupiah(fee)})</i>" if fee else "")
                 + f"\nBerlaku sampai: <b>{exp} WIB</b>\n\n"
-                "Scan QR, bayar sesuai nominal <b>tepat</b>, key dikirim otomatis ke chat ini.")
+                "Scan QR dan bayar sesuai nominal tepat. Kredit masuk otomatis setelah "
+                "pembayaran terkonfirmasi.")
         if pay.get("trx_reference"):
             body += f"\nRef: <code>{pay['trx_reference']}</code>"
         return head + body
     return head + ("\nStatus: <b>menunggu pembayaran</b>\n\n"
-                   "Pembayaran manual: transfer/QRIS ke admin, lalu tekan <b>Saya sudah bayar</b>. "
-                   "Admin konfirmasi, bot langsung kirim API key ke chat ini.")
+                   "Pembayaran manual: transfer atau QRIS ke admin, lalu tekan Saya sudah bayar. "
+                   "Admin mengonfirmasi, lalu kredit masuk ke akun ini.")
 
 
 def invoice_keyboard(order_id: str, pay: dict | None) -> list:
     if pay and pay.get("qr_image"):
         return [
-            [url_btn("💳 Buka QR", pay["qr_image"]), btn("🔄 Cek status", f"pay:{order_id}")],
-            [url_btn("🌐 Bayar di web", f"{portal_url()}/pay/{order_id}?t={pay.get('checkout_token', '')}")],
-            [btn("⬅️ Menu", "m:home")],
+            [url_btn("Buka QR", pay["qr_image"]), btn("Cek Status", f"pay:{order_id}")],
+            [url_btn("Bayar di web", f"{portal_url()}/pay/{order_id}?t={pay.get('checkout_token', '')}")],
+            [btn("‹ Menu Utama", "ui:home")],
         ]
-    return [[btn("✅ Saya sudah bayar", f"paid:{order_id}")], [btn("⬅️ Menu", "m:home")]]
+    return [[btn("Saya sudah bayar", f"paid:{order_id}")], [btn("‹ Menu Utama", "ui:home")]]
 
 
 HELP_HOWTO = (
@@ -555,24 +855,23 @@ def balance_view(uid: int) -> tuple[str, list]:
     keys = snap.get("keys") or []
     usage = snap.get("usage") or {}
     lines = [
-        "💳 <b>Saldo & Pemakaian</b>\n",
-        f"Saldo: <b>{idr(snap.get('balance_micro', 0))}</b>",
-        f"Request: <b>{usage.get('requests', 0)}</b> · token "
-        f"{usage.get('tokens_in', 0)}/{usage.get('tokens_out', 0)}",
+        "<b>Saldo &amp; Penggunaan API</b>\n",
+        f"Saldo tersedia : <b>{rupiah((snap.get('balance_micro') or 0) / 1_000_000)}</b>",
+        f"Batas akun     : {snap.get('rpm_limit') or 60} RPM",
+        f"Penggunaan     : {usage.get('requests', 0)} request · "
+        f"{usage.get('tokens_in', 0)} token masuk / {usage.get('tokens_out', 0)} token keluar",
     ]
     if keys:
         k = keys[0]
-        lines.append(f"Key aktif: <code>{k['prefix']}…</code> · {k['rpm_limit']} rpm · "
+        lines.append(f"Key aktif      : <code>{k['prefix']}…</code> · {k['rpm_limit']} RPM · "
                      f"dipakai {ago(k.get('last_used_at'))}")
     else:
-        lines.append("Key aktif: <b>tidak ada</b> — buka Key Saya → Rotasi.")
-    orders = snap.get("orders") or []
-    if orders:
-        lines.append("\n<b>Order terakhir</b>")
-        for o in orders[:3]:
-            lines.append(f"• <code>{o['id']}</code> · {o['sku']} · "
-                         f"{idr(o['price_idr'] * 1_000_000)} · <i>{o['status']}</i>")
-    kb = [[btn("🔄 Refresh", "m:bal"), btn("🔑 Key Saya", "m:keys")], [btn("⬅️ Menu", "m:home")]]
+        lines.append("Key aktif      : belum ada · buat lewat Rotasi di Kelola API Key.")
+    lines.append("\nKelola transaksi dan riwayat penggunaan melalui dashboard AethinkAI.")
+    kb = [
+        [url_btn("Buka Dashboard", f"{portal_url()}/portal")],
+        [btn("Isi Kredit API", "ui:gw:credits"), btn("‹ AethinkAI Gateway", "ui:gw:home")],
+    ]
     return "\n".join(lines), kb
 
 
@@ -581,26 +880,28 @@ def keys_view(uid: int) -> tuple[str, list]:
     if not snap:
         return "Belum ada key. Beli paket dulu:", packages_keyboard()
     keys = snap.get("keys") or []
-    lines = ["🔑 <b>Key Saya</b>\n"]
+    lines = ["<b>Kelola API Key</b>\n"]
     if keys:
         for k in keys:
-            lines.append(f"• <code>{k['prefix']}…</code> · {k['rpm_limit']} rpm · "
+            lines.append(f"<code>{k['prefix']}…</code> · {k['rpm_limit']} RPM · "
                          f"dipakai {ago(k.get('last_used_at'))}")
-        lines.append("\nKey lengkap hanya dikirim sekali saat pembelian/rotasi. Kalau hilang, rotasi.")
+        lines.append("\nKey lengkap hanya dikirim sekali saat pembelian atau rotasi. Kalau hilang, rotasi.")
     else:
-        lines.append("Tidak ada key aktif.")
-    kb = [[btn("🔄 Rotasi key", "rot:ask"), btn("🌐 Portal", "m:portal")], [btn("⬅️ Menu", "m:home")]]
+        lines.append("Belum ada key aktif.")
+    kb = [
+        [btn("Rotasi Key", "rot:ask"), url_btn("Dashboard", f"{portal_url()}/portal")],
+        [btn("‹ Bantuan Gateway", "ui:help:gw")],
+    ]
     return "\n".join(lines), kb
 
 
 def portal_view() -> tuple[str, list]:
     link = portal_url()
     return (
-        "🌐 <b>Portal pembeli</b>\n\n"
+        "<b>Dashboard AethinkAI</b>\n\n"
         f"{link}/portal\n\n"
-        "Tempel API key dari bot, lalu lihat saldo, token terpakai, model, dan request log. "
-        "Tanpa email, tanpa password.",
-        [[url_btn("🔗 Buka portal", f"{link}/portal"), btn("⬅️ Menu", "m:home")]],
+        "Masuk dengan API key dari bot untuk melihat saldo, pemakaian, model, dan riwayat request.",
+        [[url_btn("Buka Dashboard", f"{link}/portal"), btn("‹ Menu Utama", "ui:home")]],
     )
 
 
@@ -804,9 +1105,26 @@ def handle_message(msg: dict) -> None:
         confirm_link(args[0][len("link_"):], user)
         return
 
-    # commands are only shortcuts into the same menus — nothing requires typing
-    if cmd in ("/start", "/menu", "/paket", "/buy"):
+    # Commands are shortcuts into the same panels. Personal data never renders in
+    # a group: the root menu there only points to the private chat.
+    if cmd == "/start" and (msg.get("chat") or {}).get("type") in {"group", "supergroup", "channel"}:
+        send(chat_id, "Menu dan data akun hanya tersedia di chat pribadi bot.\n\n"
+                      "Buka chat privat dengan bot ini, lalu kirim /start.")
+        return
+    if cmd in ("/start", "/menu"):
         show_home(chat_id, uid, user)
+        return
+    if cmd == "/store":
+        text, kb = store_home()
+        send(chat_id, text, kb)
+        return
+    if cmd == "/gateway":
+        text, kb = gateway_home(uid)
+        send(chat_id, text, kb)
+        return
+    if cmd in ("/paket", "/buy"):
+        text, kb = gateway_credits()
+        send(chat_id, text, kb)
         return
     if cmd == "/saldo":
         body, kb = balance_view(uid)
@@ -846,6 +1164,78 @@ def handle_callback(cb: dict) -> None:
     if not uid or not chat_id:
         return
 
+    if data == "ui:home":
+        ack(cb_id)
+        show_home(chat_id, uid, sender, mid)
+        return
+
+    if data.startswith("ui:st:"):
+        parts = data.split(":")
+        ack(cb_id)
+        if data == "ui:st:home":
+            text, kb = store_home()
+        elif data == "ui:st:cats":
+            text, kb = store_categories()
+        elif len(parts) >= 5 and parts[2] == "prods":
+            text, kb = store_products(int(parts[3]), int(parts[4]))
+        elif parts[2] == "orders" and len(parts) >= 4:
+            text, kb = store_orders(int(parts[3]))
+        elif parts[2] == "product" and len(parts) >= 6:
+            text, kb = store_product(parts[3], int(parts[4]), int(parts[5]))
+        else:
+            text, kb = store_home()
+        edit(chat_id, mid, text, kb)
+        return
+
+    if data.startswith("ui:gw:"):
+        parts = data.split(":")
+        ack(cb_id)
+        if data == "ui:gw:home":
+            text, kb = gateway_home(uid)
+        elif data == "ui:gw:credits":
+            text, kb = gateway_credits()
+        elif parts[2] == "models":
+            text, kb = gateway_models(int(parts[3]) if len(parts) > 3 else 0)
+        elif parts[2] == "model" and len(parts) >= 5:
+            text, kb = gateway_model(int(parts[3]), int(parts[4]))
+        else:
+            text, kb = gateway_home(uid)
+        edit(chat_id, mid, text, kb)
+        return
+
+    if data == "ui:activity":
+        ack(cb_id)
+        text, kb = activity_home()
+        edit(chat_id, mid, text, kb)
+        return
+
+    if data.startswith("ui:activity:"):
+        parts = data.split(":")
+        ack(cb_id)
+        kind = parts[2] if len(parts) > 2 else "st"
+        page = int(parts[3]) if len(parts) > 3 else 0
+        text, kb = activity_gateway(uid, page) if kind == "gw" else activity_store(page)
+        edit(chat_id, mid, text, kb)
+        return
+
+    if data == "ui:help":
+        ack(cb_id)
+        text, kb = help_home()
+        edit(chat_id, mid, text, kb)
+        return
+
+    if data == "ui:help:st":
+        ack(cb_id)
+        text, kb = help_store()
+        edit(chat_id, mid, text, kb)
+        return
+
+    if data == "ui:help:gw":
+        ack(cb_id)
+        text, kb = help_gateway()
+        edit(chat_id, mid, text, kb)
+        return
+
     if data == "m:home":
         ack(cb_id)
         show_home(chat_id, uid, sender, mid)
@@ -853,14 +1243,20 @@ def handle_callback(cb: dict) -> None:
 
     if data == "m:models":
         ack(cb_id)
-        if not edit_rich(chat_id, mid, models_markdown(), models_keyboard()):
-            # older clients/servers: keep the monospace table rather than nothing
-            edit(chat_id, mid, models_text(), models_keyboard())
+        text, kb = gateway_models(0)
+        edit(chat_id, mid, text, kb)
+        return
+
+    if data == "m:buy":
+        ack(cb_id)
+        text, kb = gateway_credits()
+        edit(chat_id, mid, text, kb)
         return
 
     if data == "m:usage":
         ack(cb_id)
-        edit(chat_id, mid, usage_text(uid), usage_keyboard())
+        body, kb = balance_view(uid)
+        edit(chat_id, mid, body, kb)
         return
 
     if data == "m:rewards":
@@ -870,8 +1266,8 @@ def handle_callback(cb: dict) -> None:
 
     if data == "m:support":
         ack(cb_id)
-        edit(chat_id, mid, support_text(),
-             [[btn("📨 Kirim pesan ke admin", "s:ping")], [btn("⬅️ Menu", "m:home")]])
+        text, kb = help_home()
+        edit(chat_id, mid, text, kb)
         return
 
     if data == "s:ping":
@@ -948,7 +1344,7 @@ def handle_callback(cb: dict) -> None:
         if not pkg:
             ack(cb_id, "Paket tidak dikenal")
             return
-        ack(cb_id, "Membuat order…")
+        ack(cb_id, "Membuat invoice…")
         created = create_order(cb.get("from") or {}, sku, mid)
         if not created:
             send(chat_id, "Gagal membuat order. Coba lagi sebentar.", [[btn("⬅️ Menu", "m:home")]])
@@ -961,7 +1357,9 @@ def handle_callback(cb: dict) -> None:
                  [[btn("⬅️ Menu", "m:home")]])
             return
         pay = create_payment(order_id)
-        edit(chat_id, mid, invoice_text(order_id, pkg, pay), invoice_keyboard(order_id, pay))
+        # The invoice is its own traceable message: navigating the panels later must
+        # never overwrite the only payment proof.
+        send(chat_id, invoice_text(order_id, pkg, pay), invoice_keyboard(order_id, pay))
         if pay:
             return   # automated payment: no admin ping, the gateway grants on settle
         notify = (f"🧾 <b>Order baru</b> <code>{order_id}</code>\n"
@@ -981,20 +1379,18 @@ def handle_callback(cb: dict) -> None:
             ack(cb_id, "Lunas ✅")
             pkg = PKG.get(st.get("sku", ""), {})
             edit(chat_id, mid,
-                 f"✅ <b>Pembayaran diterima</b>\n\nOrder <code>{order_id}</code> · "
+                 f"✓ <b>Pembayaran diterima</b>\n\nOrder <code>{order_id}</code> · "
                  f"{html.escape(pkg.get('name', st.get('sku', 'paket')))}\n\n"
-                 "API key sudah dikirim di chat ini (pesan terpisah). Kalau tidak ada, "
-                 "buka <b>Key Saya</b> → Rotasi.",
-                 [[btn("🔑 Key Saya", "m:keys"), btn("⬅️ Menu", "m:home")]])
+                 "Kredit sudah masuk. API key ada di menu Kelola API Key.",
+                 [[btn("Kelola API Key", "m:keys"), btn("‹ Menu Utama", "ui:home")]])
             return
         ack(cb_id, "Belum masuk")
         total = st.get("total_bayar")
         edit(chat_id, mid,
-             f"⏳ <b>Belum ada pembayaran masuk</b>\n\nOrder <code>{order_id}</code>\n"
-             + (f"Nominal: <b>{idr(int(total) * 1_000_000)}</b>\n" if total else "")
-             + "Kalau sudah bayar, tunggu 10–30 detik lalu tekan <b>Cek status</b> lagi "
-               "(QRIS kadang butuh waktu konfirmasi).",
-             [[btn("🔄 Cek status", f"pay:{order_id}"), btn("⬅️ Menu", "m:home")]])
+             f"◌ <b>Menunggu konfirmasi pembayaran</b>\n\nOrder <code>{order_id}</code>\n"
+             + (f"Nominal: <b>{rupiah(total)}</b>\n" if total else "")
+             + "Kalau sudah membayar, tunggu 10–30 detik lalu tekan Cek Status lagi.",
+             [[btn("Cek Status", f"pay:{order_id}"), btn("‹ Menu Utama", "ui:home")]])
         return
 
     if data.startswith("paid:"):
@@ -1056,13 +1452,15 @@ def main() -> int:
     tg("deleteWebhook", drop_pending_updates=False)
     tg("setMyCommands", commands=[
         {"command": "start", "description": "Menu utama"},
+        {"command": "store", "description": "Digital Store"},
+        {"command": "gateway", "description": "AethinkAI Gateway"},
         {"command": "saldo", "description": "Saldo & pemakaian"},
         {"command": "portal", "description": "Portal pembeli"},
         {"command": "rotate", "description": "Ganti API key"},
     ])
     offset = int(state().get("offset", 0))
     for admin in ADMINS:
-        send(admin, "🤖 <b>Store bot online</b>\nSemua fitur lewat tombol — tekan Start untuk menu.",
+        send(admin, "✦ <b>AethinkAI Store online</b>\nSemua fitur lewat tombol. Tekan Start untuk menu.",
              home_keyboard(admin))
     while True:
         try:
