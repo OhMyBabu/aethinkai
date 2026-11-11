@@ -51,8 +51,19 @@ type Reqs = { requests: Array<{ request_id: string; model_id: string; tokens_in:
 /** Plain Rupiah, whole units: top-up policy and order prices come as IDR. */
 const rp = (value: number) => `Rp ${Math.round(Number(value) || 0).toLocaleString("id-ID")}`;
 
-/** Micro-IDR to Rupiah, for balances and ledger amounts. */
-const idr = (micro: number) => rp((Number(micro) || 0) / 1_000_000);
+/** Micro-IDR to Rupiah, for balances and ledger amounts. Sub-rupiah costs keep
+ *  two decimals so a real charge never renders as "Rp 0". */
+const idr = (micro: number) => {
+  const value = (Number(micro) || 0) / 1_000_000;
+  if (value > 0 && value < 1000) {
+    const fractional = Math.round(value * 100) % 100 !== 0;
+    return `Rp ${value.toLocaleString("id-ID", {
+      minimumFractionDigits: fractional ? 2 : 0,
+      maximumFractionDigits: fractional ? 2 : 0,
+    })}`;
+  }
+  return rp(value);
+};
 
 const rpDate = (iso: string | null | undefined) => {
   if (!iso) return "n/a";
@@ -78,8 +89,8 @@ const when = (iso: string | null) => {
 };
 
 const PACKAGE_COPY: Record<string, string> = {
-  starter: "Untuk mencoba API dan kebutuhan pribadi.",
-  pro: "Untuk aplikasi kecil dan otomatisasi harian.",
+  starter: "Cocok untuk mencoba API dan penggunaan pribadi.",
+  pro: "Praktis untuk aplikasi kecil dan otomatisasi harian.",
   max: "Untuk kebutuhan saldo dan penggunaan yang lebih besar.",
 };
 
@@ -101,6 +112,7 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
   const [notice, setNotice] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<Record<string, unknown> | null>(null);
   const [receiptBusy, setReceiptBusy] = useState<string | null>(null);
+  const [showAllOrders, setShowAllOrders] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -207,7 +219,7 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
           <div>
             <h2 className="text-[17px] font-semibold tracking-[-0.01em] text-warm">Isi Saldo</h2>
             <p className="mt-1 text-[12.5px] text-ash">
-              Pilih nominal kredit untuk melanjutkan penggunaan API. Saldo dipotong sesuai pemakaian token.
+              Pilih nominal kredit untuk menggunakan API. Biaya dihitung berdasarkan pemakaian token.
             </p>
           </div>
         </div>
@@ -219,9 +231,9 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
               <div
                 key={pkg.sku}
                 className={cn(
-                  "relative rounded-[16px] border p-4 transition",
+                  "aethink-package-card relative flex h-full flex-col rounded-[16px] border p-4",
                   featured
-                    ? "border-[#E7893C]/35 bg-[radial-gradient(120%_100%_at_18%_0%,rgba(231,137,60,0.10),transparent_62%)]"
+                    ? "aethink-package-card--featured border-[#E7893C]/35 bg-[radial-gradient(120%_100%_at_18%_0%,rgba(231,137,60,0.10),transparent_62%)]"
                     : "border-white/8 bg-[#171717]",
                 )}
               >
@@ -237,13 +249,13 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
                   {rp(pkg.price_idr)}
                 </p>
                 <p className="mt-2 text-[12px] leading-5 text-ash">{PACKAGE_COPY[pkg.sku] ?? pkg.blurb}</p>
-                <p className="mt-1 text-[11.5px] text-dim">{pkg.rpm_limit} RPM</p>
+                <p className="mt-1 pb-3 text-[11.5px] text-dim">{pkg.rpm_limit} RPM</p>
                 <button
                   type="button"
                   onClick={() => void buy(pkg.sku)}
                   disabled={busy !== null}
                   className={cn(
-                    "mt-3 flex h-11 w-full items-center justify-center gap-1.5 rounded-xl text-[12.5px] font-semibold transition disabled:opacity-50",
+                    "mt-auto flex h-11 w-full items-center justify-center gap-1.5 rounded-xl pt-0 text-[12.5px] font-semibold transition disabled:opacity-50",
                     featured
                       ? "bg-[#E7893C] text-[#18191B] hover:bg-[#F09A55]"
                       : "border border-white/10 bg-white/[0.03] text-warm hover:bg-white/[0.06]",
@@ -262,7 +274,7 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="text-[14px] font-semibold text-warm">Nominal Lainnya</h3>
               <p className="text-[11.5px] tabular-nums text-dim">
-                Min {rp(topup.min_idr)}{topup.max_idr ? ` · Maks ${rp(topup.max_idr)}` : ""}
+                Min. {rp(topup.min_idr)}{topup.max_idr ? ` · Maks. ${rp(topup.max_idr)}` : ""}
               </p>
             </div>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
@@ -326,12 +338,12 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
         </div>
         {orders.length ? (
           <div className="divide-y divide-white/6">
-            {orders.slice(0, 8).map((order) => (
+            {(showAllOrders ? orders : orders.slice(0, 5)).map((order) => (
               <button
                 key={order.id}
                 type="button"
                 onClick={() => void openReceipt(order)}
-                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-white/[0.03]"
+                className="flex min-h-[60px] w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition hover:bg-white/[0.03]"
               >
                 <div className="min-w-0">
                   <p className="truncate font-mono text-[11.5px] text-warm">{order.id}</p>
@@ -363,6 +375,15 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
             Belum ada transaksi. Riwayat pembelian kredit akan tampil di sini.
           </p>
         )}
+        {orders.length > 5 ? (
+          <button
+            type="button"
+            onClick={() => setShowAllOrders((value) => !value)}
+            className="w-full border-t border-white/8 px-4 py-3 text-[12px] text-ash transition hover:bg-white/[0.03] hover:text-warm"
+          >
+            {showAllOrders ? "Tampilkan lebih sedikit" : `Lihat Semua Transaksi (${orders.length})`}
+          </button>
+        ) : null}
       </section>
 
       {receipt ? (
@@ -669,7 +690,7 @@ export default function PortalPage() {
           <div>
             <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-warm sm:text-[28px]">Dashboard</h1>
             <p className="mt-1.5 max-w-[52ch] text-[13px] leading-6 text-ash">
-              Pantau saldo, API key, dan aktivitas penggunaan layanan Anda.
+              Pantau saldo, API key, dan aktivitas penggunaan API Anda.
             </p>
           </div>
           <a
@@ -682,9 +703,9 @@ export default function PortalPage() {
 
         <section className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" aria-label="Ringkasan akun">
           {[
-            { icon: Wallet, label: "Saldo Tersedia", value: idr(me?.balance_micro ?? 0), note: "Siap dipakai" },
-            { icon: Activity, label: "Total Permintaan", value: compact(me?.lifetime.requests ?? 0), note: "Sejak akun dibuat" },
-            { icon: BarChart3, label: "Token Digunakan", value: compact((me?.lifetime.tokens_in ?? 0) + (me?.lifetime.tokens_out ?? 0)), note: "Input dan output" },
+            { icon: Wallet, label: "Saldo Kredit", value: idr(me?.balance_micro ?? 0), note: "Tersedia untuk penggunaan API" },
+            { icon: Activity, label: "Total Request", value: compact(me?.lifetime.requests ?? 0), note: "Sejak akun dibuat" },
+            { icon: BarChart3, label: "Token Terpakai", value: compact((me?.lifetime.tokens_in ?? 0) + (me?.lifetime.tokens_out ?? 0)), note: "Input dan output" },
             { icon: Timer, label: "Batas Permintaan", value: `${me?.key?.rpm_limit ?? "n/a"} RPM`, note: "Per API key" },
           ].map((item) => (
             <div key={item.label} className="rounded-[16px] border border-white/8 bg-[#171717] p-4 sm:p-5">
@@ -698,12 +719,12 @@ export default function PortalPage() {
           ))}
         </section>
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+        <div className="mt-4 grid items-start gap-4 lg:grid-cols-[1.5fr_1fr]">
           <section className="rounded-[16px] border border-white/8 bg-[#171717] p-4 sm:p-5" aria-label="Aktivitas API">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="text-[15px] font-semibold text-warm">Aktivitas API</h2>
-                <p className="mt-0.5 text-[11.5px] text-dim">Biaya harian dalam Rupiah.</p>
+                <p className="mt-0.5 text-[12px] text-ash">Biaya penggunaan API berdasarkan periode.</p>
               </div>
               <div className="flex gap-1 rounded-lg border border-white/8 p-0.5" role="tablist" aria-label="Rentang aktivitas">
                 {[7, 30, 90].map((value) => (
@@ -724,9 +745,9 @@ export default function PortalPage() {
               </div>
             </div>
             {(usage?.daily ?? []).length ? (
-              <div className="mt-4 flex h-[240px] items-end gap-1">
+              <div className="mt-4 flex h-[270px] items-end gap-1">
                 {(usage?.daily ?? []).map((day) => (
-                  <div key={day.day} className="group relative flex-1" title={`${day.day} · ${idr(day.cost_micro)}`}>
+                  <div key={day.day} className="group relative flex h-full flex-1 items-end" title={`${day.day} · ${idr(day.cost_micro)}`}>
                     <div
                       className="w-full rounded-sm bg-[linear-gradient(180deg,#E7893C,#9C542F)] opacity-80 transition group-hover:opacity-100"
                       style={{ height: `${Math.max(4, (day.cost_micro / maxDay) * 100)}%` }}
@@ -735,19 +756,19 @@ export default function PortalPage() {
                 ))}
               </div>
             ) : (
-              <div className="mt-4 grid h-[200px] place-items-center rounded-xl border border-dashed border-white/10 px-6 text-center">
+              <div className="mt-4 grid h-[180px] place-items-center px-6 text-center">
                 <div>
-                  <Activity size={18} className="mx-auto text-dim" aria-hidden />
-                  <p className="mt-2 text-[13px] font-medium text-warm">Belum Ada Aktivitas API</p>
+                  <Activity size={16} className="mx-auto text-dim" aria-hidden />
+                  <p className="mt-2 text-[13px] font-medium text-warm">Belum ada aktivitas API</p>
                   <p className="mt-1 text-[12px] leading-5 text-ash">
-                    Permintaan yang Anda kirim akan ditampilkan pada grafik ini.
+                    Grafik akan tersedia setelah permintaan API pertama berhasil diproses.
                   </p>
                 </div>
               </div>
             )}
           </section>
 
-          <section className="flex flex-col rounded-[16px] border border-white/8 bg-[#171717] p-4 sm:p-5" aria-label="API key">
+          <section className="rounded-[16px] border border-white/8 bg-[#171717] p-4 sm:p-5" aria-label="API key">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-[15px] font-semibold text-warm">API Key Anda</h2>
               <span className={cn(
@@ -784,7 +805,7 @@ export default function PortalPage() {
               </p>
             )}
 
-            <div className="mt-auto pt-3">
+            <div className="mt-4">
               {rotStep === "idle" ? (
                 <button
                   type="button"
@@ -826,9 +847,9 @@ export default function PortalPage() {
                   </div>
                 </div>
               )}
-              <p className="mt-2 text-[11px] leading-5 text-dim">
-                Rotasi menonaktifkan key lama seketika. Saldo dan riwayat akun tetap tersimpan. Kode verifikasi
-                dikirim lewat bot Telegram.
+              <p className="mt-3 text-[11.5px] leading-5 text-ash">
+                Mengganti key lama dengan key baru. Saldo dan riwayat akun tetap tersimpan. Verifikasi dikirim
+                melalui bot Telegram.
               </p>
             </div>
           </section>
@@ -836,8 +857,8 @@ export default function PortalPage() {
 
         <section className="mt-4 rounded-[16px] border border-white/8 bg-[#171717]" aria-label="Penggunaan per model">
           <div className="border-b border-white/8 px-4 py-3">
-            <h2 className="text-[15px] font-semibold text-warm">Penggunaan per Model</h2>
-            <p className="mt-0.5 text-[11.5px] text-dim">{days} hari terakhir.</p>
+            <h2 className="text-[15px] font-semibold text-warm">Penggunaan Model</h2>
+            <p className="mt-0.5 text-[12px] text-ash">Ringkasan penggunaan selama {days} hari terakhir.</p>
           </div>
           {(models?.models ?? []).length ? (
             <div className="divide-y divide-white/6">
@@ -854,12 +875,14 @@ export default function PortalPage() {
               ))}
             </div>
           ) : (
-            <div className="px-6 py-10 text-center">
-              <BarChart3 size={18} className="mx-auto text-dim" aria-hidden />
-              <p className="mt-2 text-[13px] font-medium text-warm">Belum Ada Penggunaan Model</p>
-              <p className="mt-1 text-[12px] leading-5 text-ash">
-                Statistik penggunaan per model akan muncul setelah permintaan API pertama berhasil diproses.
-              </p>
+            <div className="grid h-[140px] place-items-center px-6 text-center">
+              <div>
+                <BarChart3 size={16} className="mx-auto text-dim" aria-hidden />
+                <p className="mt-2 text-[13px] font-medium text-warm">Belum ada penggunaan model</p>
+                <p className="mt-1 text-[12px] leading-5 text-ash">
+                  Statistik akan muncul setelah permintaan API pertama berhasil diproses.
+                </p>
+              </div>
             </div>
           )}
         </section>
@@ -867,8 +890,8 @@ export default function PortalPage() {
         <section className="mt-4 overflow-hidden rounded-[16px] border border-white/8 bg-[#171717]" aria-label="Permintaan terbaru">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/8 px-4 py-3">
             <div>
-              <h2 className="text-[15px] font-semibold text-warm">Permintaan Terbaru</h2>
-              <p className="mt-0.5 text-[11.5px] text-dim">40 permintaan terakhir dari gateway.</p>
+              <h2 className="text-[15px] font-semibold text-warm">Riwayat Request</h2>
+              <p className="mt-0.5 text-[12px] text-ash">40 permintaan API terbaru.</p>
             </div>
             <Link to="/panduan" className="text-[11.5px] text-ash transition hover:text-warm">Panduan API</Link>
           </div>
@@ -909,23 +932,22 @@ export default function PortalPage() {
               </table>
             </div>
           ) : (
-            <div className="px-6 py-10 text-center">
-              <Receipt size={18} className="mx-auto text-dim" aria-hidden />
-              <p className="mt-2 text-[13px] font-medium text-warm">Belum Ada Permintaan Tercatat</p>
-              <p className="mt-1 text-[12px] leading-5 text-ash">
-                Riwayat permintaan API akan muncul di sini setelah Anda mulai menggunakan layanan.
-              </p>
-              <Link to="/panduan" className="mt-3 inline-flex h-9 items-center rounded-lg border border-white/10 px-3 text-[12px] text-warm transition hover:bg-white/[0.04]">
-                Buka Panduan API
-              </Link>
+            <div className="grid h-[160px] place-items-center px-6 text-center">
+              <div>
+                <Receipt size={16} className="mx-auto text-dim" aria-hidden />
+                <p className="mt-2 text-[13px] font-medium text-warm">Belum ada request tercatat</p>
+                <p className="mt-1 text-[12px] leading-5 text-ash">
+                  Riwayat request akan tampil setelah Anda mulai menggunakan API.
+                </p>
+              </div>
             </div>
           )}
         </section>
 
         <StorePanel token={token} onChanged={() => void load()} />
 
-        <p className="mt-6 text-center text-[11px] text-dim">
-          Saldo dan pemakaian diperbarui dari gateway. Angka di halaman ini berasal dari data akun Anda.
+        <p className="mt-6 text-center text-[12px] text-ash">
+          Saldo dan statistik diperbarui berdasarkan data penggunaan akun Anda.
         </p>
       </main>
     </div>

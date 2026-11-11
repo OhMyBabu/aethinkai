@@ -919,3 +919,24 @@ html[data-reduced-motion="true"] .lift:hover { transform: none; }
   .aethink-pricing-card:hover,
   .aethink-pricing-btn:hover { transform: none; }
 }
+
+/* Package cards: one hover gesture, written outside Tailwind's hover media
+   wrapper so the state is testable in a headless browser and identical on
+   devices that report no hover capability. */
+.aethink-package-card {
+  transition: translate 200ms ease, border-color 200ms ease;
+}
+.aethink-package-card:hover {
+  translate: 0 -3px;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.aethink-package-card--featured:hover {
+  border-color: rgba(231, 137, 60, 0.5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .aethink-package-card,
+  .aethink-package-card:hover {
+    transition: none;
+    translate: none;
+  }
+}
