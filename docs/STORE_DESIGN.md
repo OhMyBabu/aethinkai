@@ -92,6 +92,10 @@ Rules:
   and the returned ids are written to `store_order_stock`. If fewer than `qty`
   rows come back the transaction rolls back and the buyer sees the real stock.
 - Reserved stock returns to `available` on cancel, expiry, or a sweeper run.
+- Reservation follows the payment deadline, not a short hold: reserve for the
+  QR window (60 minutes observed from the provider, 30 minutes local fallback)
+  and extend `reserved_until` when the QR is created. A 15 minute hold that dies
+  before the QR would let a paid buyer lose the item.
 - Payment after expiry: money arrived, so the order moves to `paid_no_stock` if
   the item is gone, and admin gets a queue entry for refund or replacement. Never
   silently drop a paid order.

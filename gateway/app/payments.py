@@ -434,6 +434,19 @@ async def expiry_sweeper(interval_seconds: int = 60) -> None:
                             WHERE id = $1 AND status = 'pending'""",
                         row["order_id"],
                     )
+            # An order whose QR was never requested has no provider deadline, so
+            # give it a short grace period instead of blocking the buyer forever.
+            ttl = int(os.environ.get("UNPAID_ORDER_TTL_MINUTES", "30"))
+            await db.pool().execute(
+                """UPDATE orders SET status = 'expired', expired_at = now()
+                    WHERE status = 'pending'
+                      AND created_at < now() - make_interval(mins => $1)
+                      AND NOT EXISTS (
+                            SELECT 1 FROM payment_intents pi
+                             WHERE pi.order_id = orders.id AND pi.status IN ('pending', 'paid')
+                      )""",
+                ttl,
+            )
         except Exception as exc:
             print(f"[pay] expiry sweeper: {exc}", flush=True)
         await asyncio.sleep(interval_seconds)

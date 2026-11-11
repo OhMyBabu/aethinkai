@@ -113,6 +113,19 @@ A late webhook is still safe: `settle_order` re-checks the provider and grants a
 paid order whatever its local status was, so money that arrived is never lost to
 an expiry race.
 
+Durations:
+
+| Case | Deadline | Source |
+|:--|--:|:--|
+| QRIS created | 60 minutes from creation | provider `expired` field, observed 59:59.9 on every live intent |
+| Provider omits `expired` | 30 minutes | local fallback in `create_for_order` |
+| Order created, QR never requested | 30 minutes | local `UNPAID_ORDER_TTL_MINUTES` |
+| Sweep granularity | 60 seconds | `PAY_EXPIRY_SWEEP_SECONDS` |
+
+None of this polls WijayaPay. The only provider calls are QR creation, the
+explicit `Cek Status` / `/api/pay/status` check, and the webhook itself. The
+reconciler stays off.
+
 Verified with a QA order whose intent expiry was backdated two minutes: within
 one sweep the order read `expired` with `expired_at` set and the intent read
 `expired`. No provider call was made (`journalctl | grep -ci wijayapay` = 0).
