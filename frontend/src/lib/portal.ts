@@ -112,7 +112,7 @@ export async function createPayment(token: string, orderId: string): Promise<Pay
   return body as PayPayload;
 }
 
-/** Public status poll — the checkout token is the only credential needed. */
+/** Public status poll, the checkout token is the only credential needed. */
 export async function payStatus(orderId: string, checkoutToken: string): Promise<PayPayload> {
   const res = await fetch(
     `/api/pay/status?order_id=${encodeURIComponent(orderId)}&t=${encodeURIComponent(checkoutToken)}`,

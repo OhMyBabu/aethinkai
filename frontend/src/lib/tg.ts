@@ -98,7 +98,7 @@ export function compact(n: number): string {
 export function when(iso: string | null): string {
   if (!iso) return "belum dipakai";
   const d = Date.parse(iso);
-  if (Number.isNaN(d)) return "—";
+  if (Number.isNaN(d)) return "n/a";
   const mins = Math.max(0, Math.round((Date.now() - d) / 60000));
   if (mins < 1) return "baru saja";
   if (mins < 60) return `${mins}m lalu`;

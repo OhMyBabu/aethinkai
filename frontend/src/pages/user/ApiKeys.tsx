@@ -248,7 +248,7 @@ export default function UserApiKeysPage() {
       </Card>
 
       <p className="mt-3 text-[11px] leading-5 text-dim">
-        {loading ? "Memuat key dari gateway…" : "Key disimpan sebagai hash di gateway — nilai penuh hanya tampil sekali saat dibuat."}
+        {loading ? "Memuat key dari gateway…" : "Key disimpan sebagai hash di gateway, nilai penuh hanya tampil sekali saat dibuat."}
       </p>
 
       <Modal
@@ -297,7 +297,7 @@ export default function UserApiKeysPage() {
         open={Boolean(revealed)}
         onClose={() => setRevealed(null)}
         title="Your new API key"
-        description="Copy it now — this value is shown only once."
+        description="Copy it now, this value is shown only once."
         size="md"
         footer={
           <>

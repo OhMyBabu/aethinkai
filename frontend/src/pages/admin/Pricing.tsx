@@ -230,13 +230,13 @@ export default function AdminPricingPage() {
         <Card className="p-4">
           <p className="text-[10.5px] uppercase tracking-[0.12em] text-ash">Termurah</p>
           <p className="mt-1 text-[15px] text-warm">
-            {stats.cheapest ? `${stats.cheapest.name} · ${idr(stats.cheapest.price_idr)}` : "—"}
+            {stats.cheapest ? `${stats.cheapest.name} · ${idr(stats.cheapest.price_idr)}` : "n/a"}
           </p>
         </Card>
         <Card className="p-4">
           <p className="text-[10.5px] uppercase tracking-[0.12em] text-ash">RPM</p>
           <p className="mt-1 text-[15px] text-warm">
-            {stats.bestRpm ? `${stats.bestRpm.rpm_limit} rpm · flat semua paket` : "—"}
+            {stats.bestRpm ? `${stats.bestRpm.rpm_limit} rpm · flat semua paket` : "n/a"}
           </p>
         </Card>
       </div>
@@ -321,13 +321,13 @@ export default function AdminPricingPage() {
             <p className="mt-1 text-[11.5px] leading-5 text-ash">
               {topup.enabled
                 ? `Aktif · minimal ${idr(topup.min_idr)}${topup.max_idr ? ` · maksimal ${idr(topup.max_idr)}` : ""}`
-                : "Nonaktif — buyer hanya bisa beli paket"}
+                : "Nonaktif, buyer hanya bisa beli paket"}
             </p>
           </div>
           <StatusPill tone={topup.enabled ? "success" : "neutral"}>{topup.enabled ? "aktif" : "mati"}</StatusPill>
         </div>
         <p className="mt-2 text-[11px] leading-5 text-dim">
-          Top-up hanya menambah saldo. RPM tidak berubah — RPM naik hanya lewat pembelian paket, dan nilainya adalah
+          Top-up hanya menambah saldo. RPM tidak berubah, RPM naik hanya lewat pembelian paket, dan nilainya adalah
           paket tertinggi yang pernah dibeli akun itu.
         </p>
       </Card>
@@ -347,7 +347,7 @@ export default function AdminPricingPage() {
       >
         <div className="space-y-3">
           {!editing ? (
-            <Field label="SKU" hint="huruf kecil, dipakai di bot & web — tidak bisa diubah setelah dibuat">
+            <Field label="SKU" hint="huruf kecil, dipakai di bot & web, tidak bisa diubah setelah dibuat">
               {(id) => (
                 <TextInput
                   id={id}
@@ -365,7 +365,7 @@ export default function AdminPricingPage() {
             {(id) => <TextInput id={id} type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />}
           </Field>
           <div className="rounded-xl border border-ash/20 bg-warm/[0.02] px-3 py-2.5 text-[11.5px] leading-5 text-ash">
-            RPM <span className="font-mono text-warm">60/menit</span> untuk semua paket — tidak diatur per paket.
+            RPM <span className="font-mono text-warm">60/menit</span> untuk semua paket, tidak diatur per paket.
             Mau diubah? Set <span className="font-mono">AETHINK_RPM_LIMIT</span> atau ubah di DB, satu angka untuk semua.
           </div>
           <label className="flex items-center gap-2 text-[12px] text-ash">
@@ -412,8 +412,8 @@ export default function AdminPricingPage() {
                   onChange={(e) => setForm({ ...form, active: e.target.value === "1" })}
                   className="w-full rounded-xl border border-ash/25 bg-[#141518] px-3 py-2.5 text-sm text-warm"
                 >
-                  <option value="1">aktif — dijual</option>
-                  <option value="0">nonaktif — disembunyikan</option>
+                  <option value="1">aktif, dijual</option>
+                  <option value="0">nonaktif, disembunyikan</option>
                 </select>
               )}
             </Field>

@@ -5,7 +5,7 @@ import { payStatus, type PayPayload } from "@/lib/portal";
 import { Wordmark } from "@/components/layout/BrandLogo";
 import { cn } from "@/lib/cn";
 
-/** QRIS checkout — reached from the bot ("Bayar di web") or right after a web purchase. */
+/** QRIS checkout, reached from the bot ("Bayar di web") or right after a web purchase. */
 const idr = (micro: number) =>
   new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 })
     .format(Math.round(micro / 1_000_000));
@@ -91,7 +91,7 @@ export default function PayPage() {
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <div>
               <p className="text-[11px] uppercase tracking-wide text-[#85888B]">Pembayaran QRIS</p>
-              <h1 className="mt-1 font-mono text-[13px] text-[#FAF8F4]">{orderId || "—"}</h1>
+              <h1 className="mt-1 font-mono text-[13px] text-[#FAF8F4]">{orderId || "n/a"}</h1>
             </div>
             <span className={cn("rounded-md px-2 py-1 text-[11px] font-semibold",
               paid ? "bg-[#E7893C]/15 text-[#E7893C]"
@@ -145,7 +145,7 @@ export default function PayPage() {
                   <Timer size={13} />
                   {expiresIn !== null && !expired
                     ? <span>Berlaku <b className="text-[#FAF8F4]">{mmss(expiresIn)}</b> lagi</span>
-                    : <span>{expired ? "QR sudah kedaluwarsa" : "—"}</span>}
+                    : <span>{expired ? "QR sudah kedaluwarsa" : "n/a"}</span>}
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">

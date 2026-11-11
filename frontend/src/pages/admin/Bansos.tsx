@@ -27,7 +27,7 @@ import { formatCompact, formatDateTime, formatIDR, formatNumber } from "@/lib/fo
 
 const idr = (micro: number) => formatIDR(Number(micro ?? 0) / 1_000_000);
 
-/** Small credit amounts need cents — Rp 0,13 not Rp 0. */
+/** Small credit amounts need cents, Rp 0,13 not Rp 0. */
 const idrFine = (micro: number) => {
   const value = Number(micro ?? 0) / 1_000_000;
   if (Math.abs(value) >= 1000) return formatIDR(value);
@@ -284,7 +284,7 @@ export default function AdminBansosPage() {
                           </button>
                         </div>
                       ) : (
-                        <span className="text-[11px] text-ash/50">—</span>
+                        <span className="text-[11px] text-ash/50">-</span>
                       )}
                     </td>
                     <td className="px-4 py-3">

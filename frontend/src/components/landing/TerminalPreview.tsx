@@ -7,7 +7,7 @@ import { useStore } from "@/data/store";
 import { useToast } from "@/components/common/Toast";
 
 /**
- * Terminal preview — three slides (cURL / Python / Node) against the gateway base URL
+ * Terminal preview, three slides (cURL / Python / Node) against the gateway base URL
  * URL. Syntax colouring uses only the five brand hues (orange, burnt, warm
  * white, gray + alpha). Auto-advances unless reduced motion is on or the pointer
  * is inside the panel.
@@ -187,7 +187,7 @@ export function TerminalPreview({ className }: { className?: string }) {
         </span>
         <p className="ml-1 flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-ash max-sm:flex-1 sm:text-[10.5px]">
           <TerminalSquare size={11} aria-hidden />
-          <span className="truncate">aethinkai — quickstart</span>
+          <span className="truncate">aethinkai, quickstart</span>
         </p>
         <div className="ml-auto flex items-center gap-1 rounded-lg border border-ash/15 bg-[#101113] p-0.5 max-sm:order-3 max-sm:ml-0 max-sm:w-full max-sm:justify-between" role="tablist" aria-label="Code language">
           {snippets.map((snippet, i) => (

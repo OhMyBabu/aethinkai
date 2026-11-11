@@ -1,7 +1,7 @@
 import { cn } from "@/lib/cn";
 
 /**
- * AethinkAI brand mark — the supplied app icon (rounded black tile, white A,
+ * AethinkAI brand mark, the supplied app icon (rounded black tile, white A,
  * orange orbit, sparkle), used exactly as delivered so no detail is lost in a
  * redraw. Same file backs the favicon/manifest icons.
  */

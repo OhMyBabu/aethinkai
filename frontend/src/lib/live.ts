@@ -17,7 +17,7 @@ const POLL_MS = 2500;
  *
  * Tries server-sent events first (instant push). Cloudflare quick tunnels
  * buffer `text/event-stream`, so if no frame arrives within a few seconds we
- * fall back to a 2.5s JSON poll on /api/live/poll/* — same payloads, same
+ * fall back to a 2.5s JSON poll on /api/live/poll/*, same payloads, same
  * handlers, no reload for the user.
  */
 export function connectLive(channel: "me" | "admin", handlers: Handlers): () => void {
@@ -80,7 +80,7 @@ export function connectLive(channel: "me" | "admin", handlers: Handlers): () => 
     source = new EventSource(`/api/live/${channel}?token=${encodeURIComponent(token)}`);
 
     watchdog = window.setTimeout(() => {
-      // nothing arrived — proxy is buffering, switch to polling
+      // nothing arrived, proxy is buffering, switch to polling
       startPolling();
     }, SSE_TIMEOUT);
 

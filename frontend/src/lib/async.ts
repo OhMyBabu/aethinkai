@@ -3,7 +3,7 @@
  *
  * A dashboard usually fires 5–8 endpoints in parallel. With `Promise.all` one
  * 404/500 (an endpoint added but the gateway not restarted, a revoked key, a
- * proxy hiccup) rejects the whole batch, and the page quietly renders zeros —
+ * proxy hiccup) rejects the whole batch, and the page quietly renders zeros -
  * which reads like "no traffic" instead of "the call failed". `settle()` turns
  * each call into `T | null` so the caller can render what DID arrive and say
  * out loud what did not.

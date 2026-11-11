@@ -63,7 +63,7 @@ export default function AdminUsagePage() {
           reqs.requests.map((row: GwRequestRow) => ({
             id: row.id,
             at: row.created_at,
-            email: row.email ?? "—",
+            email: row.email ?? "n/a",
             modelId: row.model_id,
             modelName: row.display_name ?? row.model_id,
             inTokens: Number(row.tokens_in ?? 0),
@@ -90,7 +90,7 @@ export default function AdminUsagePage() {
         .map((row) => ({
           id: String(row.id),
           at: String(row.created_at),
-          email: String(row.email ?? "—"),
+          email: String(row.email ?? "n/a"),
           modelId: String(row.model_id),
           modelName: String(row.display_name ?? row.model_id),
           inTokens: Number(row.tokens_in ?? 0),

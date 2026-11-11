@@ -164,7 +164,7 @@ export default function AdminFallbacksPage() {
                       <p className="truncate font-mono text-[10.5px] text-ash/60">{row.fallback_model_id}</p>
                     </div>
                     <span className="text-[11.5px] text-ash">
-                      {row.provider_label || "—"} · prioritas {row.priority}
+                      {row.provider_label || "n/a"} · prioritas {row.priority}
                     </span>
                     <Switch
                       checked={row.active}

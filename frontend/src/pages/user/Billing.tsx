@@ -47,7 +47,7 @@ export default function UserBillingPage() {
             type: KIND_LABEL[entry.kind] ?? entry.kind,
             amount: entry.amount_micro / 1_000_000,
             balanceAfter: entry.balance_after / 1_000_000,
-            note: entry.note ?? "—",
+            note: entry.note ?? "n/a",
           })),
         );
         setError(null);
@@ -146,7 +146,7 @@ export default function UserBillingPage() {
               {formatIDR(balance)}
             </p>
             <p className="mt-2 text-[12px] text-ash">
-              {profile?.user.email ?? "—"} · prepaid Rupiah
+              {profile?.user.email ?? "n/a"} · prepaid Rupiah
             </p>
             <div className="mt-4 grid gap-2 sm:grid-cols-3">
               {[
@@ -182,7 +182,7 @@ export default function UserBillingPage() {
             ))}
           </div>
           <Button variant="secondary" full className="mt-4" disabled>
-            Payment gateway — fase berikutnya
+            Payment gateway, fase berikutnya
           </Button>
           <div className="mt-3 flex items-start gap-2 rounded-xl border border-flame/20 bg-flame/[0.06] px-3 py-2 text-[11px] leading-5 text-flame">
             <Info size={13} className="mt-0.5 shrink-0" aria-hidden /> Minta admin menambahkan saldo lewat{" "}

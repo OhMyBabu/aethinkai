@@ -12,7 +12,7 @@ function idr(value: number): string {
 }
 
 function ctxLabel(tokens: number): string {
-  if (!tokens) return "—";
+  if (!tokens) return "n/a";
   if (tokens >= 1_000_000) {
     const m = Math.round((tokens / 1_000_000) * 10) / 10;
     return `${m % 1 === 0 ? m.toFixed(0) : m}M`;
@@ -326,7 +326,7 @@ curl -X POST ${BASE}/api/portal/session \\
                   {!packages.length ? (
                     <tr>
                       <td colSpan={4} className="px-3 py-3 text-[12px] text-[#85888B]">
-                        Paket sedang tidak tersedia — cek portal.
+                        Paket sedang tidak tersedia, cek portal.
                       </td>
                     </tr>
                   ) : null}
@@ -347,10 +347,10 @@ curl -X POST ${BASE}/api/portal/session \\
             <h3 className="pt-1 text-[14px] font-semibold text-[#FAF8F4]">Respons Saat Batas Tercapai</h3>
             <ul className="list-disc space-y-1.5 pl-5">
               <li>
-                <code className="font-mono text-[12px]">429 rate_limited</code> — batas RPM akun telah tercapai.
+                <code className="font-mono text-[12px]">429 rate_limited</code>, batas RPM akun telah tercapai.
               </li>
               <li>
-                <code className="font-mono text-[12px]">429 gateway_busy</code> — kapasitas gateway sedang penuh.
+                <code className="font-mono text-[12px]">429 gateway_busy</code>, kapasitas gateway sedang penuh.
                 Kondisi ini tidak berarti kuota RPM akun Anda habis.
               </li>
             </ul>

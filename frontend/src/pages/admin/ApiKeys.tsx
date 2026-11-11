@@ -151,7 +151,7 @@ export default function AdminApiKeysPage() {
     <div>
       <PageHeader
         title="Customer API keys"
-        description="Setiap key yang dibuat user langsung tercatat di sini — lengkap dengan pemakaian dan biaya."
+        description="Setiap key yang dibuat user langsung tercatat di sini, lengkap dengan pemakaian dan biaya."
         breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "API Keys" }]}
         actions={
           <div className="flex items-center gap-2">

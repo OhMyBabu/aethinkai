@@ -20,7 +20,7 @@ const categories: Array<ModelCategory | "all"> = ["all", "Reasoning", "Coding", 
 
 const sampleAnswers: Record<string, string> = {
   Reasoning:
-    "Reasoning trace: the request splits into three checks — schema validation, retrieval of the two candidate rows, then a reconciliation step. Result: 14 records match, 2 need manual review.",
+    "Reasoning trace: the request splits into three checks, schema validation, retrieval of the two candidate rows, then a reconciliation step. Result: 14 records match, 2 need manual review.",
   Coding:
     "Suggested patch: wrap the fetch in a retry helper with exponential backoff, cap at 3 attempts, and surface the final error through the existing toast channel.",
   Multimodal:
@@ -68,7 +68,7 @@ function toAIModel(m: LiveModel, index: number): AIModel {
     modelId: m.id,
     provider: providerMark(m.id) ?? providerName(m.provider),
     category,
-    description: `${m.display_name} — ${m.context_length ? `${formatCompact(m.context_length)} context` : "gateway model"}${caps.length ? ` · ${caps.slice(0, 3).join(", ")}` : ""}.`,
+    description: `${m.display_name}, ${m.context_length ? `${formatCompact(m.context_length)} context` : "gateway model"}${caps.length ? ` · ${caps.slice(0, 3).join(", ")}` : ""}.`,
     contextWindow: m.context_length || 0,
     inputRate: m.pricing_idr_per_1m.input,
     outputRate: m.pricing_idr_per_1m.output,

@@ -37,7 +37,7 @@ const idr = (micro: number) => {
   return `Rp ${v.toLocaleString("id-ID", { maximumFractionDigits: v < 100 ? 2 : 0 })}`;
 };
 const when = (iso: string | null) => {
-  if (!iso) return "—";
+  if (!iso) return "n/a";
   const d = new Date(iso);
   return d.toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 };
@@ -200,7 +200,7 @@ export default function AccessPage() {
 
       {newKey ? (
         <div className="rounded-xl border border-flame/40 bg-flame/[0.08] p-3.5">
-          <p className="text-[12px] font-semibold text-warm">Key baru — kirim ke pembeli sekarang</p>
+          <p className="text-[12px] font-semibold text-warm">Key baru, kirim ke pembeli sekarang</p>
           <div className="mt-2 flex items-center gap-2">
             <code className="min-w-0 flex-1 break-all rounded-lg bg-[#0f1012] p-2 font-mono text-[11.5px] text-flame">{newKey}</code>
             <button
@@ -246,7 +246,7 @@ export default function AccessPage() {
                           onClick={async () => setDetail(await adminBuyerDetail(k.buyer_id!))}
                           className="text-left text-[12px] text-warm hover:text-flame"
                         >
-                          {k.username ? `@${k.username}` : `tg ${k.tg_id ?? "—"}`}
+                          {k.username ? `@${k.username}` : `tg ${k.tg_id ?? "n/a"}`}
                           <span className="block text-[10.5px] text-ash">{k.buyer_name ?? k.email}</span>
                         </button>
                       ) : (
@@ -271,7 +271,7 @@ export default function AccessPage() {
                       {k.rpm_override ? (
                         <span
                           className="ml-1 rounded-md bg-flame/12 px-1.5 py-0.5 text-[9.5px] text-flame"
-                          title="RPM di-set manual oleh admin — pembelian paket tidak menimpanya"
+                          title="RPM di-set manual oleh admin, pembelian paket tidak menimpanya"
                         >
                           custom
                         </span>
@@ -333,7 +333,7 @@ export default function AccessPage() {
                       <td className="px-4 py-2.5">
                         <button type="button" onClick={async () => setDetail(await adminBuyerDetail(b.id))} className="text-left hover:text-flame">
                           <span className="text-warm">{b.username ? `@${b.username}` : b.name ?? "tanpa nama"}</span>
-                          <span className="block text-[10.5px] text-ash">tg {b.tg_id ?? "—"}</span>
+                          <span className="block text-[10.5px] text-ash">tg {b.tg_id ?? "n/a"}</span>
                         </button>
                       </td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-ash">{b.keys_active}</td>
@@ -366,7 +366,7 @@ export default function AccessPage() {
                   <p className="mt-1 text-[15px] font-semibold text-warm">
                     {detail.buyer.username ? `@${detail.buyer.username}` : detail.buyer.name ?? detail.buyer.id}
                   </p>
-                  <p className="text-[11.5px] text-ash">tg {detail.buyer.tg_id ?? "—"} · {detail.buyer.status}</p>
+                  <p className="text-[11.5px] text-ash">tg {detail.buyer.tg_id ?? "n/a"} · {detail.buyer.status}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[12px]">
                   <div className="rounded-lg border border-ash/15 p-2.5">
@@ -436,7 +436,7 @@ export default function AccessPage() {
                 {orders.map((o) => (
                   <tr key={o.id} className="border-b border-ash/10 text-[12px] last:border-0">
                     <td className="px-4 py-2.5 font-mono text-[11px] text-ash">{o.id}</td>
-                    <td className="px-4 py-2.5 text-warm">{o.username ? `@${o.username}` : `tg ${o.tg_id ?? "—"}`}</td>
+                    <td className="px-4 py-2.5 text-warm">{o.username ? `@${o.username}` : `tg ${o.tg_id ?? "n/a"}`}</td>
                     <td className="px-4 py-2.5 text-ash">{o.sku}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-warm">{idr(o.credits_micro)}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-ash">{idr(o.price_idr * 1_000_000)}</td>
@@ -480,8 +480,8 @@ export default function AccessPage() {
                   <tr key={`${f.at}-${i}`} className="border-b border-ash/10 text-[12px] last:border-0">
                     <td className="px-4 py-2.5 text-ash">{when(f.at)}</td>
                     <td className="px-4 py-2.5 font-mono text-[11px] text-warm">{f.scope}</td>
-                    <td className="px-4 py-2.5 font-mono text-[11px] text-ash">{f.ident ?? "—"}</td>
-                    <td className="px-4 py-2.5 font-mono text-[11px] text-ash">{f.ip ?? "—"}</td>
+                    <td className="px-4 py-2.5 font-mono text-[11px] text-ash">{f.ident ?? "n/a"}</td>
+                    <td className="px-4 py-2.5 font-mono text-[11px] text-ash">{f.ip ?? "n/a"}</td>
                   </tr>
                 ))}
                 {!failures.length ? (

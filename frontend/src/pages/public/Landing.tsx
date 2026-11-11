@@ -43,22 +43,17 @@ export default function LandingPage() {
         <section className="mx-auto max-w-[1320px] px-4 pb-8 pt-6 max-[899px]:px-5 sm:px-6 sm:pb-12 sm:pt-12 lg:pt-14">
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] items-center gap-10 min-[900px]:grid-cols-[1.02fr_1fr] min-[900px]:gap-8">
             <div className="min-w-0">
-              <span className="inline-flex items-center gap-2 rounded-full border border-ash/25 bg-warm/[0.03] px-3 py-1 text-[11px] font-medium text-ash max-[899px]:px-3.5 max-[899px]:py-1.5 max-[899px]:text-[12px]">
-                <span className="size-1.5 rounded-full bg-flame" aria-hidden />
-                OpenAI-compatible API
-              </span>
-
-              <h1 className="mt-5 text-balance text-[38px] font-semibold leading-[1.03] tracking-[-0.035em] text-warm sm:text-[52px] lg:text-[62px]">
+              <h1 className="text-balance text-[38px] font-semibold leading-[1.03] tracking-[-0.035em] text-warm sm:text-[52px] lg:text-[62px]">
                 One API.
                 <br />
                 Every Model.
               </h1>
 
-              <p className="mt-4 text-[15px] font-medium text-warm/85 max-[899px]:mt-5 max-[899px]:text-[16.5px] sm:text-[17px]">Connect once. Route smarter.</p>
+              <p className="mt-4 text-[15px] font-medium text-warm/85 max-[899px]:mt-5 max-[899px]:text-[16.5px] sm:text-[17px]">OpenAI-compatible gateway. Connect once. Route smarter.</p>
 
               <p className="mt-2.5 max-w-[520px] text-[13.5px] leading-6 text-ash max-[899px]:mt-3 max-[899px]:text-[15px] max-[899px]:leading-7 sm:text-[14px]">
-                A single gateway for DeepSeek, GLM, Kimi and Claude. Smart routing, key management and spend
-                visibility — without wiring four providers into your stack.
+                A single gateway for DeepSeek, GLM, Kimi and Claude. Health-aware routing, key management and
+                spend visibility, without wiring four providers into your stack.
               </p>
 
               <div className="aethink-hero-cta-row mt-6 max-[899px]:mt-7 max-[899px]:flex-col max-[899px]:items-stretch max-[899px]:gap-3">
@@ -69,16 +64,16 @@ export default function LandingPage() {
                   trailingIcon={<ArrowRight size={16} />}
                   onClick={() => navigate("/login")}
                 >
-                  Get API Key
+                  Get an API key
                 </Button>
                 <Button
                   variant="secondary"
                   size="lg"
                   className="aethink-hero-cta aethink-hero-cta--secondary max-[899px]:w-full"
                   leadingIcon={<Boxes size={15} />}
-                  onClick={() => document.getElementById("models")?.scrollIntoView({ behavior: "smooth" })}
+                  onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
                 >
-                  Explore Models
+                  See live pricing
                 </Button>
               </div>
 
@@ -123,7 +118,7 @@ export default function LandingPage() {
                   Ship your first routed request today
                 </h2>
                 <p className="mt-2 max-w-[52ch] text-[13px] leading-6 text-ash">
-                  Create a key, send one request, and watch the spend land in your ledger — every provider behind
+                  Create a key, send one request, and watch the spend land in your ledger, every provider behind
                   one endpoint.
                 </p>
               </div>

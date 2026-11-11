@@ -357,7 +357,7 @@ export async function adminSummary() {
     cost_idr: number;
     margin_idr: number;
     margin_pct: number | null;
-    /** false when upstream cost was never recorded — margin is unknown, not 100%. */
+    /** false when upstream cost was never recorded, margin is unknown, not 100%. */
     cost_known?: boolean;
     cost_tracked_requests?: number;
     topup_idr: number;

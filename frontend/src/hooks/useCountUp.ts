@@ -11,7 +11,7 @@ function prefersReduced(): boolean {
  * Tween a number for KPI cards.
  *
  * Two guarantees matter more than the animation itself:
- *   1. the final value is ALWAYS rendered — a backgrounded tab, a headless run or
+ *   1. the final value is ALWAYS rendered, a backgrounded tab, a headless run or
  *      a cancelled frame must never leave the card frozen on its first frame
  *      (the "KPI stuck at 0 while its hint already shows the real number" bug);
  *   2. a value that arrives after mount (async fetch) animates from the previous

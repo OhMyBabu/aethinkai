@@ -131,22 +131,22 @@ export default function StatusPage() {
               {
                 icon: <Activity size={14} />,
                 label: "Total Permintaan",
-                value: status ? compact(status.requests_24h) : "—",
+                value: status ? compact(status.requests_24h) : "n/a",
               },
               {
                 icon: <Gauge size={14} />,
                 label: "Tingkat Keberhasilan",
-                value: status ? `${status.success_rate.toLocaleString("id-ID", { maximumFractionDigits: 2 })}%` : "—",
+                value: status ? `${status.success_rate.toLocaleString("id-ID", { maximumFractionDigits: 2 })}%` : "n/a",
               },
               {
                 icon: <Timer size={14} />,
                 label: "Latensi P95",
-                value: status?.p95_latency_ms ? `${status.p95_latency_ms.toLocaleString("id-ID")} ms` : "—",
+                value: status?.p95_latency_ms ? `${status.p95_latency_ms.toLocaleString("id-ID")} ms` : "n/a",
               },
               {
                 icon: <Server size={14} />,
                 label: "Model Aktif",
-                value: status ? String(status.models_active) : "—",
+                value: status ? String(status.models_active) : "n/a",
               },
             ].map((kpi) => (
               <div key={kpi.label} className="rounded-xl border border-[#3A3B3D] bg-[#1B1C1F] p-4">
@@ -222,7 +222,7 @@ export default function StatusPage() {
                       {m.errors}
                     </td>
                     <td className="px-4 py-2 text-right text-[#a9a49c]">
-                      {m.p95_latency_ms ? `${m.p95_latency_ms.toLocaleString("id-ID")} ms` : "—"}
+                      {m.p95_latency_ms ? `${m.p95_latency_ms.toLocaleString("id-ID")} ms` : "n/a"}
                     </td>
                   </tr>
                 ))}

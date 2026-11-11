@@ -145,7 +145,7 @@ export default function LoginPage() {
               className="h-11 w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 font-mono text-[15px] tracking-[0.3em] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
             />
             <span className="mt-1.5 block text-[11px] text-ash">
-              Password sudah benar — masukkan 6 digit dari aplikasi authenticator.
+              Password sudah benar, masukkan 6 digit dari aplikasi authenticator.
             </span>
           </label>
         ) : null}

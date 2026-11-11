@@ -72,7 +72,7 @@ export default function UserSettingsPage() {
         <Card>
           <CardHeader title="Interface preferences" description="Applied immediately across the app." />
           <div className="mt-4 space-y-4">
-            <Field label="Interface language" hint="Placeholder selector — the UI copy stays English in this trial.">
+            <Field label="Interface language" hint="Placeholder selector, the UI copy stays English in this trial.">
               {(id) => (
                 <Select
                   id={id}

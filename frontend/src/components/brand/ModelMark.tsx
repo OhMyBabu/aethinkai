@@ -41,7 +41,7 @@ const ICONS: Array<{ test: RegExp; icon: IconPair }> = [
 
 /**
  * Resolve by model id first, then by provider name. The provider branch matches the same
- * regex table instead of comparing regex sources — comparing sources silently missed every
+ * regex table instead of comparing regex sources, comparing sources silently missed every
  * vendor whose pattern was multi-token (`glm|chatglm|zhipu`, `kimi|moonshot`), which rendered
  * blank marks for GLM, Kimi and Claude.
  */

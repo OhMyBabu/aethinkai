@@ -21,9 +21,9 @@ import type { LandingStatus } from "@/lib/landing-data";
 
 export function FeatureStrip() {
   const features = [
-    { icon: Blocks, title: "Multi-Model Access", text: "One credential across DeepSeek, GLM, Kimi and Claude." },
-    { icon: GitBranch, title: "Intelligent Routing", text: "Per-request route selection with automatic fallbacks." },
-    { icon: ShieldCheck, title: "Enterprise Ready", text: "Key scoping, audit trails and predictable spend limits." },
+    { icon: Blocks, title: "One key, four providers", text: "DeepSeek, GLM, Kimi and Claude behind a single credential." },
+    { icon: GitBranch, title: "Health-aware routing", text: "Each request goes to a route that is up, with automatic fallback." },
+    { icon: ShieldCheck, title: "Per-key limits", text: "RPM caps, spend ledger and audit trail per key." },
   ];
   return (
     <ul className="grid min-w-0 gap-3 sm:grid-cols-3">
@@ -45,9 +45,9 @@ export function FeatureStrip() {
 export function KpiStrip({ models, status }: { models: AIModel[]; status: LandingStatus | null }) {
   const p95 = status?.p95_latency_ms ?? 0;
   const items = [
-    { label: "Models live", value: String(models.length || status?.models_active || "—"), icon: Layers },
-    { label: "Success 24h", value: status ? `${status.success_rate}%` : "—", icon: Gauge },
-    { label: "p95 latency", value: p95 ? `${p95} ms` : "—", icon: TrendingUp },
+    { label: "Models live", value: String(models.length || status?.models_active || "n/a"), icon: Layers },
+    { label: "Success 24h", value: status ? `${status.success_rate}%` : "n/a", icon: Gauge },
+    { label: "p95 latency", value: p95 ? `${p95} ms` : "n/a", icon: TrendingUp },
   ];
   return (
     <div className="grid min-w-0 grid-cols-3 gap-2.5 sm:gap-3">
@@ -163,15 +163,14 @@ function ctxLabel(tokens: number): string {
 
 export function FullModelCatalog({ models }: { models: AIModel[] }) {
   const grouped = Array.from(new Set(models.map((model) => model.provider)));
-  // the headline quotes the largest window the catalogue really reports today —
+  // the headline quotes the largest window the catalogue really reports today -
   // it drops automatically when a route with a smaller window replaces it
   const maxContextLabel = ctxLabel(Math.max(0, ...models.map((m) => Number(m.contextWindow) || 0)));
   return (
     <section id="catalog" className="scroll-mt-24">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[12px] uppercase tracking-[0.2em] text-flame sm:text-[11px]">Full catalogue</p>
-          <h2 className="mt-1.5 text-[24px] font-semibold tracking-[-0.02em] text-warm sm:text-[30px]">
+          <h2 className="text-[24px] font-semibold tracking-[-0.02em] text-warm sm:text-[30px]">
             {models.length} model{models.length === 1 ? "" : "s"}
             {maxContextLabel ? `, up to ${maxContextLabel} token${maxContextLabel === "1" ? "" : "s"}` : ""}
           </h2>
@@ -183,7 +182,7 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
           to="/login"
           className="cta-landing-soft inline-flex h-11 items-center gap-1.5 rounded-xl border border-ash/25 px-4 text-[13px] font-medium text-warm transition active:scale-[0.985] active:bg-warm/8 hover:border-flame/40 hover:text-flame"
         >
-          Explore the dashboard <ArrowRight size={13} aria-hidden />
+          Open the dashboard <ArrowRight size={13} aria-hidden />
         </Link>
       </div>
 
@@ -261,7 +260,7 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
         </div>
       </div>
 
-      {/* Phones get cards — a 680px table that needs sideways scrolling is not a
+      {/* Phones get cards, a 680px table that needs sideways scrolling is not a
           mobile pattern. Hidden from 900px up so desktop keeps the table. */}
       <ul className="space-y-2.5 min-[900px]:hidden">
         {models.map((model) => (
@@ -315,7 +314,7 @@ export function FullModelCatalog({ models }: { models: AIModel[] }) {
 }
 
 export function PricingPreview() {
-  // The shop is the package table the admin owns — no derived model "plans" and no
+  // The shop is the package table the admin owns, no derived model "plans" and no
   // second price strip. Per-model rates live in the catalogue below.
   const [packages, setPackages] = useState<Pkg[]>([]);
   const [topup, setTopup] = useState<TopupPolicy | null>(null);
@@ -337,8 +336,7 @@ export function PricingPreview() {
     <section id="pricing" className="scroll-mt-24">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[12px] uppercase tracking-[0.2em] text-flame sm:text-[11px]">Pricing</p>
-          <h2 className="mt-1.5 text-[24px] font-semibold tracking-[-0.02em] text-warm sm:text-[30px]">
+          <h2 className="text-[24px] font-semibold tracking-[-0.02em] text-warm sm:text-[30px]">
             Pay as you go
           </h2>
           <p className="mt-1.5 max-w-xl text-[13px] leading-6 text-ash">
@@ -346,7 +344,7 @@ export function PricingPreview() {
           </p>
         </div>
         <Button variant="ghost" size="md" className="cta-landing-soft" trailingIcon={<ArrowRight size={14} />} onClick={() => window.location.assign("/login")}>
-          Get started
+          Add credit
         </Button>
       </div>
       <div className="grid gap-4 sm:grid-cols-3 sm:gap-5 lg:gap-6">

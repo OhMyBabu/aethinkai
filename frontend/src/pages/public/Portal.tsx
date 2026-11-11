@@ -23,7 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/cn";
 
 /**
- * Buyer portal — no email, no password. A purchaser pastes the API key they got from the
+ * Buyer portal, no email, no password. A purchaser pastes the API key they got from the
  * Telegram store once; the gateway trades it for a read-only 12h token.
  */
 
@@ -56,7 +56,7 @@ const compact = (n: number) => {
   return String(v);
 };
 const when = (iso: string | null) => {
-  if (!iso) return "—";
+  if (!iso) return "n/a";
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.round(diff / 60000);
   if (m < 1) return "baru saja";
@@ -93,7 +93,7 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
     setNotice(null);
     try {
       const order = await placeOrder(token, sku);
-      setNotice(`Order ${order.order_id} dibuat — lanjut ke pembayaran QRIS…`);
+      setNotice(`Order ${order.order_id} dibuat, lanjut ke pembayaran QRIS…`);
       await refresh();
       onChanged();
       try {
@@ -102,7 +102,7 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
       } catch (err) {
         // provider unavailable: fall back to the manual/admin flow, order stays pending
         setNotice(`Order ${order.order_id} dibuat (${idr(order.price_idr * 1_000_000)}). ` +
-          "Pembayaran otomatis belum aktif — hubungi admin, key dikirim ke bot Telegram." +
+          "Pembayaran otomatis belum aktif, hubungi admin, key dikirim ke bot Telegram." +
           (err instanceof Error ? ` (${err.message})` : ""));
       }
     } catch (err) {
@@ -129,7 +129,7 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
         const pay = await createPayment(token, order.order_id);
         navigate(`/pay/${order.order_id}?t=${encodeURIComponent(pay.checkout_token)}`);
       } catch {
-        setNotice(`Top-up ${order.order_id} dibuat (${idr(amount)}). Pembayaran otomatis belum aktif — hubungi admin.`);
+        setNotice(`Top-up ${order.order_id} dibuat (${idr(amount)}). Pembayaran otomatis belum aktif, hubungi admin.`);
       }
     } catch (err) {
       setNotice(err instanceof Error ? err.message : "Gagal membuat top-up");
@@ -270,12 +270,12 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
                 const amount = receipt.amount as { price_idr?: number; credits_idr?: number } | undefined;
                 const used = receipt.usage_since_issue as { requests?: number; tokens_in?: number; tokens_out?: number } | undefined;
                 const rows: Array<[string, string]> = [
-                  ["Paket", `${pkg?.name ?? pkg?.sku ?? "—"} · ${pkg?.rpm_limit ?? "—"} rpm`],
+                  ["Paket", `${pkg?.name ?? pkg?.sku ?? "n/a"} · ${pkg?.rpm_limit ?? "n/a"} rpm`],
                   ["Dibayar", `Rp ${Number(amount?.price_idr ?? 0).toLocaleString("id-ID")}`],
                   ["Kredit masuk", `Rp ${Number(amount?.credits_idr ?? 0).toLocaleString("id-ID")}`],
                   ["Status", String(receipt.status)],
                   ["Terbit", when(String(receipt.issued_at))],
-                  ["Dibayar", receipt.paid_at ? when(String(receipt.paid_at)) : "—"],
+                  ["Dibayar", receipt.paid_at ? when(String(receipt.paid_at)) : "n/a"],
                   ["Saldo sekarang", idr(Number(receipt.balance_micro ?? 0))],
                   ["Pemakaian sejak invoice", `${used?.requests ?? 0} req · ${(used?.tokens_in ?? 0) + (used?.tokens_out ?? 0)} token`],
                 ];
@@ -301,7 +301,7 @@ function usePortalApi(token: string | null, onInvalid: () => void) {
       const res = await fetch(path, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
       if (res.status === 401) {
         onInvalid();
-        throw new Error("Sesi habis — tempel ulang API key");
+        throw new Error("Sesi habis, tempel ulang API key");
       }
       const body = await res.json();
       if (!res.ok) throw new Error(body?.error?.message || `Gagal (${res.status})`);
@@ -523,7 +523,7 @@ export default function PortalPage() {
       <main className="mx-auto max-w-[1180px] space-y-5 px-4 py-6 sm:px-6">
         {fresh ? (
           <div className="rounded-xl border border-[#E7893C]/40 bg-[#E7893C]/10 p-4">
-            <p className="text-[12.5px] font-semibold text-[#FAF8F4]">Key baru — simpan sekarang, tidak ditampilkan lagi</p>
+            <p className="text-[12.5px] font-semibold text-[#FAF8F4]">Key baru, simpan sekarang, tidak ditampilkan lagi</p>
             <div className="mt-2 flex items-center gap-2">
               <code className="min-w-0 flex-1 break-all rounded-lg bg-[#141518] p-2 font-mono text-[12px] text-[#E7893C]">{fresh}</code>
               <button
@@ -546,7 +546,7 @@ export default function PortalPage() {
             { icon: Wallet, label: "Sisa kredit", value: idr(me?.balance_micro ?? 0) },
             { icon: Activity, label: "Request total", value: compact(me?.lifetime.requests ?? 0) },
             { icon: BarChart3, label: "Token terpakai", value: compact((me?.lifetime.tokens_in ?? 0) + (me?.lifetime.tokens_out ?? 0)) },
-            { icon: Gift, label: "RPM", value: String(me?.key?.rpm_limit ?? "—") },
+            { icon: Gift, label: "RPM", value: String(me?.key?.rpm_limit ?? "n/a") },
           ].map((s) => (
             <div key={s.label} className="rounded-xl border border-[#3A3B3D] bg-[#1B1C1F] p-4">
               <s.icon size={14} className="text-[#85888B]" />
@@ -662,7 +662,7 @@ export default function PortalPage() {
               )}
               <p className="mt-2 text-[11px] text-[#85888B]">
                 Rotasi mematikan key lama seketika, saldo tetap, dan key baru ditampilkan satu kali.
-                Kode verifikasi dikirim ke chat bot — atau ketik /rotate di bot.
+                Kode verifikasi dikirim ke chat bot, atau ketik /rotate di bot.
               </p>
             </div>
           </section>
@@ -691,7 +691,7 @@ export default function PortalPage() {
                     <td className="px-4 py-2 text-right tabular-nums text-[#85888B]">{r.tokens_in}/{r.tokens_out}</td>
                     <td className="px-4 py-2 text-right tabular-nums text-[#FAF8F4]">{idr(r.cost_micro)}</td>
                     <td className="px-4 py-2 text-right tabular-nums text-[#85888B]">{r.latency_ms}ms</td>
-                    <td className="px-4 py-2 font-mono text-[11px] text-[#85888B]">{r.client_ip ?? "—"}</td>
+                    <td className="px-4 py-2 font-mono text-[11px] text-[#85888B]">{r.client_ip ?? "n/a"}</td>
                     <td className="px-4 py-2 text-right">
                       <span className={cn("rounded-md px-1.5 py-0.5 text-[10.5px]", r.status === "ok" ? "bg-[#E7893C]/12 text-[#E7893C]" : "bg-[#FAF8F4]/6 text-[#85888B]")}>
                         {r.status}

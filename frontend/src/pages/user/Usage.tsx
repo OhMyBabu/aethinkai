@@ -123,7 +123,7 @@ export default function UserUsagePage() {
       rows.map((entry) => ({
         time: formatDateTime(entry.at),
         model: names[entry.modelId] ?? entry.modelId,
-        key: entry.keyId || "—",
+        key: entry.keyId || "n/a",
         input_tokens: entry.inputTokens,
         output_tokens: entry.outputTokens,
         status: entry.status,
@@ -151,7 +151,7 @@ export default function UserUsagePage() {
       key: "key",
       header: "Key",
       hideBelow: "md",
-      render: (row) => <span className="text-ash">{row.keyId || "—"}</span>,
+      render: (row) => <span className="text-ash">{row.keyId || "n/a"}</span>,
     },
     {
       key: "tokens",

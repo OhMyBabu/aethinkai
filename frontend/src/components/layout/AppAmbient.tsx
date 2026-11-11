@@ -1,5 +1,5 @@
 /**
- * Dashboard atmosphere — same air as the landing page.
+ * Dashboard atmosphere, same air as the landing page.
  *
  * base #0A0A0A · 40px hairline grid at white 4% · white radial ambient drifting
  * 18s · vignette. The amber belongs to actions and data, not the background.

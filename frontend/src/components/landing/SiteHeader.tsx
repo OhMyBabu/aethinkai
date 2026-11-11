@@ -34,7 +34,7 @@ import type { Role } from "@/types";
 
 const spring = { type: "spring", stiffness: 420, damping: 26, mass: 0.7 } as const;
 
-/** Flat premium nav item — no boxes, no bevels, no 3D tilt. */
+/** Flat premium nav item, no boxes, no bevels, no 3D tilt. */
 function NavItem({
   label,
   icon,
@@ -325,7 +325,7 @@ function DocsPanel({ onClose }: { onClose: () => void }) {
 /* ------------------------------------------------------------------ */
 
 const uptimeLabel = (seconds: number) => {
-  if (!seconds) return "—";
+  if (!seconds) return "n/a";
   if (seconds < 3600) return `${Math.max(1, Math.round(seconds / 60))}m`;
   if (seconds < 86_400) return `${Math.round(seconds / 3600)}h`;
   return `${Math.round(seconds / 86_400)}d`;
@@ -357,7 +357,7 @@ function StatusPanel({ onClose }: { onClose: () => void }) {
   const rows = [
     {
       name: "Gateway API",
-      value: status ? `${status.p95_latency_ms.toLocaleString("en-US")} ms` : "—",
+      value: status ? `${status.p95_latency_ms.toLocaleString("en-US")} ms` : "n/a",
       meta: "p95",
     },
     {
@@ -411,9 +411,9 @@ function StatusPanel({ onClose }: { onClose: () => void }) {
 
       <dl className="mt-3.5 grid grid-cols-3 gap-2 border-y border-ash/10 py-3">
         {[
-          { k: "Success 24h", v: status ? `${status.success_rate.toFixed(2)}%` : "—" },
-          { k: "Requests 24h", v: status ? status.requests_24h.toLocaleString("en-US") : "—" },
-          { k: "Latency p95", v: status ? `${status.p95_latency_ms.toLocaleString("en-US")} ms` : "—" },
+          { k: "Success 24h", v: status ? `${status.success_rate.toFixed(2)}%` : "n/a" },
+          { k: "Requests 24h", v: status ? status.requests_24h.toLocaleString("en-US") : "n/a" },
+          { k: "Latency p95", v: status ? `${status.p95_latency_ms.toLocaleString("en-US")} ms` : "n/a" },
         ].map((item) => (
           <div key={item.k} className="min-w-0">
             <dd className="text-[16px] font-semibold tabular-nums tracking-[-0.01em] text-warm">{item.v}</dd>
@@ -770,7 +770,7 @@ export function SiteHeader() {
                         </p>
                         <p className="mt-1 text-[12px] text-ash">
                           {mobileStatus
-                            ? `${mobileStatus.success_rate}% success · ${mobileStatus.requests_24h} req / 24h · p95 ${mobileStatus.p95_latency_ms || "—"}ms`
+                            ? `${mobileStatus.success_rate}% success · ${mobileStatus.requests_24h} req / 24h · p95 ${mobileStatus.p95_latency_ms || "n/a"}ms`
                             : "Memuat status gateway…"}
                         </p>
                       </div>

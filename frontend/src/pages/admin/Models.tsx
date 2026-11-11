@@ -115,8 +115,8 @@ function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute
               className="h-9 w-full rounded-lg border border-ash/30 bg-[#141518] px-2 font-mono text-[11px] text-warm focus:border-flame focus:outline-none"
             />
             <div className="truncate font-mono text-[10px] text-ash/70">
-              route: {model.model_id} · ctx {model.context_window ? `${Math.round(model.context_window / 1000)}K` : "—"} · out{" "}
-              {model.max_output ? `${Math.round(model.max_output / 1000)}K` : "—"}
+              route: {model.model_id} · ctx {model.context_window ? `${Math.round(model.context_window / 1000)}K` : "n/a"} · out{" "}
+              {model.max_output ? `${Math.round(model.max_output / 1000)}K` : "n/a"}
             </div>
           </div>
         ) : (
@@ -198,9 +198,9 @@ function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute
             aria-label={`Status ${model.display_name}`}
             className="h-10 rounded-lg border border-flame/45 bg-[#141518] px-2 text-[12px] text-warm focus:border-flame focus:outline-none"
           >
-            <option value="on">On — dijual</option>
-            <option value="maintenance">Gangguan — tampil, tak bisa dipakai</option>
-            <option value="off">Off — hilang dari katalog</option>
+            <option value="on">On, dijual</option>
+            <option value="maintenance">Gangguan, tampil, tak bisa dipakai</option>
+            <option value="off">Off, hilang dari katalog</option>
           </select>
         ) : (
           <span
@@ -329,7 +329,7 @@ export default function AdminModelsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Katalog & harga"
-        description="Ini yang dijual: nama publik, harga per 1M token, dan status tayang. Provider mana yang melayani tiap model diatur di halaman Routing — bukan di sini."
+        description="Ini yang dijual: nama publik, harga per 1M token, dan status tayang. Provider mana yang melayani tiap model diatur di halaman Routing, bukan di sini."
         breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Models" }]}
         actions={
           <div className="flex items-center gap-2">
@@ -417,7 +417,7 @@ export default function AdminModelsPage() {
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         title="Tambah produk"
-        description="Pilih model dari router. Kalau nama modelnya sudah dijual, sistem menolak dan mengarahkan ke Routing — supaya katalog tidak berisi duplikat."
+        description="Pilih model dari router. Kalau nama modelnya sudah dijual, sistem menolak dan mengarahkan ke Routing, supaya katalog tidak berisi duplikat."
       >
         <div className="space-y-3">
           <SearchInput value={pickerQuery} onChange={setPickerQuery} placeholder="cari model router…" />
@@ -446,7 +446,7 @@ export default function AdminModelsPage() {
                   <span className="min-w-0">
                     <span className="block truncate font-mono text-[12px] text-warm">{row.id}</span>
                     <span className="block text-[10.5px] text-ash">
-                      {row.provider} · ctx {row.context_window ?? "—"} · out {row.max_output ?? "—"}
+                      {row.provider} · ctx {row.context_window ?? "n/a"} · out {row.max_output ?? "n/a"}
                     </span>
                   </span>
                   <span className="shrink-0 text-[10.5px] text-ash">

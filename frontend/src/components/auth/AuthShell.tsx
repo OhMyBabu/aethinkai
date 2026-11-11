@@ -34,7 +34,7 @@ export function AuthShell({
             Every Model.
           </h2>
           <p className="mt-4 text-[13.5px] leading-6 text-ash">
-            DeepSeek, Qwen, GLM and Kimi behind a single key — one endpoint, one bill, automatic failover when a
+            DeepSeek, Qwen, GLM and Kimi behind a single key, one endpoint, one bill, automatic failover when a
             provider degrades.
           </p>
 
@@ -62,7 +62,7 @@ export function AuthShell({
           </ul>
         </div>
 
-        <p className="text-[11px] text-dim">© {new Date().getFullYear()} AethinkAI — gateway for frontier models</p>
+        <p className="text-[11px] text-dim">© {new Date().getFullYear()} AethinkAI, gateway for frontier models</p>
       </aside>
 
       <main className="relative flex flex-1 flex-col justify-center px-4 py-8 sm:px-8">

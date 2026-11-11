@@ -21,7 +21,7 @@ import {
 } from "@/lib/gw";
 
 function ctx(tokens?: number | null) {
-  if (!tokens) return "—";
+  if (!tokens) return "n/a";
   if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(tokens % 1_000_000 ? 1 : 0)}M`;
   if (tokens >= 1000) return `${Math.round(tokens / 1000)}K`;
   return String(tokens);
@@ -215,7 +215,7 @@ export default function AdminRoutingPage() {
                       <tr key={route.id} className="border-b border-ash/10 last:border-0">
                         <td className="py-2.5 pr-3 font-mono text-ash">{route.priority}</td>
                         <td className="py-2.5 pr-3 font-mono text-warm">{route.upstream_model}</td>
-                        <td className="py-2.5 pr-3 text-ash">{route.provider_label || "—"}</td>
+                        <td className="py-2.5 pr-3 text-ash">{route.provider_label || "n/a"}</td>
                         <td className="py-2.5 pr-3">
                           <StatusPill tone={route.active ? "success" : "neutral"}>
                             {route.active ? (index === 0 ? "primary" : "fallback") : "off"}

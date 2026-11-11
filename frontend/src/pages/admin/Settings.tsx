@@ -16,7 +16,7 @@ export default function AdminSettingsPage() {
   const [resetOpen, setResetOpen] = useState(false);
   const [modelCount, setModelCount] = useState<number | null>(null);
 
-  // the catalogue lives in the gateway, not in the UI store — ask it instead of counting seeds
+  // the catalogue lives in the gateway, not in the UI store, ask it instead of counting seeds
   useEffect(() => {
     let alive = true;
     publicModels()
@@ -112,7 +112,7 @@ export default function AdminSettingsPage() {
             Reset workspace data
           </Button>
           <span className="text-[11.5px] text-ash">
-            {state.users.length} users · {modelCount ?? "—"} model (live) · {state.apiKeys.length} keys · {state.usage.length} requests
+            {state.users.length} users · {modelCount ?? "n/a"} model (live) · {state.apiKeys.length} keys · {state.usage.length} requests
           </span>
         </div>
       </Card>

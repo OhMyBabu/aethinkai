@@ -4,7 +4,7 @@ import { Wordmark } from "@/components/layout/BrandLogo";
 import { LandingAurora } from "@/components/landing/LandingAurora";
 import { TelegramConnect } from "@/components/portal/TelegramConnect";
 
-/** Buyer sign-in: Telegram only. No email, no password — the bot is the identity provider. */
+/** Buyer sign-in: Telegram only. No email, no password, the bot is the identity provider. */
 export default function LoginTelegramPage() {
   const navigate = useNavigate();
   const params = new URLSearchParams(window.location.search);

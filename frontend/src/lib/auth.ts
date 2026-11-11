@@ -1,6 +1,6 @@
 /**
  * Local credential handling for the frontend build. Passwords are never stored
- * in clear text — each account keeps a random salt plus a PBKDF2-SHA256 digest
+ * in clear text, each account keeps a random salt plus a PBKDF2-SHA256 digest
  * (Web Crypto, 120k iterations). Swapping `hashPassword` for a server call is
  * the only change needed once the gateway API is live.
  */

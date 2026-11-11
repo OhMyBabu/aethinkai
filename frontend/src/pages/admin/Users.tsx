@@ -197,7 +197,7 @@ export default function AdminUsersPage() {
     <div>
       <PageHeader
         title="Users"
-        description="Semua akun gateway: saldo, key, dan pemakaian — langsung dari Postgres."
+        description="Semua akun gateway: saldo, key, dan pemakaian, langsung dari Postgres."
         breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Users" }]}
         actions={
           <div className="flex items-center gap-2">
@@ -297,7 +297,7 @@ export default function AdminUsersPage() {
         open={creating}
         onClose={() => setCreating(false)}
         title="Add user"
-        description="Password awal ditampilkan sekali — kirim ke user, minta segera diganti."
+        description="Password awal ditampilkan sekali, kirim ke user, minta segera diganti."
         footer={
           <>
             <Button variant="ghost" size="sm" onClick={() => setCreating(false)}>
@@ -379,7 +379,7 @@ export default function AdminUsersPage() {
             Copy credentials
           </Button>
           <p className="text-[11.5px] leading-5 text-ash">
-            Password disimpan sebagai hash PBKDF2 di gateway — tidak bisa ditampilkan lagi.
+            Password disimpan sebagai hash PBKDF2 di gateway, tidak bisa ditampilkan lagi.
           </p>
         </div>
       </Modal>

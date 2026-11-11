@@ -46,7 +46,7 @@ const panelMotion = {
   transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] as const },
 };
 
-/** Copies exactly the string it was given — never the innerText of a wrapped node. */
+/** Copies exactly the string it was given, never the innerText of a wrapped node. */
 function CopyButton({
   value,
   label = "Copy",
@@ -231,7 +231,7 @@ export function BansosPanel({ onClose }: { onClose: () => void }) {
                 ))
               ) : (
                 <span className="text-[11px] text-ash/70">
-                  Belum ada model — daftar muncul setelah Bansos aktif.
+                  Belum ada model, daftar muncul setelah Bansos aktif.
                 </span>
               )}
             </div>
@@ -304,7 +304,7 @@ export function BansosPanel({ onClose }: { onClose: () => void }) {
             </div>
             {!active ? (
               <p className="mt-2 text-[10.5px] leading-4 text-ash/65">
-                Contoh saja — belum bisa dipakai sampai Bansos aktif.
+                Contoh saja, belum bisa dipakai sampai Bansos aktif.
               </p>
             ) : null}
           </div>

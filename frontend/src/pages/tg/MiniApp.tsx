@@ -114,7 +114,7 @@ export default function MiniAppPage() {
           <span className="grid size-11 place-items-center rounded-xl border border-[#E7893C]/40 bg-[#9C542F]/20 text-[16px] font-bold text-[#E7893C]">A</span>
           <h1 className="mt-4 text-[19px] font-semibold text-[#FAF8F4]">Buka lewat Telegram</h1>
           <p className="mt-1.5 text-[12.5px] leading-6 text-[#A1A3A7]">
-            Mini App ini membaca identitas dari Telegram — tidak ada login email atau password.
+            Mini App ini membaca identitas dari Telegram, tidak ada login email atau password.
             {error ? <span className="mt-2 block text-[#E7893C]">{error}</span> : null}
           </p>
           <a href="https://t.me/AethinkBot" className="mt-4 flex h-11 items-center justify-center gap-2 rounded-xl bg-[#E7893C] text-[13px] font-semibold text-[#18191B]">
@@ -521,7 +521,7 @@ function AccountScreen({ me, orders, token, onRotated, onTopUp }: {
     try {
       const r = await rotateKey(token);
       setReveal(r.api_key);
-      setMsg("Key baru aktif. Simpan sekarang — tidak ditampilkan lagi.");
+      setMsg("Key baru aktif. Simpan sekarang, tidak ditampilkan lagi.");
       setConfirm(false);
       onRotated();
     } catch (err) {
@@ -536,7 +536,7 @@ function AccountScreen({ me, orders, token, onRotated, onTopUp }: {
         <div className="min-w-0">
           <p className="truncate text-[15px] font-semibold">{me?.buyer.name || "Tanpa nama"}</p>
           <p className="truncate text-[11.5px] text-[#85888B]">
-            {me?.buyer.username ? `@${me.buyer.username}` : "Telegram"} · id {me?.buyer.tg_id ?? "—"}
+            {me?.buyer.username ? `@${me.buyer.username}` : "Telegram"} · id {me?.buyer.tg_id ?? "n/a"}
           </p>
         </div>
       </div>
@@ -568,14 +568,14 @@ function AccountScreen({ me, orders, token, onRotated, onTopUp }: {
         ))}
         {!(me?.keys ?? []).length ? (
           <p className="rounded-xl border border-white/10 bg-[#171717] p-4 text-[11.5px] text-[#85888B]">
-            Belum ada key. Selesaikan pembelian — key dikirim ke chat bot.
+            Belum ada key. Selesaikan pembelian, key dikirim ke chat bot.
           </p>
         ) : null}
       </div>
 
       {reveal ? (
         <div className="mt-2 rounded-xl border border-[#E7893C]/40 bg-[#E7893C]/10 p-3">
-          <p className="text-[10.5px] uppercase tracking-[0.1em] text-[#E7C9A8]">Key baru — sekali tampil</p>
+          <p className="text-[10.5px] uppercase tracking-[0.1em] text-[#E7C9A8]">Key baru, sekali tampil</p>
           <div className="mt-1 flex items-start gap-2">
             <code className="min-w-0 flex-1 break-all font-mono text-[11px] text-[#FAF8F4]">{reveal}</code>
             <button type="button" aria-label="Salin"
@@ -663,7 +663,7 @@ function TopUpSheet({ packages, token, onClose, onDone }: {
           </div>
           <p className="text-[11.5px] leading-6 text-[#A1A3A7]">
             Pembayaran masih manual: transfer ke admin, lalu tekan “Saya sudah bayar” di bot.
-            Saldo dan key masuk setelah admin konfirmasi — tidak ada kredit otomatis dari tombol.
+            Saldo dan key masuk setelah admin konfirmasi, tidak ada kredit otomatis dari tombol.
           </p>
           <a href="https://t.me/AethinkBot" className="flex h-10 items-center justify-center gap-2 rounded-xl bg-[#E7893C] text-[12px] font-semibold text-[#18191B]">
             <Send size={13} /> Buka bot
@@ -709,8 +709,8 @@ function ModelSheet({ model, onClose }: { model: CatalogModel; onClose: () => vo
         ))}
       </div>
       <dl className="mt-3 space-y-1.5 text-[11.5px]">
-        <div className="flex justify-between"><dt className="text-[#85888B]">Context</dt><dd className="tabular-nums">{model.context_length ? compact(model.context_length) + " token" : "—"}</dd></div>
-        <div className="flex justify-between"><dt className="text-[#85888B]">Max output</dt><dd className="tabular-nums">{model.max_completion_tokens ? compact(model.max_completion_tokens) + " token" : "—"}</dd></div>
+        <div className="flex justify-between"><dt className="text-[#85888B]">Context</dt><dd className="tabular-nums">{model.context_length ? compact(model.context_length) + " token" : "n/a"}</dd></div>
+        <div className="flex justify-between"><dt className="text-[#85888B]">Max output</dt><dd className="tabular-nums">{model.max_completion_tokens ? compact(model.max_completion_tokens) + " token" : "n/a"}</dd></div>
       </dl>
       {caps.length ? (
         <div className="mt-2.5 flex flex-wrap gap-1.5">

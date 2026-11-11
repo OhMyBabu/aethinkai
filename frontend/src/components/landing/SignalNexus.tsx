@@ -10,7 +10,7 @@ import { useStore } from "@/data/store";
 import { cn } from "@/lib/cn";
 
 /**
- * Signal Nexus — routing diagram for the hero.
+ * Signal Nexus, routing diagram for the hero.
  *
  * Composition: app plate (left) → core module (centre) → four provider cards
  * (right), joined by a fan of hairline curves. The whole scene sits on a

@@ -160,7 +160,7 @@ export default function AdminOverviewPage() {
 
       {partialFail > 0 ? (
         <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-[12px] text-warm/80">
-          {partialFail} endpoint gagal dimuat — angka di bawah hanya dari data yang berhasil. Cek gateway lalu muat ulang.
+          {partialFail} endpoint gagal dimuat, angka di bawah hanya dari data yang berhasil. Cek gateway lalu muat ulang.
         </div>
       ) : null}
 
@@ -177,7 +177,7 @@ export default function AdminOverviewPage() {
               <span className="text-ash/50">·</span>
               {summary && summary.cost_known === false ? (
                 <span className="font-medium text-[#e3b183]" title="Kartu harga 9Router / ledger upstream belum terbaca">
-                  modal belum tercatat — margin tidak bisa dihitung
+                  modal belum tercatat, margin tidak bisa dihitung
                 </span>
               ) : (
                 <span className={cn("font-medium", (summary?.margin_idr ?? 0) >= 0 ? "text-warm/85" : "text-[#e08a5f]")}>

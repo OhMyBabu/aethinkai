@@ -153,7 +153,7 @@ export default function UserOverviewPage() {
       key: "key",
       header: "Key",
       hideBelow: "md",
-      render: (row) => <span className="text-ash">{row.keyId || "—"}</span>,
+      render: (row) => <span className="text-ash">{row.keyId || "n/a"}</span>,
     },
     {
       key: "tokens",
@@ -196,7 +196,7 @@ export default function UserOverviewPage() {
 
       {partialFail > 0 ? (
         <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-[12px] text-warm/80">
-          {partialFail} endpoint gagal dimuat — angka di bawah hanya dari data yang berhasil. Cek koneksi lalu muat ulang.
+          {partialFail} endpoint gagal dimuat, angka di bawah hanya dari data yang berhasil. Cek koneksi lalu muat ulang.
         </div>
       ) : null}
 

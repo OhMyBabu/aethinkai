@@ -14,7 +14,7 @@ export function writeJSON(key: string, value: unknown): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
-    /* storage full or blocked — state continues in memory */
+    /* storage full or blocked, state continues in memory */
   }
 }
 

@@ -3,7 +3,7 @@ import { apiStream } from "@/lib/gw";
 import type { AIModel, ModelCategory, Provider } from "@/types";
 
 /**
- * Landing data — everything the public page claims must come from the gateway,
+ * Landing data, everything the public page claims must come from the gateway,
  * not from fixtures. `/api/models` is public (no auth) and `/api/status` returns
  * aggregate-only numbers.
  */
@@ -128,7 +128,7 @@ export function useLandingData(): LandingData {
     // just landed in the usage window). Without the second one the header pill and the
     // status panel only moved on the 15s poll.
     const offStream = apiStream({ catalog: () => void pull(), status: () => void pull() });
-    // safety net only — push is the primary path
+    // safety net only, push is the primary path
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible") void pull();
     }, 30_000);
