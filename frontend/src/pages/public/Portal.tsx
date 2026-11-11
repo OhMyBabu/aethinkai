@@ -11,6 +11,7 @@ import {
   KeyRound,
   Loader2,
   LogOut,
+  Minus,
   Receipt,
   RefreshCw,
   ShieldAlert,
@@ -20,9 +21,8 @@ import {
 import { Wordmark } from "@/components/layout/BrandLogo";
 import { AppAmbient } from "@/components/layout/AppAmbient";
 import { TelegramConnect } from "@/components/portal/TelegramConnect";
-import { createPayment, fetchOrders, fetchShop, placeOrder, topupOrder,
-  type Pkg, type PortalOrder, type TopupPolicy } from "@/lib/portal";
-import { useNavigate } from "react-router-dom";
+import { cancelOrder, createPayment, fetchOrders, fetchPending, fetchShop, localOrderStatus, placeOrder,
+  topupOrder, type PendingOrder, type Pkg, type PortalOrder, type TopupPolicy } from "@/lib/portal";
 import { cn } from "@/lib/cn";
 
 /**
@@ -99,16 +99,62 @@ const orderStatusLabel = (status: string) => {
   if (status === "pending") return "Menunggu Pembayaran";
   if (status === "expired") return "Kedaluwarsa";
   if (status === "failed") return "Gagal";
+  if (status === "cancelled") return "Dibatalkan";
   return status;
 };
 
-function StorePanel({ token, onChanged }: { token: string; onChanged: () => void }) {
-  const navigate = useNavigate();
+export type PurchaseDraft =
+  | { kind: "plan"; sku: string; name: string; price_idr: number; credits_micro: number; rpm: number }
+  | { kind: "topup"; amount: number };
+
+/** Renders the provider image when there is one, otherwise the QRIS payload
+ *  locally, so the panel never depends on an external image host. */
+function QrCode({ value, image }: { value: string | null; image: string | null }) {
+  const [src, setSrc] = useState<string | null>(image);
+  useEffect(() => {
+    let alive = true;
+    if (image) { setSrc(image); return; }
+    if (!value) { setSrc(null); return; }
+    void import("qrcode")
+      .then((mod) => mod.toDataURL(value, {
+        margin: 1,
+        width: 360,
+        color: { dark: "#0A0A0A", light: "#FFFFFF" },
+      }))
+      .then((url) => { if (alive) setSrc(url); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [image, value]);
+
+  if (!src) {
+    return (
+      <div className="grid h-[220px] w-[220px] place-items-center rounded-xl border border-dashed border-white/12 text-center text-[12px] leading-5 text-dim">
+        QRIS belum dibuat
+      </div>
+    );
+  }
+  return <img src={src} alt="Kode QRIS pembayaran" className="h-[220px] w-[220px] rounded-xl bg-white p-2" />;
+}
+
+function StorePanel({
+  token,
+  onChanged,
+  onPurchase,
+  pending,
+  onShowPending,
+  refreshKey,
+}: {
+  token: string;
+  onChanged: () => void;
+  onPurchase: (draft: PurchaseDraft) => void;
+  refreshKey: number;
+  pending: PendingOrder | null;
+  onShowPending: () => void;
+}) {
   const [packages, setPackages] = useState<Pkg[]>([]);
   const [topup, setTopup] = useState<TopupPolicy>({ min_idr: 2000, max_idr: null, enabled: true });
   const [topupAmount, setTopupAmount] = useState("20000");
   const [orders, setOrders] = useState<PortalOrder[]>([]);
-  const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<Record<string, unknown> | null>(null);
   const [receiptBusy, setReceiptBusy] = useState<string | null>(null);
@@ -123,7 +169,7 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
     try { setOrders(await fetchOrders(token)); } catch { /* session may be key-only */ }
   }, [token]);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => { void refresh(); }, [refresh, refreshKey]);
 
   useEffect(() => {
     if (!receipt) return;
@@ -142,27 +188,20 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
     (value) => value >= topup.min_idr && (!topup.max_idr || value <= topup.max_idr),
   );
 
-  const buy = async (sku: string) => {
-    setBusy(sku);
+  const buy = (pkg: Pkg) => {
     setNotice(null);
-    try {
-      const order = await placeOrder(token, sku);
-      setNotice(`Order ${order.order_id} dibuat, lanjut ke pembayaran QRIS.`);
-      await refresh();
-      onChanged();
-      try {
-        const pay = await createPayment(token, order.order_id);
-        navigate(`/pay/${order.order_id}?t=${encodeURIComponent(pay.checkout_token)}`);
-      } catch (err) {
-        setNotice(`Order ${order.order_id} dibuat (${rp(order.price_idr)}). ` +
-          "Pembayaran otomatis belum aktif, hubungi admin, key dikirim ke bot Telegram." +
-          (err instanceof Error ? ` (${err.message})` : ""));
-      }
-    } catch (err) {
-      setNotice(err instanceof Error ? err.message : "Gagal membuat order");
-    } finally {
-      setBusy(null);
+    if (pending) {
+      onShowPending();
+      return;
     }
+    onPurchase({
+      kind: "plan",
+      sku: pkg.sku,
+      name: pkg.name,
+      price_idr: pkg.price_idr,
+      credits_micro: pkg.credits_micro,
+      rpm: pkg.rpm_limit,
+    });
   };
 
   const buyTopup = async () => {
@@ -176,24 +215,11 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
       setNotice(`Maksimal isi saldo ${rp(topup.max_idr)}.`);
       return;
     }
-    setBusy("topup");
-    setNotice(null);
-    try {
-      const order = await topupOrder(token, value);
-      setNotice(`Top-up ${order.order_id} dibuat (${rp(value)}). Lanjut pembayaran.`);
-      await refresh();
-      onChanged();
-      try {
-        const pay = await createPayment(token, order.order_id);
-        navigate(`/pay/${order.order_id}?t=${encodeURIComponent(pay.checkout_token)}`);
-      } catch {
-        setNotice(`Top-up ${order.order_id} dibuat (${rp(value)}). Pembayaran otomatis belum aktif, hubungi admin.`);
-      }
-    } catch (err) {
-      setNotice(err instanceof Error ? err.message : "Gagal membuat top-up");
-    } finally {
-      setBusy(null);
+    if (pending) {
+      onShowPending();
+      return;
     }
+    onPurchase({ kind: "topup", amount: value });
   };
 
   const openReceipt = async (order: PortalOrder) => {
@@ -224,6 +250,18 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
           </div>
         </div>
 
+        {pending ? (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#E7893C]/30 bg-[#E7893C]/[0.06] px-3 py-2.5">
+            <p className="text-[11.5px] text-ash">
+              Pembayaran <span className="font-mono text-dim">{pending.order_id}</span> masih berjalan. Lunasi atau batalkan dulu sebelum membeli lagi.
+            </p>
+            <button type="button" onClick={onShowPending}
+              className="h-8 rounded-lg border border-[#E7893C]/40 px-2.5 text-[11.5px] font-medium text-[#F0B47A] transition hover:bg-[#E7893C]/10">
+              Lihat Invoice
+            </button>
+          </div>
+        ) : null}
+
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           {packages.map((pkg, index) => {
             const featured = pkg.sku === "pro" || (packages.length > 2 && index === 1);
@@ -252,8 +290,7 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
                 <p className="mt-1 pb-3 text-[11.5px] text-dim">{pkg.rpm_limit} RPM</p>
                 <button
                   type="button"
-                  onClick={() => void buy(pkg.sku)}
-                  disabled={busy !== null}
+                  onClick={() => buy(pkg)}
                   className={cn(
                     "mt-auto flex h-11 w-full items-center justify-center gap-1.5 rounded-xl pt-0 text-[12.5px] font-semibold transition disabled:opacity-50",
                     featured
@@ -261,7 +298,6 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
                       : "border border-white/10 bg-white/[0.03] text-warm hover:bg-white/[0.06]",
                   )}
                 >
-                  {busy === pkg.sku ? <Loader2 size={13} className="animate-spin" /> : null}
                   Pilih {pkg.name}
                 </button>
               </div>
@@ -308,10 +344,9 @@ function StorePanel({ token, onChanged }: { token: string; onChanged: () => void
               <button
                 type="button"
                 onClick={() => void buyTopup()}
-                disabled={!amountValid || busy !== null}
+                disabled={!amountValid}
                 className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[#E7893C] px-4 text-[12.5px] font-semibold text-[#18191B] transition hover:bg-[#F09A55] disabled:cursor-not-allowed disabled:opacity-40 sm:ml-auto"
               >
-                {busy === "topup" ? <Loader2 size={13} className="animate-spin" /> : null}
                 Isi Saldo
               </button>
             </div>
@@ -574,6 +609,195 @@ export default function PortalPage() {
 
   const maxDay = useMemo(() => Math.max(1, ...(usage?.daily ?? []).map((d) => d.cost_micro)), [usage]);
 
+  const [pending, setPending] = useState<PendingOrder | null>(null);
+  const [checkout, setCheckout] = useState<PurchaseDraft | null>(null);
+  const [payOpen, setPayOpen] = useState(false);
+  const [payBusy, setPayBusy] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+  const [payNotice, setPayNotice] = useState<string | null>(null);
+  const [cancelAsk, setCancelAsk] = useState(false);
+  const [copiedQr, setCopiedQr] = useState(false);
+  const [clock, setClock] = useState(() => Date.now());
+  const [ordersKey, setOrdersKey] = useState(0);
+
+  // A reload never creates a new order: it only restores the one open payment,
+  // minimised, because no money has moved and nothing was cancelled.
+  useEffect(() => {
+    if (!token) return;
+    let alive = true;
+    void fetchPending(token)
+      .then((order) => { if (alive) { setPending(order); setPayOpen(false); } })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [token]);
+
+  useEffect(() => {
+    if (!pending) return;
+    const id = window.setInterval(() => setClock(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [pending]);
+
+  // Local status only: our webhook settles the payment, this poll never calls
+  // the provider, so an open panel cannot spam WijayaPay.
+  useEffect(() => {
+    if (!token || !pending || pending.status !== "pending") return;
+    let alive = true;
+    const tick = async () => {
+      try {
+        const s = await localOrderStatus(token, pending.order_id);
+        if (!alive) return;
+        if (s.status === "granted" || s.payment_status === "paid") {
+          setPending(null);
+          setPayOpen(false);
+          setPayNotice("Pembayaran diterima. Saldo dan kredit sudah diperbarui.");
+          void load();
+        } else if (s.status === "cancelled" || s.status === "expired") {
+          setPending(null);
+          setPayOpen(false);
+        }
+      } catch {
+        /* transient network error: next tick retries */
+      }
+    };
+    const id = window.setInterval(() => void tick(), 8000);
+    return () => { alive = false; window.clearInterval(id); };
+  }, [load, pending, token]);
+
+  const startPurchase = (draft: PurchaseDraft) => {
+    setPayError(null);
+    setPayNotice(null);
+    if (pending) {
+      setPayOpen(true);
+      return;
+    }
+    setCheckout(draft);
+  };
+
+  const confirmPurchase = async () => {
+    if (!token || !checkout) return;
+    setPayBusy(true);
+    setPayError(null);
+    try {
+      const payment = { status: "none", live: false, expires_at: null, qr_string: null, qr_image: null, total_bayar: 0, fee_idr: 0 };
+      if (checkout.kind === "plan") {
+        const order = await placeOrder(token, checkout.sku);
+        setPending({
+          order_id: order.order_id,
+          sku: checkout.sku,
+          price_idr: order.price_idr,
+          credits_micro: checkout.credits_micro,
+          status: "pending",
+          created_at: new Date().toISOString(),
+          payment: { ...payment, total_bayar: order.price_idr },
+        });
+      } else {
+        const order = await topupOrder(token, checkout.amount);
+        setPending({
+          order_id: order.order_id,
+          sku: "topup",
+          price_idr: order.price_idr,
+          credits_micro: order.credits_micro,
+          status: "pending",
+          created_at: new Date().toISOString(),
+          payment: { ...payment, total_bayar: order.price_idr },
+        });
+      }
+      setCheckout(null);
+      setPayOpen(true);
+      setOrdersKey((key) => key + 1);
+      void load();
+    } catch (err) {
+      setPayError(err instanceof Error ? err.message : "Gagal membuat order");
+      const existing = await fetchPending(token).catch(() => null);
+      if (existing) {
+        setPending(existing);
+        setCheckout(null);
+        setPayOpen(true);
+      }
+    } finally {
+      setPayBusy(false);
+    }
+  };
+
+  // Second, explicit step: the provider is only contacted when the buyer asks
+  // for the QR, never on page load and never on a package click.
+  const createQr = async () => {
+    if (!token || !pending) return;
+    setPayBusy(true);
+    setPayError(null);
+    try {
+      const pay = await createPayment(token, pending.order_id);
+      setPending({
+        ...pending,
+        payment: {
+          status: pay.status,
+          live: Boolean(pay.qr_string || pay.qr_image),
+          expires_at: pay.expires_at ?? null,
+          qr_string: pay.qr_string ?? null,
+          qr_image: pay.qr_image ?? null,
+          total_bayar: pay.total_bayar,
+          fee_idr: pay.fee_idr,
+        },
+      });
+    } catch (err) {
+      setPayError(err instanceof Error ? err.message : "Gagal membuat QRIS");
+      const existing = await fetchPending(token).catch(() => null);
+      if (existing) setPending(existing);
+    } finally {
+      setPayBusy(false);
+    }
+  };
+
+  const cancelPayment = async () => {
+    if (!token || !pending) return;
+    setPayBusy(true);
+    setPayError(null);
+    try {
+      await cancelOrder(token, pending.order_id);
+      setPending(null);
+      setPayOpen(false);
+      setCancelAsk(false);
+      setPayNotice(null);
+      setOrdersKey((key) => key + 1);
+      void load();
+    } catch (err) {
+      setPayError(err instanceof Error ? err.message : "Gagal membatalkan pembayaran");
+    } finally {
+      setPayBusy(false);
+    }
+  };
+
+  const copyQr = async () => {
+    if (!pending?.payment.qr_string) return;
+    try {
+      await navigator.clipboard.writeText(pending.payment.qr_string);
+      setCopiedQr(true);
+      window.setTimeout(() => setCopiedQr(false), 2000);
+    } catch {
+      /* clipboard blocked: the code is visible in the panel */
+    }
+  };
+
+  useEffect(() => {
+    if (!payOpen && !checkout) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setPayOpen(false);
+      setCheckout(null);
+      setCancelAsk(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [checkout, payOpen]);
+
+  const remaining = (() => {
+    if (!pending?.payment.expires_at) return null;
+    const ms = new Date(pending.payment.expires_at).getTime() - clock;
+    if (ms <= 0) return "kedaluwarsa";
+    const total = Math.floor(ms / 1000);
+    return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+  })();
+
   if (!token) {
     return (
       <div className="relative grid min-h-screen place-items-center px-4 py-14">
@@ -665,6 +889,14 @@ export default function PortalPage() {
       </header>
 
       <main className="mx-auto max-w-[1200px] px-4 pb-16 pt-6 sm:px-6">
+        {payNotice ? (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#E7893C]/30 bg-[#E7893C]/[0.08] px-4 py-3">
+            <p className="text-[12.5px] text-warm">{payNotice}</p>
+            <button type="button" onClick={() => setPayNotice(null)} className="text-[12px] text-dim hover:text-warm">
+              Tutup
+            </button>
+          </div>
+        ) : null}
         {fresh ? (
           <div className="mb-4 rounded-xl border border-[#E7893C]/40 bg-[#E7893C]/10 p-4">
             <p className="text-[12.5px] font-semibold text-warm">Key baru, simpan sekarang, tidak ditampilkan lagi</p>
@@ -944,11 +1176,173 @@ export default function PortalPage() {
           )}
         </section>
 
-        <StorePanel token={token} onChanged={() => void load()} />
+        <StorePanel
+          token={token}
+          onChanged={() => void load()}
+          onPurchase={startPurchase}
+          pending={pending}
+          onShowPending={() => setPayOpen(true)}
+          refreshKey={ordersKey}
+        />
 
         <p className="mt-6 text-center text-[12px] text-ash">
           Saldo dan statistik diperbarui berdasarkan data penggunaan akun Anda.
         </p>
+
+        {checkout ? (
+          <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
+            <div className="w-full max-w-[430px] rounded-2xl border border-white/10 bg-[#171717] p-5 shadow-[0_40px_90px_-50px_rgba(0,0,0,0.95)]">
+              <h2 id="checkout-title" className="text-[16px] font-semibold text-warm">Konfirmasi pembelian</h2>
+              <p className="mt-1 text-[12.5px] leading-5 text-ash">
+                Periksa nominalnya. QRIS tidak dibuat di langkah ini, jadi tidak ada permintaan ke penyedia pembayaran sampai kamu menekan Buat QRIS.
+              </p>
+              <dl className="mt-4 space-y-2 rounded-xl border border-white/8 bg-[#101113] p-4 text-[12.5px]">
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-dim">{checkout.kind === "plan" ? "Paket" : "Isi saldo"}</dt>
+                  <dd className="font-medium text-warm">{checkout.kind === "plan" ? checkout.name : rp(checkout.amount)}</dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-dim">Harga</dt>
+                  <dd className="font-semibold tabular-nums text-warm">{rp(checkout.kind === "plan" ? checkout.price_idr : checkout.amount)}</dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-dim">Kredit masuk</dt>
+                  <dd className="tabular-nums text-ash">{rp((checkout.kind === "plan" ? checkout.credits_micro : checkout.amount * 1_000_000) / 1_000_000)}</dd>
+                </div>
+                {checkout.kind === "plan" ? (
+                  <div className="flex items-baseline justify-between gap-3">
+                    <dt className="text-dim">Batas permintaan</dt>
+                    <dd className="tabular-nums text-ash">{checkout.rpm} RPM</dd>
+                  </div>
+                ) : null}
+              </dl>
+              {payError ? <p className="mt-3 text-[12px] text-[#E7893C]">{payError}</p> : null}
+              <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                <button type="button" onClick={() => setCheckout(null)} disabled={payBusy}
+                  className="h-11 rounded-xl border border-white/10 bg-white/[0.03] px-4 text-[12.5px] font-medium text-warm transition hover:bg-white/[0.06] disabled:opacity-50">
+                  Batal
+                </button>
+                <button type="button" onClick={() => void confirmPurchase()} disabled={payBusy}
+                  className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[#E7893C] px-4 text-[12.5px] font-semibold text-[#18191B] transition hover:bg-[#F09A55] disabled:opacity-50">
+                  {payBusy ? <Loader2 size={13} className="animate-spin" /> : null}
+                  Lanjutkan
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {pending && payOpen ? (
+          <div className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="pay-title">
+            <div className="w-full max-w-[440px] rounded-2xl border border-white/10 bg-[#171717] p-5 shadow-[0_40px_90px_-50px_rgba(0,0,0,0.95)]">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 id="pay-title" className="text-[16px] font-semibold text-warm">Pembayaran</h2>
+                  <p className="mt-0.5 font-mono text-[11.5px] text-dim">{pending.order_id}</p>
+                </div>
+                <button type="button" onClick={() => { setCancelAsk(false); setPayOpen(false); }} aria-label="Minimalkan pembayaran"
+                  className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 text-dim transition hover:text-warm">
+                  <Minus size={15} />
+                </button>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className={cn("rounded-full border px-2.5 py-1 text-[11px] font-medium",
+                  pending.payment.live
+                    ? "border-[#E7893C]/40 bg-[#E7893C]/10 text-[#F0B47A]"
+                    : "border-white/10 bg-white/[0.03] text-dim")}>
+                  {pending.payment.live ? "Menunggu pembayaran" : "QRIS belum dibuat"}
+                </span>
+                <span className="text-[11.5px] tabular-nums text-dim">
+                  {pending.sku === "topup" ? "Isi saldo" : pending.sku}
+                </span>
+                {remaining && pending.payment.live ? (
+                  <span className="text-[11.5px] tabular-nums text-dim">sisa {remaining}</span>
+                ) : null}
+              </div>
+
+              <div className="mt-4 grid place-items-center rounded-xl border border-white/8 bg-[#101113] p-4">
+                <QrCode value={pending.payment.qr_string} image={pending.payment.qr_image} />
+                <p className="mt-3 text-[28px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-warm">
+                  {rp(pending.payment.total_bayar)}
+                </p>
+                {pending.payment.fee_idr > 0 ? (
+                  <p className="mt-1 text-[11.5px] text-dim">
+                    termasuk biaya layanan {rp(pending.payment.fee_idr)}
+                  </p>
+                ) : null}
+                <p className="mt-2 max-w-[300px] text-center text-[11.5px] leading-5 text-ash">
+                  {pending.payment.live
+                    ? "Scan dengan aplikasi bank atau e-wallet. Status diperbarui otomatis setelah pembayaran diterima."
+                    : "Tekan Buat QRIS untuk meminta kode pembayaran. Satu akun hanya boleh punya satu pembayaran berjalan."}
+                </p>
+              </div>
+
+              {payError ? <p className="mt-3 text-[12px] text-[#E7893C]">{payError}</p> : null}
+
+              {cancelAsk ? (
+                <div className="mt-4 rounded-xl border border-white/10 bg-[#101113] p-3">
+                  <p className="text-[12px] leading-5 text-ash">
+                    Batalkan pembayaran ini? QRIS yang sudah tampil tidak bisa dipakai lagi, dan kamu bisa membuat yang baru.
+                  </p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                    <button type="button" onClick={() => setCancelAsk(false)} disabled={payBusy}
+                      className="h-10 rounded-lg border border-white/10 px-3 text-[12px] text-warm disabled:opacity-50">
+                      Kembali
+                    </button>
+                    <button type="button" onClick={() => void cancelPayment()} disabled={payBusy}
+                      className="flex h-10 items-center justify-center gap-1.5 rounded-lg bg-[#E7893C] px-3 text-[12px] font-semibold text-[#18191B] disabled:opacity-50">
+                      {payBusy ? <Loader2 size={12} className="animate-spin" /> : null}
+                      Ya, batalkan
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  {pending.payment.live ? (
+                    <button type="button" onClick={() => void copyQr()}
+                      className="h-11 flex-1 rounded-xl border border-white/10 bg-white/[0.03] text-[12.5px] font-medium text-warm transition hover:bg-white/[0.06]">
+                      {copiedQr ? "Kode disalin" : "Salin kode QR"}
+                    </button>
+                  ) : (
+                    <button type="button" onClick={() => void createQr()} disabled={payBusy}
+                      className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#E7893C] text-[12.5px] font-semibold text-[#18191B] transition hover:bg-[#F09A55] disabled:opacity-50">
+                      {payBusy ? <Loader2 size={13} className="animate-spin" /> : null}
+                      Buat QRIS
+                    </button>
+                  )}
+                  <button type="button" onClick={() => setCancelAsk(true)} disabled={payBusy}
+                    className="h-11 flex-1 rounded-xl border border-white/10 bg-white/[0.03] text-[12.5px] font-medium text-ash transition hover:bg-white/[0.06] hover:text-warm disabled:opacity-50">
+                    Batalkan pembayaran
+                  </button>
+                </div>
+              )}
+              <button type="button" onClick={() => { setCancelAsk(false); setPayOpen(false); }}
+                className="mt-3 w-full text-center text-[11.5px] text-dim transition hover:text-warm">
+                Minimalkan, lanjut lihat dashboard
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {pending && !payOpen ? (
+          <div className="fixed inset-x-4 bottom-4 z-[60] mx-auto max-w-[380px] rounded-xl border border-[#E7893C]/30 bg-[#141414]/95 p-3 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)] backdrop-blur-xl sm:inset-x-auto sm:right-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="flex items-center gap-1.5 text-[11.5px] font-medium text-[#F0B47A]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#E7893C]" />
+                  {pending.payment.live ? "Pembayaran menunggu" : "Pembayaran belum selesai"}
+                </p>
+                <p className="mt-0.5 truncate font-mono text-[11px] text-dim">{pending.order_id}</p>
+                <p className="mt-0.5 text-[12px] tabular-nums text-ash">{rp(pending.payment.total_bayar)}</p>
+              </div>
+              <button type="button" onClick={() => setPayOpen(true)}
+                className="h-9 shrink-0 rounded-lg bg-[#E7893C] px-3 text-[11.5px] font-semibold text-[#18191B] transition hover:bg-[#F09A55]">
+                Lihat Invoice
+              </button>
+            </div>
+          </div>
+        ) : null}
       </main>
     </div>
   );

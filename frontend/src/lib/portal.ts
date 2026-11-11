@@ -123,6 +123,62 @@ export async function payStatus(orderId: string, checkoutToken: string): Promise
   return body as PayPayload;
 }
 
+export type PendingPayment = {
+  status: string;
+  live: boolean;
+  expires_at: string | null;
+  qr_string: string | null;
+  qr_image: string | null;
+  total_bayar: number;
+  fee_idr: number;
+};
+
+export type PendingOrder = {
+  order_id: string;
+  sku: string;
+  price_idr: number;
+  credits_micro: number;
+  status: string;
+  created_at: string | null;
+  payment: PendingPayment;
+};
+
+export async function fetchPending(token: string): Promise<PendingOrder | null> {
+  const res = await fetch("/api/portal/pending", { headers: { Authorization: `Bearer ${token}` } });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body?.error?.message ?? "Gagal memuat pembayaran pending");
+  return (body.order ?? null) as PendingOrder | null;
+}
+
+export type LocalOrderStatus = {
+  order_id: string;
+  status: string;
+  payment_status: string;
+  live: boolean;
+  expires_at: string | null;
+  granted_at: string | null;
+};
+
+/** Reads our tables only; never asks the payment provider. */
+export async function localOrderStatus(token: string, orderId: string): Promise<LocalOrderStatus> {
+  const res = await fetch(`/api/portal/orders/${encodeURIComponent(orderId)}/status`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body?.error?.message ?? "Gagal cek status order");
+  return body as LocalOrderStatus;
+}
+
+export async function cancelOrder(token: string, orderId: string): Promise<{ order_id: string; status: string }> {
+  const res = await fetch(`/api/portal/orders/${encodeURIComponent(orderId)}/cancel`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body?.error?.message ?? "Gagal membatalkan pembayaran");
+  return body as { order_id: string; status: string };
+}
+
 export type PortalOrder = {
   id: string;
   sku: string;

@@ -89,12 +89,19 @@ check("me buyer", (body.get("buyer") or {}).get("tg_id") == TG)
 before = int(body.get("balance_micro") or 0)
 check("me has keys list", isinstance(body.get("keys"), list))
 
+# 6b. one open order per buyer: clear a stale pending order from an earlier run
+stale = c.get(B + "/api/portal/pending", headers=H).json().get("order")
+if stale:
+    c.post(B + f"/api/portal/orders/{stale['order_id']}/cancel", headers=H)
+
 # 7. order from the web
 r = c.post(B + "/api/portal/order", headers=H, json={"sku": sku})
 check("order 200", r.status_code == 200, r.text[:120])
 order_id = r.json().get("order_id")
 check("order price", r.json().get("price_idr") == price)
 check("order starts pending", c.get(B + "/api/portal/orders", headers=H).json()["orders"][0]["status"] == "pending")
+dup = c.post(B + "/api/portal/order", headers=H, json={"sku": sku})
+check("second order blocked", dup.status_code == 409 and dup.json()["error"]["code"] == "order_pending", dup.text[:120])
 
 # 8. it lands in the bot's admin queue
 pend = sget("/api/internal/pending", "pending").json()["orders"]

@@ -328,6 +328,25 @@ async def portal_pay_create(body: PayCreateIn, row: dict = Depends(portal.portal
         raise portal._bad("not_your_order", "Order ini bukan milik akun ini", 403)
     if await db.pool().fetchval("SELECT status FROM orders WHERE id = $1", body.order_id) == "granted":
         raise portal._bad("already_paid", "Order ini sudah dibayar", 409)
+
+    # One live payable QR per buyer. A second order cannot open its own code while
+    # another is still payable: the buyer pays or cancels that one first.
+    conflict = await db.pool().fetchrow(
+        """SELECT o.id FROM payment_intents pi
+             JOIN orders o ON o.id = pi.order_id
+            WHERE o.buyer_id = $1 AND o.status = 'pending'
+              AND pi.status = 'pending' AND pi.expires_at > now()
+              AND pi.order_id <> $2
+            ORDER BY pi.created_at DESC LIMIT 1""",
+        buyer_id, body.order_id,
+    )
+    if conflict:
+        raise portal._bad(
+            "payment_pending",
+            "Masih ada QRIS yang belum dibayar. Lunasi atau batalkan dulu.",
+            409,
+            pending_order_id=str(conflict["id"]),
+        )
     return await create_for_order(body.order_id)
 
 

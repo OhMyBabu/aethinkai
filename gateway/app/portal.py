@@ -141,8 +141,8 @@ def _client_ip(request: Request) -> str:
     )
 
 
-def _bad(code: str, message: str, status: int = 401) -> HTTPException:
-    return HTTPException(status, {"error": {"message": message, "code": code}})
+def _bad(code: str, message: str, status: int = 401, **extra: Any) -> HTTPException:
+    return HTTPException(status, {"error": {"message": message, "code": code, **extra}})
 
 
 async def _audit_failure(scope: str, ident: str | None, ip: str) -> None:
@@ -707,6 +707,59 @@ class OrderReq(BaseModel):
     sku: str = Field(min_length=2, max_length=40)
 
 
+async def pending_order_for(buyer_id: str) -> dict[str, Any] | None:
+    """One open order per buyer: the checkout must finish or be cancelled first."""
+    row = await db.pool().fetchrow(
+        """
+        SELECT o.id, o.sku, o.price_idr, o.credits_micro, o.status, o.created_at, o.checkout_token,
+               pi.status AS intent_status, pi.expires_at, pi.raw
+          FROM orders o
+          LEFT JOIN LATERAL (
+                SELECT status, expires_at, raw FROM payment_intents
+                 WHERE order_id = o.id ORDER BY created_at DESC LIMIT 1
+          ) pi ON true
+         WHERE o.buyer_id = $1 AND o.status = 'pending'
+         ORDER BY o.created_at DESC
+         LIMIT 1
+        """,
+        buyer_id,
+    )
+    return dict(row) if row else None
+
+
+def _pending_public(row: dict[str, Any]) -> dict[str, Any]:
+    """Buyer-safe view of an open order, QR included only while the code is live."""
+    raw = row.get("raw") or {}
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except Exception:
+            raw = {}
+    expires_at = row.get("expires_at")
+    live = False
+    if row.get("intent_status") == "pending" and expires_at:
+        ts = expires_at if expires_at.tzinfo else expires_at.replace(tzinfo=timezone.utc)
+        live = ts > datetime.now(timezone.utc)
+    total = int(raw.get("total_bayar") or row["price_idr"])
+    return {
+        "order_id": str(row["id"]),
+        "sku": row["sku"],
+        "price_idr": int(row["price_idr"]),
+        "credits_micro": int(row["credits_micro"]),
+        "status": row["status"],
+        "created_at": row["created_at"].isoformat() if row.get("created_at") else None,
+        "payment": {
+            "status": row.get("intent_status") or "none",
+            "live": live,
+            "expires_at": expires_at.isoformat() if expires_at else None,
+            "qr_string": raw.get("qr_string") if live else None,
+            "qr_image": raw.get("qr_image") if live else None,
+            "total_bayar": total if live else int(row["price_idr"]),
+            "fee_idr": max(0, total - int(row["price_idr"])) if live else 0,
+        },
+    }
+
+
 @portal.post("/order")
 async def portal_order(body: OrderReq, row: dict = Depends(portal_identity)):
     """Web purchase: allowed only for a Telegram-linked buyer (that is the identity check)."""
@@ -716,6 +769,14 @@ async def portal_order(body: OrderReq, row: dict = Depends(portal_identity)):
     buyer_id = row.get("buyer_id")
     if not buyer_id:
         raise _bad("telegram_required", "Hubungkan Telegram dulu untuk membeli", 403)
+    open_order = await pending_order_for(buyer_id)
+    if open_order:
+        raise _bad(
+            "order_pending",
+            "Masih ada pembayaran yang belum selesai. Lunasi atau batalkan dulu.",
+            409,
+            order=_pending_public(open_order),
+        )
 
     order_id = await unique_order_ref()
     credits = int(pkg["credits_micro"])
@@ -765,6 +826,14 @@ async def portal_topup(body: TopupReq, row: dict = Depends(portal_identity)):
     buyer_id = row.get("buyer_id")
     if not buyer_id:
         raise _bad("telegram_required", "Hubungkan Telegram dulu untuk top-up", 403)
+    open_order = await pending_order_for(buyer_id)
+    if open_order:
+        raise _bad(
+            "order_pending",
+            "Masih ada pembayaran yang belum selesai. Lunasi atau batalkan dulu.",
+            409,
+            order=_pending_public(open_order),
+        )
 
     order_id = await unique_order_ref()
     credits = amount * 1_000_000
@@ -853,6 +922,67 @@ async def portal_orders(row: dict = Depends(portal_identity)):
     )
     return {"orders": [{**dict(r), "created_at": r["created_at"].isoformat(),
                         "granted_at": r["granted_at"].isoformat() if r["granted_at"] else None} for r in rows]}
+
+
+@portal.get("/pending")
+async def portal_pending(row: dict = Depends(portal_identity)):
+    """The single open order, if any. No provider call: this reads our tables only."""
+    buyer_id = row.get("buyer_id")
+    if not buyer_id:
+        return {"order": None}
+    open_order = await pending_order_for(buyer_id)
+    return {"order": _pending_public(open_order) if open_order else None}
+
+
+@portal.get("/orders/{order_id}/status")
+async def portal_order_status(order_id: str, row: dict = Depends(portal_identity)):
+    """Local status poll for the in-page QRIS panel. Never asks the provider."""
+    buyer_id = row.get("buyer_id")
+    order = await db.pool().fetchrow(
+        "SELECT buyer_id, status, granted_at FROM orders WHERE id = $1", order_id)
+    if order is None or order["buyer_id"] != buyer_id:
+        raise _bad("order_not_found", "Order tidak ada", 404)
+    intent = await db.pool().fetchrow(
+        """SELECT status, expires_at FROM payment_intents
+            WHERE order_id = $1 ORDER BY created_at DESC LIMIT 1""", order_id)
+    expires_at = intent["expires_at"] if intent else None
+    live = False
+    if intent and intent["status"] == "pending" and expires_at:
+        ts = expires_at if expires_at.tzinfo else expires_at.replace(tzinfo=timezone.utc)
+        live = ts > datetime.now(timezone.utc)
+    return {
+        "order_id": order_id,
+        "status": order["status"],
+        "payment_status": intent["status"] if intent else "none",
+        "live": live,
+        "expires_at": expires_at.isoformat() if expires_at else None,
+        "granted_at": order["granted_at"].isoformat() if order["granted_at"] else None,
+    }
+
+
+@portal.post("/orders/{order_id}/cancel")
+async def portal_cancel_order(order_id: str, row: dict = Depends(portal_identity)):
+    """Cancel an unpaid order so the buyer can start a new one. Local only."""
+    buyer_id = row.get("buyer_id")
+    order = await db.pool().fetchrow(
+        "SELECT buyer_id, status FROM orders WHERE id = $1", order_id)
+    if order is None or order["buyer_id"] != buyer_id:
+        raise _bad("order_not_found", "Order tidak ada", 404)
+    if order["status"] == "granted":
+        raise _bad("already_paid", "Order ini sudah dibayar", 409)
+    if order["status"] != "pending":
+        return {"order_id": order_id, "status": order["status"]}
+    paid = await db.pool().fetchval(
+        "SELECT 1 FROM payment_intents WHERE order_id = $1 AND status = 'paid' LIMIT 1", order_id)
+    if paid:
+        raise _bad("already_paid", "Pembayaran order ini sudah diterima", 409)
+    await db.pool().execute(
+        "UPDATE orders SET status = 'cancelled' WHERE id = $1 AND status = 'pending'", order_id)
+    await db.pool().execute(
+        "UPDATE payment_intents SET status = 'cancelled' WHERE order_id = $1 AND status = 'pending'",
+        order_id)
+    await db.log_audit(f"buyer:{buyer_id}", "portal.order.cancel", order_id, {})
+    return {"order_id": order_id, "status": "cancelled"}
 
 
 # ------------------------------------------------------------------ Telegram Mini App
