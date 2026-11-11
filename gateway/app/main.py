@@ -31,6 +31,7 @@ async def lifespan(app: FastAPI):
     janitor = asyncio.create_task(_hold_janitor())
     # Reconciler polls the provider; it stays OFF unless the operator opts in
     # (PAY_RECONCILE=1). Webhook + the bot's "Cek status" already cover the flow.
+    sweeper = asyncio.create_task(payments.expiry_sweeper(int(os.environ.get("PAY_EXPIRY_SWEEP_SECONDS", "60"))))
     collector = None
     if (os.environ.get("PAY_RECONCILE") or "").strip() in {"1", "true", "yes"}:
         collector = asyncio.create_task(payments.reconciler(int(os.environ.get("PAY_RECONCILE_SECONDS", "300"))))
@@ -38,6 +39,7 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         janitor.cancel()
+        sweeper.cancel()
         if collector is not None:
             collector.cancel()
         await db.close_pool()

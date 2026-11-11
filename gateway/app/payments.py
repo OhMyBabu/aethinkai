@@ -414,6 +414,31 @@ async def wijayapay_webhook(request: Request):
     return {"ok": True, **result}
 
 
+# ------------------------------------------------------------------ expiry sweeper
+async def expiry_sweeper(interval_seconds: int = 60) -> None:
+    """Expire QRIS that are past their own deadline. Local only: the provider is
+    never called, so a stale checkout cannot keep a buyer locked out or spam
+    WijayaPay. A late webhook still settles, because settle_order re-checks the
+    provider and grants a paid order whatever its local status was."""
+    while True:
+        try:
+            expired = await db.pool().fetch(
+                """UPDATE payment_intents SET status = 'expired'
+                    WHERE status = 'pending' AND expires_at IS NOT NULL AND expires_at < now()
+                    RETURNING order_id"""
+            )
+            for row in expired:
+                if row["order_id"]:
+                    await db.pool().execute(
+                        """UPDATE orders SET status = 'expired', expired_at = now()
+                            WHERE id = $1 AND status = 'pending'""",
+                        row["order_id"],
+                    )
+        except Exception as exc:
+            print(f"[pay] expiry sweeper: {exc}", flush=True)
+        await asyncio.sleep(interval_seconds)
+
+
 # ------------------------------------------------------------------ reconciler
 async def reconciler(interval_seconds: int = 30) -> None:
     """Sweep pending intents: grant the paid ones, close the expired ones."""

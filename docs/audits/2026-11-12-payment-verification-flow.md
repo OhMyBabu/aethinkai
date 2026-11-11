@@ -101,6 +101,22 @@ through the internal bot endpoint, list switched from `Menunggu Pembayaran` to
 `Kredit Ditambahkan` on the next beat, the pending bar and panel disappeared, the
 "Pembayaran diterima" notice appeared, and the balance KPI showed the new credit.
 
+## Expiry without polling the provider
+
+The reconciler stays off (`PAY_RECONCILE` unset), so nothing calls WijayaPay on a
+timer. A local sweeper now runs every 60s (`PAY_EXPIRY_SWEEP_SECONDS`) and only
+touches our tables: pending intents whose own `expires_at` passed become
+`expired`, and their orders become `expired` with `expired_at` set. That frees
+the one-open-order slot and closes the panel on the next 5s status beat.
+
+A late webhook is still safe: `settle_order` re-checks the provider and grants a
+paid order whatever its local status was, so money that arrived is never lost to
+an expiry race.
+
+Verified with a QA order whose intent expiry was backdated two minutes: within
+one sweep the order read `expired` with `expired_at` set and the intent read
+`expired`. No provider call was made (`journalctl | grep -ci wijayapay` = 0).
+
 ## Not covered
 
 - The provider round trip itself was not exercised: Bang tests real payments.
