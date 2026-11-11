@@ -146,18 +146,17 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <footer className="mt-10 border-t border-ash/10 sm:mt-12">
-              <div className="flex flex-col gap-6 py-7 sm:flex-row sm:items-center sm:justify-between">
+            <footer className="mt-10 border-t border-ash/10 py-7 sm:mt-12">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   <Wordmark compact className="[&_span.block]:text-[15px]" />
                   <span className="hidden h-4 w-px bg-ash/20 sm:block" aria-hidden />
                   <span className="text-[11.5px] text-dim">© {new Date().getFullYear()}</span>
                 </div>
-                <nav aria-label="Footer" className="flex flex-wrap items-center gap-x-6 gap-y-0">
+                <nav aria-label="Footer" className="flex flex-wrap items-center gap-x-6">
                   {[
                     { label: "Models", href: "#catalog" },
                     { label: "Pricing", href: "#pricing" },
-                    { label: "Playground", href: "#terminal" },
                   ].map((item) => (
                     <a
                       key={item.label}
@@ -173,17 +172,7 @@ export default function LandingPage() {
                   >
                     Sign in
                   </Link>
-                  <a
-                    href="mailto:support@aethink.ai"
-                    className="flex h-9 items-center text-[12.5px] text-ash transition hover:text-warm max-sm:h-11"
-                  >
-                    Contact
-                  </a>
                 </nav>
-              </div>
-              <div className="flex flex-col gap-1 border-t border-ash/10 py-4 text-[11px] text-dim sm:flex-row sm:items-center sm:justify-between">
-                <span className="font-mono">router.aethink.ai.id/v1</span>
-                <span>Jakarta · WIB · UTC+7</span>
               </div>
             </footer>
           </div>
