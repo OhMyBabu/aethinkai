@@ -312,14 +312,18 @@ def home_keyboard(uid: int) -> list:
 def home_text(user: dict | None = None, snap: dict | None = None) -> str:
     """Root: two services, nothing transactional, no balance leak in groups."""
     return (
-        "✦ <b>AethinkAI Store</b>\n"
-        "<code>Digital Products · AI Gateway</code>\n\n"
-        "Selamat datang. Pilih layanan yang ingin Anda gunakan.\n\n"
-        "<b>Digital Store</b>\n"
-        "Akun premium dan produk digital dengan pemesanan langsung melalui bot.\n\n"
-        "<b>AethinkAI Gateway</b>\n"
-        "Akses berbagai model AI melalui satu API key dengan sistem kredit prabayar.\n\n"
-        "Pilih salah satu layanan di bawah untuk melanjutkan."
+        "✦ <b>AETHINKAI STORE</b>\n"
+        "<i>Digital essentials. Intelligent access.</i>\n\n"
+        "Selamat datang di <b>AethinkAI Store.</b>\n\n"
+        "Satu tempat untuk kebutuhan digital Anda, mulai dari akun premium hingga "
+        "akses berbagai model AI.\n\n"
+        "<b>01 / DIGITAL STORE</b>\n"
+        "<blockquote>Temukan akun premium, langganan AI, dan produk digital pilihan.\n\n"
+        "<i>Pilih produk. Bayar. Terima pesanan.</i></blockquote>\n\n"
+        "<b>02 / AETHINKAI GATEWAY</b>\n"
+        "<blockquote>Akses Claude, DeepSeek, GLM, Kimi, dan model lainnya melalui satu API key.\n\n"
+        "<i>Isi kredit. Integrasikan. Bayar sesuai pemakaian.</i></blockquote>\n\n"
+        "<i>Pilih layanan Anda untuk memulai.</i>"
     )
 
 
