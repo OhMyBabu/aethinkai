@@ -102,7 +102,10 @@ def state() -> dict:
 
 
 def save_state(data: dict) -> None:
-    STATE.write_text(json.dumps(data))
+    """Merge instead of replace: the poller writes offset while flags live here too."""
+    current = state()
+    current.update(data)
+    STATE.write_text(json.dumps(current))
 
 
 def idr(micro: int) -> str:
@@ -203,6 +206,14 @@ def tg(method: str, **params: Any) -> dict:
     return {}
 
 
+def send_reply_keyboard(chat_id: int) -> dict:
+    """Persistent shortcuts under the input field. Inline panels stay the primary UI."""
+    keyboard = [[{"text": "Store"}, {"text": "Gateway"}],
+                [{"text": "Account"}, {"text": "Support"}]]
+    return tg("sendMessage", chat_id=chat_id, text="Shortcut menu aktif di bawah.",
+              reply_markup={"keyboard": keyboard, "resize_keyboard": True, "is_persistent": True})
+
+
 def send(chat_id: int, text: str, keyboard: list | None = None) -> dict:
     params: dict[str, Any] = {"chat_id": chat_id, "text": text, "parse_mode": "HTML",
                               "disable_web_page_preview": True}
@@ -297,11 +308,25 @@ def gateway_status() -> dict:
 
 
 # ---------------------------------------------------------------- views
-def home_keyboard(uid: int) -> list:
+def pending_order(uid: int, snap: dict | None = None) -> dict | None:
+    snap = snap if snap is not None else buyer_snapshot(uid)
+    for order in (snap or {}).get("orders") or []:
+        if order.get("status") == "pending":
+            return order
+    return None
+
+
+def home_keyboard(uid: int, snap: dict | None = None) -> list:
     """Executive dashboard: two full-width services, utilities, then the site."""
     rows = [
         [btn("Digital Store  ›", "ui:st:home")],
         [btn("AI Gateway  ›", "ui:gw:home")],
+    ]
+    pending = pending_order(uid, snap)
+    if pending:
+        rows.append([btn(f"◌ Menunggu pembayaran · {rupiah(pending.get('price_idr', 0))}",
+                         f"ui:order:{pending.get('id')}")])
+    rows += [
         [btn("My Account", "ui:activity"), btn("Support", "ui:help")],
         [url_btn("aethink.ai.id  ↗", f"{portal_url().rstrip('/')}/")],
     ]
@@ -662,6 +687,32 @@ def gateway_model(idx: int, page: int) -> tuple[str, list]:
         [url_btn("Buka Panduan API", f"{portal_url()}/panduan")],
         [btn("‹ Model & Harga", f"ui:gw:models:{page}")],
     ]
+    return "\n".join(lines), kb
+
+
+def order_panel(uid: int, order_id: str) -> tuple[str, list]:
+    snap = buyer_snapshot(uid)
+    order = next((o for o in (snap or {}).get("orders") or [] if o.get("id") == order_id), None)
+    if not order:
+        return ("<b>Pesanan tidak ditemukan</b>\n\nDaftar pesanan sudah berubah.",
+                [[btn("‹ Menu Utama", "ui:home")]])
+    status = str(order.get("status"))
+    symbol = {"pending": "◌", "granted": "✓", "cancelled": "×", "expired": "×", "failed": "×"}.get(status, "·")
+    lines = [
+        "<b>Invoice</b>",
+        f"<code>{html.escape(order_id)}</code>",
+        "",
+        f"Paket        : {html.escape(str(order.get('sku', '')))}",
+        f"Status       : {symbol} {ORDER_STATUS_ID.get(status, status)}",
+        f"Nominal      : {rupiah(order.get('price_idr', 0))}",
+    ]
+    if order.get("created_at"):
+        lines.append(f"Dibuat       : {str(order['created_at'])[:16].replace('T', ' ')}")
+    kb = []
+    if status == "pending":
+        kb.append([btn("Cek Status", f"pay:{order_id}")])
+    kb.append([url_btn("Buka Dashboard", f"{portal_url()}/portal")])
+    kb.append([btn("‹ Menu Utama", "ui:home")])
     return "\n".join(lines), kb
 
 
@@ -1082,7 +1133,7 @@ def do_rotate(chat_id: int, uid: int, panel: int | None = None) -> None:
 def show_home(chat_id: int, uid: int, user: dict | None = None,
               message_id: int | None = None) -> None:
     snap = buyer_snapshot(uid)
-    text, kb = home_text(user or {"first_name": ""}, snap), home_keyboard(uid)
+    text, kb = home_text(user or {"first_name": ""}, snap), home_keyboard(uid, snap)
     if message_id:
         edit(chat_id, message_id, text, kb)
     else:
@@ -1103,6 +1154,16 @@ def handle_message(msg: dict) -> None:
     cmd = text.split()[0].split("@")[0].lower() if text.startswith("/") else ""
     args = text.split()[1:]
 
+    shortcuts = {"store": store_home, "account": activity_home, "support": help_home}
+    if not cmd and text.lower() in {"store", "gateway", "account", "support"} \
+            and (msg.get("chat") or {}).get("type") == "private":
+        if text.lower() == "gateway":
+            panel = gateway_home(uid)
+        else:
+            panel = shortcuts[text.lower()]()
+        send(chat_id, *panel)
+        return
+
     # deep link from the web: t.me/<bot>?start=link_<code>
     if cmd == "/start" and args and args[0].startswith("link_"):
         confirm_link(args[0][len("link_"):], user)
@@ -1115,6 +1176,13 @@ def handle_message(msg: dict) -> None:
                       "Buka chat privat dengan bot ini, lalu kirim /start.")
         return
     if cmd in ("/start", "/menu"):
+        if (msg.get("chat") or {}).get("type") == "private":
+            installed = dict(state().get("reply_kb") or {})
+            today = time.strftime("%Y-%m-%d")
+            if installed.get(str(uid)) != today:
+                send_reply_keyboard(chat_id)
+                installed[str(uid)] = today
+                save_state({"reply_kb": installed})
         show_home(chat_id, uid, user)
         return
     if cmd == "/store":
@@ -1203,6 +1271,12 @@ def handle_callback(cb: dict) -> None:
             text, kb = gateway_model(int(parts[3]), int(parts[4]))
         else:
             text, kb = gateway_home(uid)
+        edit(chat_id, mid, text, kb)
+        return
+
+    if data.startswith("ui:order:"):
+        ack(cb_id)
+        text, kb = order_panel(uid, data.split(":", 2)[2])
         edit(chat_id, mid, text, kb)
         return
 

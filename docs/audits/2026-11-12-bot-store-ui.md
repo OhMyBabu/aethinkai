@@ -74,6 +74,17 @@ read `Menunggu pembayaran`, `Kredit Ditambahkan`, `Kedaluwarsa`, `Dibatalkan`.
 - Real data seen on screen: `Saldo API: Rp72.000`, `Batas akun: 60 RPM`,
   transactions with `Kredit Ditambahkan` and `Dibatalkan`.
 
+## Home extras
+
+- A live pending order adds one row to the home keyboard:
+  `◌ Menunggu pembayaran · Rp5.000`, opening an invoice panel with status,
+  nominal and creation date. Granted orders drop the row.
+- `reply_kb` installs persistent shortcuts (`Store`, `Gateway`, `Account`,
+  `Support`) under the input field once per user per day on `/start`; tapping one
+  sends the same panel as the inline route. Inline stays the primary navigation.
+- `save_state` now merges keys so the poll offset and the keyboard flag no longer
+  overwrite each other.
+
 ## Not covered
 
 - Store catalogue and checkout screens render empty states until the store
