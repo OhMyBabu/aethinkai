@@ -298,11 +298,12 @@ def gateway_status() -> dict:
 
 # ---------------------------------------------------------------- views
 def home_keyboard(uid: int) -> list:
-    """Two doors, then utilities. Nothing else lives on the root panel."""
+    """Executive dashboard: two full-width services, utilities, then the site."""
     rows = [
-        [btn("Digital Store", "ui:st:home")],
-        [btn("AethinkAI Gateway", "ui:gw:home")],
-        [btn("Aktivitas Saya", "ui:activity"), btn("Bantuan", "ui:help")],
+        [btn("Digital Store  ›", "ui:st:home")],
+        [btn("AI Gateway  ›", "ui:gw:home")],
+        [btn("My Account", "ui:activity"), btn("Support", "ui:help")],
+        [url_btn("aethink.ai.id  ↗", f"{portal_url().rstrip('/')}/")],
     ]
     if uid in ADMINS:
         rows.append([btn("Admin Panel", "m:admin")])
@@ -310,20 +311,18 @@ def home_keyboard(uid: int) -> list:
 
 
 def home_text(user: dict | None = None, snap: dict | None = None) -> str:
-    """Root: two services, nothing transactional, no balance leak in groups."""
+    """Root: executive dashboard. Two services, nothing transactional."""
     return (
-        "✦ <b>AETHINKAI STORE</b>\n"
-        "<i>Digital essentials. Intelligent access.</i>\n\n"
-        "Selamat datang di <b>AethinkAI Store.</b>\n\n"
-        "Satu tempat untuk kebutuhan digital Anda, mulai dari akun premium hingga "
-        "akses berbagai model AI.\n\n"
-        "<b>01 / DIGITAL STORE</b>\n"
-        "<blockquote>Temukan akun premium, langganan AI, dan produk digital pilihan.\n\n"
-        "<i>Pilih produk. Bayar. Terima pesanan.</i></blockquote>\n\n"
-        "<b>02 / AETHINKAI GATEWAY</b>\n"
-        "<blockquote>Akses Claude, DeepSeek, GLM, Kimi, dan model lainnya melalui satu API key.\n\n"
-        "<i>Isi kredit. Integrasikan. Bayar sesuai pemakaian.</i></blockquote>\n\n"
-        "<i>Pilih layanan Anda untuk memulai.</i>"
+        "<b>AethinkAI Store | HOME</b>\n"
+        "<i>Digital commerce &amp; AI infrastructure</i>\n\n"
+        "<blockquote><b>Your Digital Workspace</b>\n"
+        "Kelola kebutuhan digital dan akses AI Anda dari satu tempat.</blockquote>\n\n"
+        "<b>AVAILABLE SERVICES</b>\n\n"
+        "<b>↳ Digital Store</b>\n"
+        "Premium accounts · AI subscriptions · Digital products\n\n"
+        "<b>↳ AethinkAI Gateway</b>\n"
+        "Multi-model API · Prepaid credits · Developer tools\n\n"
+        "<i>Select a service to continue.</i>"
     )
 
 
