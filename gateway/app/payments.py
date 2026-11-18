@@ -233,20 +233,52 @@ def _public_payload(intent: dict[str, Any], order: dict[str, Any], token: str) -
 
 
 # ------------------------------------------------------------------ settle
+async def _provider_refs(order_id: str) -> list[str]:
+    """Every provider ref ever issued for the order, newest first.
+
+    A retry mints `<order_id>-<n>`, but the buyer may still pay the earlier QR, so
+    settling has to look at all of them, not just the latest."""
+    rows = await db.pool().fetch(
+        """SELECT provider_ref FROM payment_intents
+            WHERE order_id = $1 AND provider = $2 AND provider_ref IS NOT NULL
+            ORDER BY created_at DESC""",
+        order_id, PROVIDER,
+    )
+    refs = list(dict.fromkeys(r["provider_ref"] for r in rows))
+    return refs or [order_id]
+
+
+async def _resolve_provider_state(order_id: str) -> tuple[dict[str, Any] | None, str]:
+    """Ask the provider about each ref of the order.
+
+    Returns (paid_status, "paid") when any ref is paid; otherwise (None, reason) where
+    reason is pending / provider_unreachable / expired / unknown. The order only counts
+    as expired when every ref answered and none of them is still payable."""
+    states: list[str | None] = []
+    for ref in await _provider_refs(order_id):
+        st = await provider_status(ref)
+        if st is not None and st["state"] == "paid":
+            return st, "paid"
+        states.append(None if st is None else st["state"])
+    if "pending" in states:
+        return None, "pending"
+    if None in states:
+        return None, "provider_unreachable"
+    if "expired" in states:
+        return None, "expired"
+    return None, states[0] if states else "unknown"
+
+
 async def settle_order(order_id: str, source: str, raw: Any = None) -> dict[str, Any]:
     """Verify with the provider, then grant. Safe to call any number of times."""
-    intent = await _intent_row(order_id)
-    ref = (intent or {}).get("provider_ref") or order_id
-    st = await provider_status(ref)
+    st, reason = await _resolve_provider_state(order_id)
     if st is None:
-        return {"settled": False, "reason": "provider_unreachable"}
-    if st["state"] != "paid":
-        if st["state"] == "expired":
+        if reason == "expired":
             await db.pool().execute(
                 "UPDATE payment_intents SET status='expired' WHERE order_id=$1 AND status='pending'", order_id)
             await db.pool().execute(
                 "UPDATE orders SET status='expired', expired_at=now() WHERE id=$1 AND status='pending'", order_id)
-        return {"settled": False, "reason": st["state"]}
+        return {"settled": False, "reason": reason}
 
     data = st.get("data") or {}
     paid_total = int(data.get("total_bayar") or data.get("total_dibayar") or 0)
