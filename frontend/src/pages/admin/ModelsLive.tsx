@@ -128,7 +128,7 @@ export default function AdminModelLivePage() {
                   className="flex w-full cursor-pointer flex-col gap-3 p-4 text-left transition hover:bg-warm/[0.03] sm:flex-row sm:items-center sm:gap-4 sm:p-5"
                 >
                   <span className="flex min-w-0 flex-1 items-center gap-3">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-ash/20 bg-[#141518]">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-ash/20 bg-panel">
                       <ModelMark modelId={model.public_id} size={20} />
                     </span>
                     <span className="min-w-0">
@@ -138,29 +138,29 @@ export default function AdminModelLivePage() {
                           {model.provider}
                         </StatusPill>
                       </span>
-                      <span className="mt-0.5 block truncate font-mono text-[11px] text-ash/70">{model.public_id}</span>
+                      <span className="mt-0.5 block truncate font-mono text-[12px] text-ash/70">{model.public_id}</span>
                     </span>
                   </span>
 
                   <span className="grid grid-cols-2 gap-x-5 gap-y-1 text-[12px] sm:flex sm:items-center sm:gap-6">
                     <span className="text-ash">
-                      <span className="block text-[10px] uppercase tracking-wide text-ash/60">Req</span>
+                      <span className="block text-[12px] text-ash/60">Req</span>
                       <span className="text-warm">{formatNumber(model.requests)}</span>
                     </span>
                     <span className="text-ash">
-                      <span className="block text-[10px] uppercase tracking-wide text-ash/60">Token</span>
+                      <span className="block text-[12px] text-ash/60">Token</span>
                       <span className="text-warm">{formatCompact(model.tokens_in + model.tokens_out)}</span>
                     </span>
                     <span className="text-ash">
-                      <span className="block text-[10px] uppercase tracking-wide text-ash/60">User</span>
+                      <span className="block text-[12px] text-ash/60">User</span>
                       <span className="text-warm">{model.user_count}</span>
                     </span>
                     <span className="text-ash">
-                      <span className="block text-[10px] uppercase tracking-wide text-ash/60">IP</span>
+                      <span className="block text-[12px] text-ash/60">IP</span>
                       <span className="text-warm">{model.ip_count}</span>
                     </span>
                     <span className="hidden text-ash sm:block">
-                      <span className="block text-[10px] uppercase tracking-wide text-ash/60">Biaya</span>
+                      <span className="block text-[12px] text-ash/60">Biaya</span>
                       <span className="text-warm">{idr(model.cost_micro)}</span>
                     </span>
                   </span>
@@ -173,13 +173,13 @@ export default function AdminModelLivePage() {
                 </button>
 
                 {expanded ? (
-                  <div className="border-t border-ash/12 bg-[#141518]/40 px-4 pb-4 pt-3 sm:px-5">
+                  <div className="border-t border-ash/12 bg-panel/40 px-4 pb-4 pt-3 sm:px-5">
                     <div className="space-y-3">
                       {model.users.map((user) => (
                         <div key={user.user_id} className="rounded-xl border border-ash/15 bg-[#16171a] p-3">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <span className="text-[13px] font-medium text-warm">{user.email}</span>
-                            <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-ash">
+                            <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ash">
                               <span>{formatNumber(user.requests)} req</span>
                               <span>in {formatCompact(user.tokens_in)}</span>
                               <span>out {formatCompact(user.tokens_out)}</span>
@@ -190,7 +190,7 @@ export default function AdminModelLivePage() {
                             {user.ips.map((ip) => (
                               <span
                                 key={`${ip.ip}-${ip.user_agent}`}
-                                className="inline-flex items-center gap-1.5 rounded-md border border-ash/20 bg-warm/[0.03] px-2 py-1 text-[11px] text-ash"
+                                className="inline-flex items-center gap-1.5 rounded-md border border-ash/20 bg-warm/[0.03] px-2 py-1 text-[12px] text-ash"
                                 title={`${ip.user_agent} · terakhir ${relativeTime(ip.last_seen)}`}
                               >
                                 <Globe size={11} className="text-flame/70" aria-hidden />
@@ -200,7 +200,7 @@ export default function AdminModelLivePage() {
                               </span>
                             ))}
                           </div>
-                          <p className="mt-2 text-[11px] text-ash/60">
+                          <p className="mt-2 text-[12px] text-ash/60">
                             Terakhir: {relativeTime(user.ips[0]?.last_seen ?? model.last_seen)} ·{" "}
                             {user.ips[0]?.user_agent ?? "unknown"}
                           </p>

@@ -139,7 +139,7 @@ export default function AdminRoutingPage() {
       />
 
       {error ? (
-        <div className="rounded-xl border border-[#c4633a]/40 bg-[#c4633a]/10 px-3 py-2 text-[12px] text-[#e79c78]">
+        <div className="rounded-xl border border-bad/40 bg-bad/10 px-3 py-2 text-[12px] text-bad">
           {error}
         </div>
       ) : null}
@@ -159,20 +159,20 @@ export default function AdminRoutingPage() {
               title={
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono text-[13px] text-warm">{group.publicId}</span>
-                  <span className="text-[11px] text-ash">{group.displayName}</span>
+                  <span className="text-[12px] text-ash">{group.displayName}</span>
                   <StatusPill tone={group.routes.some((r) => r.active) ? "success" : "error"}>
                     {group.routes.filter((r) => r.active).length} aktif
                   </StatusPill>
                 </div>
               }
               description={
-                <span className="text-[11px] text-ash">
+                <span className="text-[12px] text-ash">
                   context {ctx(group.contextWindow)} · output {ctx(group.maxOutput)} · {group.routes.length} route
                 </span>
               }
               action={
                 <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 text-[11px] text-ash">
+                  <label className="flex items-center gap-2 text-[12px] text-ash">
                     Fallback
                     <Switch
                       checked={group.fallbackEnabled}
@@ -199,7 +199,7 @@ export default function AdminRoutingPage() {
             <div className="mt-3 overflow-x-auto">
               <table className="w-full min-w-[640px] border-collapse text-left text-[12px]">
                 <thead>
-                  <tr className="border-b border-ash/15 text-[10.5px] uppercase tracking-[0.08em] text-dim">
+                  <tr className="border-b border-ash/15 text-[12px] text-dim">
                     <th className="py-2 pr-3 font-medium">#</th>
                     <th className="py-2 pr-3 font-medium">Route upstream</th>
                     <th className="py-2 pr-3 font-medium">Provider</th>
@@ -263,7 +263,7 @@ export default function AdminRoutingPage() {
                               aria-label="Hapus route"
                               disabled={busy === `r:${route.id}`}
                               onClick={() => void run(`r:${route.id}`, () => deleteModelRoute(route.id))}
-                              className="rounded-md border border-ash/20 p-1 text-ash hover:border-[#c4633a]/50 hover:text-[#e79c78] disabled:opacity-40"
+                              className="rounded-md border border-ash/20 p-1 text-ash hover:border-bad/50 hover:text-bad disabled:opacity-40"
                             >
                               <Trash2 size={12} />
                             </button>
@@ -298,11 +298,11 @@ export default function AdminRoutingPage() {
               >
                 <span className="min-w-0">
                   <span className="block truncate font-mono text-[12px] text-warm">{row.id}</span>
-                  <span className="block text-[10.5px] text-ash">
+                  <span className="block text-[12px] text-ash">
                     {row.provider} · ctx {ctx(row.context_window)} · out {ctx(row.max_output)}
                   </span>
                 </span>
-                <span className="shrink-0 text-[10.5px] text-ash">
+                <span className="shrink-0 text-[12px] text-ash">
                   {row.in_use ? "sudah dipakai" : "tambah"}
                 </span>
               </button>

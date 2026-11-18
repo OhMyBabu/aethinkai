@@ -151,19 +151,19 @@ export default function AdminFallbacksPage() {
                 <StatusPill tone="neutral" dot={false}>
                   {group.publicId}
                 </StatusPill>
-                <span className="ml-auto text-[11px] text-ash/60">{group.rows.length} cadangan</span>
+                <span className="ml-auto text-[12px] text-ash/60">{group.rows.length} cadangan</span>
               </div>
               <div className="divide-y divide-ash/8">
                 {group.rows.map((row, index) => (
                   <div key={row.id} className="flex flex-wrap items-center gap-3 p-4 sm:px-5">
-                    <span className="grid h-6 w-6 place-items-center rounded-md border border-ash/20 bg-warm/[0.04] text-[11px] text-ash">
+                    <span className="grid h-6 w-6 place-items-center rounded-md border border-ash/20 bg-warm/[0.04] text-[12px] text-ash">
                       {index + 1}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[13px] text-warm">{row.fallback_name}</p>
-                      <p className="truncate font-mono text-[10.5px] text-ash/60">{row.fallback_model_id}</p>
+                      <p className="truncate font-mono text-[12px] text-ash/60">{row.fallback_model_id}</p>
                     </div>
-                    <span className="text-[11.5px] text-ash">
+                    <span className="text-[12px] text-ash">
                       {row.provider_label || "n/a"} · prioritas {row.priority}
                     </span>
                     <Switch
@@ -217,7 +217,7 @@ export default function AdminFallbacksPage() {
                 id={id}
                 value={source}
                 onChange={(event) => setSource(event.target.value)}
-                className="w-full cursor-pointer rounded-xl border border-ash/25 bg-[#141518] px-3.5 py-2.5 text-sm text-warm focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
+                className="w-full cursor-pointer rounded-xl border border-ash/25 bg-panel px-3.5 py-2.5 text-sm text-warm focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
               >
                 <option value="">Pilih model…</option>
                 {models.map((model) => (
@@ -235,7 +235,7 @@ export default function AdminFallbacksPage() {
                 id={id}
                 value={target}
                 onChange={(event) => setTarget(event.target.value)}
-                className="w-full cursor-pointer rounded-xl border border-ash/25 bg-[#141518] px-3.5 py-2.5 text-sm text-warm focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
+                className="w-full cursor-pointer rounded-xl border border-ash/25 bg-panel px-3.5 py-2.5 text-sm text-warm focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
               >
                 <option value="">Pilih model cadangan…</option>
                 {upstream.map((model) => (
@@ -255,7 +255,7 @@ export default function AdminFallbacksPage() {
                   inputMode="numeric"
                   value={priority}
                   onChange={(event) => setPriority(event.target.value.replace(/[^\d]/g, ""))}
-                  className="w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 py-2.5 text-sm text-warm focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
+                  className="w-full rounded-xl border border-ash/25 bg-panel px-3.5 py-2.5 text-sm text-warm focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
                 />
               )}
             </Field>
@@ -266,13 +266,13 @@ export default function AdminFallbacksPage() {
                   value={providerLabel}
                   onChange={(event) => setProviderLabel(event.target.value)}
                   placeholder="DeepSeek"
-                  className="w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 py-2.5 text-sm text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
+                  className="w-full rounded-xl border border-ash/25 bg-panel px-3.5 py-2.5 text-sm text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
                 />
               )}
             </Field>
           </div>
 
-          {error ? <p className="text-[12px] text-[#e08a5f]">{error}</p> : null}
+          {error ? <p className="text-[12px] text-bad">{error}</p> : null}
         </div>
       </Modal>
     </div>

@@ -242,7 +242,7 @@ export default function AdminBansosPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-[13px]">
               <thead>
-                <tr className="border-y border-ash/12 text-[11px] uppercase tracking-wide text-ash/70">
+                <tr className="border-y border-ash/12 text-[12px] text-ash/70">
                   <th className="px-5 py-2.5 font-medium">Program</th>
                   <th className="px-4 py-2.5 font-medium">Kredit</th>
                   <th className="px-4 py-2.5 font-medium">Key bersama</th>
@@ -259,7 +259,7 @@ export default function AdminBansosPage() {
                     <td className="px-5 py-3">
                       <button type="button" onClick={() => openEdit(program)} className="cursor-pointer text-left">
                         <span className="block font-medium text-warm">{program.name}</span>
-                        <span className="text-[11px] text-ash/60">
+                        <span className="text-[12px] text-ash/60">
                           1 key bersama · {program.auto_grant ? "auto-grant signup" : "manual"}
                         </span>
                       </button>
@@ -268,7 +268,7 @@ export default function AdminBansosPage() {
                     <td className="px-4 py-3">
                       {program.shared_key ? (
                         <div className="flex items-center gap-1.5">
-                          <code className="font-mono text-[10.5px] text-ash">{program.shared_key.masked}</code>
+                          <code className="font-mono text-[12px] text-ash">{program.shared_key.masked}</code>
                           <CopyChip value={program.shared_key.key} />
                           <button
                             type="button"
@@ -284,20 +284,20 @@ export default function AdminBansosPage() {
                           </button>
                         </div>
                       ) : (
-                        <span className="text-[11px] text-ash/50">-</span>
+                        <span className="text-[12px] text-ash/50">-</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
                       <span className="inline-flex flex-wrap gap-1">
                         {(program.models ?? []).slice(0, 3).map((model) => (
-                          <span key={model} className="rounded border border-ash/20 bg-warm/[0.03] px-1.5 py-0.5 text-[10.5px] text-ash">
+                          <span key={model} className="rounded border border-ash/20 bg-warm/[0.03] px-1.5 py-0.5 text-[12px] text-ash">
                             {model}
                           </span>
                         ))}
                         {(program.models ?? []).length > 3 ? (
-                          <span className="px-1 text-[10.5px] text-ash/60">+{(program.models ?? []).length - 3}</span>
+                          <span className="px-1 text-[12px] text-ash/60">+{(program.models ?? []).length - 3}</span>
                         ) : null}
-                        {(program.models ?? []).length === 0 ? <span className="text-[11px] text-ash/60">semua model</span> : null}
+                        {(program.models ?? []).length === 0 ? <span className="text-[12px] text-ash/60">semua model</span> : null}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-ash">
@@ -305,7 +305,7 @@ export default function AdminBansosPage() {
                     </td>
                     <td className="px-4 py-3 text-ash">
                       {formatIDR(program.used_idr)}
-                      <span className="ml-1 text-[11px] text-ash/50">
+                      <span className="ml-1 text-[12px] text-ash/50">
                         ({((program.used_idr / Math.max(program.granted_idr, 1)) * 100).toFixed(0)}%)
                       </span>
                     </td>
@@ -356,7 +356,7 @@ export default function AdminBansosPage() {
           <div className="mt-3 overflow-x-auto">
             <table className="w-full min-w-[680px] text-left text-[13px]">
               <thead>
-                <tr className="border-y border-ash/12 text-[11px] uppercase tracking-wide text-ash/70">
+                <tr className="border-y border-ash/12 text-[12px] text-ash/70">
                   <th className="px-5 py-2.5 font-medium">User</th>
                   <th className="px-4 py-2.5 font-medium">Program</th>
                   <th className="px-4 py-2.5 font-medium">Kredit</th>
@@ -375,7 +375,7 @@ export default function AdminBansosPage() {
                     <td className="px-4 py-3 text-ash">{idrFine(grant.amount_micro)}</td>
                     <td className="px-4 py-3 text-ash">{idrFine(grant.used_micro)}</td>
                     <td className="px-4 py-3 text-warm">{idrFine(grant.remaining_micro)}</td>
-                    <td className="px-4 py-3 text-[11.5px] text-ash/70">{formatDateTime(grant.created_at)}</td>
+                    <td className="px-4 py-3 text-[12px] text-ash/70">{formatDateTime(grant.created_at)}</td>
                     <td className="px-4 py-3">
                       <StatusPill tone={grant.status === "active" ? "active" : grant.status === "revoked" ? "revoked" : "neutral"}>
                         {grant.status}
@@ -428,7 +428,7 @@ export default function AdminBansosPage() {
                 value={draft.name}
                 onChange={(event) => setDraft((d) => ({ ...d, name: event.target.value }))}
                 placeholder="Bansos Publik November"
-                className="w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 py-2.5 text-sm text-warm placeholder:text-ash/60 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
+                className="w-full rounded-xl border border-ash/25 bg-panel px-3.5 py-2.5 text-sm text-warm placeholder:text-ash/60 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
               />
             )}
           </Field>
@@ -441,23 +441,23 @@ export default function AdminBansosPage() {
                   inputMode="numeric"
                   value={draft.credit}
                   onChange={(event) => setDraft((d) => ({ ...d, credit: event.target.value.replace(/[^\d]/g, "") }))}
-                  className="w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 py-2.5 text-sm text-warm focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
+                  className="w-full rounded-xl border border-ash/25 bg-panel px-3.5 py-2.5 text-sm text-warm focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
                 />
               )}
             </Field>
           </div>
 
-          <div className="flex items-center justify-between rounded-xl border border-ash/18 bg-[#141518] px-3.5 py-2.5">
+          <div className="flex items-center justify-between rounded-xl border border-ash/18 bg-panel px-3.5 py-2.5">
             <div>
               <p className="text-[13px] text-warm">Auto-grant saat signup</p>
-              <p className="text-[11px] text-ash/70">Setiap akun baru langsung dapat kredit bansos ini.</p>
+              <p className="text-[12px] text-ash/70">Setiap akun baru langsung dapat kredit bansos ini.</p>
             </div>
             <Switch checked={draft.auto} label="Auto grant" onChange={(next) => setDraft((d) => ({ ...d, auto: next }))} />
           </div>
 
           <div>
             <p className="mb-2 text-[12px] font-medium text-ash">Model yang masuk bansos</p>
-            <div className="grid max-h-48 gap-1.5 overflow-y-auto rounded-xl border border-ash/18 bg-[#141518] p-2 sm:grid-cols-2">
+            <div className="grid max-h-48 gap-1.5 overflow-y-auto rounded-xl border border-ash/18 bg-panel p-2 sm:grid-cols-2">
               {catalog.map((model) => {
                 const checked = draft.models.includes(model.id);
                 return (
@@ -477,13 +477,13 @@ export default function AdminBansosPage() {
                       className="h-4 w-4 cursor-pointer accent-[#E7893C]"
                     />
                     <span className={checked ? "text-warm" : ""}>{model.display_name}</span>
-                    <span className="ml-auto font-mono text-[10px] text-ash/50">{model.id}</span>
+                    <span className="ml-auto font-mono text-[12px] text-ash/50">{model.id}</span>
                   </label>
                 );
               })}
               {catalog.length === 0 ? <p className="p-2 text-[12px] text-ash/60">Katalog model belum termuat.</p> : null}
             </div>
-            <p className="mt-1.5 text-[11px] text-ash/60">Kosongkan centang = semua model berharga boleh dipakai.</p>
+            <p className="mt-1.5 text-[12px] text-ash/60">Kosongkan centang = semua model berharga boleh dipakai.</p>
           </div>
 
           <Field label="Catatan (opsional)">
@@ -493,17 +493,17 @@ export default function AdminBansosPage() {
                 value={draft.note}
                 onChange={(event) => setDraft((d) => ({ ...d, note: event.target.value }))}
                 placeholder="Kuota uji coba publik"
-                className="w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 py-2.5 text-sm text-warm placeholder:text-ash/60 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
+                className="w-full rounded-xl border border-ash/25 bg-panel px-3.5 py-2.5 text-sm text-warm placeholder:text-ash/60 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
               />
             )}
           </Field>
 
-          <div className="flex items-center justify-between rounded-xl border border-ash/18 bg-[#141518] px-3.5 py-2.5">
+          <div className="flex items-center justify-between rounded-xl border border-ash/18 bg-panel px-3.5 py-2.5">
             <p className="text-[13px] text-warm">Program aktif</p>
             <Switch checked={draft.active} label="Aktif" onChange={(next) => setDraft((d) => ({ ...d, active: next }))} />
           </div>
 
-          {error ? <p className="text-[12px] text-[#e08a5f]">{error}</p> : null}
+          {error ? <p className="text-[12px] text-bad">{error}</p> : null}
         </div>
       </Modal>
 
@@ -530,7 +530,7 @@ export default function AdminBansosPage() {
                 id={id}
                 value={grantProgram}
                 onChange={(event) => setGrantProgram(event.target.value)}
-                className="w-full cursor-pointer rounded-xl border border-ash/25 bg-[#141518] px-3.5 py-2.5 text-sm text-warm focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
+                className="w-full cursor-pointer rounded-xl border border-ash/25 bg-panel px-3.5 py-2.5 text-sm text-warm focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
               >
                 <option value="">Pilih program…</option>
                 {programs.map((program) => (
@@ -550,7 +550,7 @@ export default function AdminBansosPage() {
                 onChange={(event) => setGrantEmails(event.target.value)}
                 rows={4}
                 placeholder={"budi@mail.com\nsari@mail.com"}
-                className="w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 py-2.5 text-sm text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
+                className="w-full rounded-xl border border-ash/25 bg-panel px-3.5 py-2.5 text-sm text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
               />
             )}
           </Field>
@@ -563,16 +563,16 @@ export default function AdminBansosPage() {
                 value={grantAmount}
                 onChange={(event) => setGrantAmount(event.target.value.replace(/[^\d]/g, ""))}
                 placeholder="Kosongkan = pakai nominal program"
-                className="w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 py-2.5 text-sm text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
+                className="w-full rounded-xl border border-ash/25 bg-panel px-3.5 py-2.5 text-sm text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/25"
               />
             )}
           </Field>
 
-          {error ? <p className="text-[12px] text-[#e08a5f]">{error}</p> : null}
+          {error ? <p className="text-[12px] text-bad">{error}</p> : null}
         </div>
       </Modal>
 
-      <p className="text-[11px] text-ash/50">
+      <p className="text-[12px] text-ash/50">
         {loading ? "Memuat data bansos…" : `${formatNumber(grants.length)} grant · total kredit ${formatIDR(totals.granted)} · terpakai ${formatIDR(totals.used)}`}{" "}
         · {formatCompact(grants.length)} baris
       </p>

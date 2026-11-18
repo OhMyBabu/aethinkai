@@ -64,7 +64,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 exit={{ opacity: 0, y: 8, scale: 0.98 }}
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                 className={cn(
-                  "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border px-4 py-3 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)]",
+                  "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border px-4 py-3",
                   "border-white/10 bg-[#1B1B1C] text-warm",
                 )}
                 role="status"

@@ -12,8 +12,12 @@ __pycache__/
 *.env
 .admin
 .devkey
-data/
+/data/
+/gateway/data/
 *.bak-*
 
 # OS noise
 .DS_Store
+
+# local QA scratch
+.tmp/

@@ -24,9 +24,9 @@ function ctxLabel(tokens: number): string {
 function CopyBlock({ code, label, copyLabel = "Salin kode" }: { code: string; label: string; copyLabel?: string }) {
   const [done, setDone] = useState(false);
   return (
-    <div className="relative rounded-xl border border-[#3A3B3D] bg-[#141518]">
+    <div className="relative rounded-xl border border-white/12 bg-panel">
       <div className="flex items-center justify-between border-b border-white/8 px-3 py-2">
-        <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-[#85888B]">{label}</span>
+        <span className="font-mono text-[12px] text-ash">{label}</span>
         <button
           type="button"
           onClick={() => {
@@ -35,7 +35,7 @@ function CopyBlock({ code, label, copyLabel = "Salin kode" }: { code: string; la
             window.setTimeout(() => setDone(false), 1400);
           }}
           aria-label={done ? "Kode berhasil disalin" : copyLabel}
-          className="inline-flex items-center gap-1 rounded-md border border-[#3A3B3D] px-2 py-1 text-[10.5px] text-[#FAF8F4]/80 transition hover:bg-[#22242a]"
+          className="inline-flex items-center gap-1 rounded-md border border-white/12 px-2 py-1 text-[12px] text-warm/80 transition hover:bg-panel-2"
         >
           {done ? <Check size={11} /> : <Copy size={11} />} {done ? "Tersalin" : copyLabel}
           <span aria-live="polite" className="sr-only">
@@ -43,7 +43,7 @@ function CopyBlock({ code, label, copyLabel = "Salin kode" }: { code: string; la
           </span>
         </button>
       </div>
-      <pre className="overflow-x-auto px-3 py-3 font-mono text-[11.5px] leading-5 text-[#d7d3cc]">{code}</pre>
+      <pre className="overflow-x-auto px-3 py-3 font-mono text-[12px] leading-5 text-warm/85">{code}</pre>
     </div>
   );
 }
@@ -51,8 +51,8 @@ function CopyBlock({ code, label, copyLabel = "Salin kode" }: { code: string; la
 function Section({ title, children, id }: { title: string; children: React.ReactNode; id?: string }) {
   return (
     <section id={id} className="scroll-mt-24 border-t border-white/8 pt-8">
-      <h2 className="text-[19px] font-semibold tracking-[-0.01em] text-[#FAF8F4]">{title}</h2>
-      <div className="mt-3 space-y-3 text-[13.5px] leading-7 text-[#a9a49c]">{children}</div>
+      <h2 className="text-[19px] font-semibold tracking-[-0.01em] text-warm">{title}</h2>
+      <div className="mt-3 space-y-3 text-[13.5px] leading-7 text-ash">{children}</div>
     </section>
   );
 }
@@ -117,51 +117,51 @@ export default function DocsPage() {
   }'`;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-[#FAF8F4]">
+    <div className="min-h-screen bg-charcoal text-warm">
       <div className="mx-auto max-w-[900px] px-4 py-10 sm:px-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-4">
-            <Link to="/" className="inline-flex items-center gap-1.5 text-[12.5px] text-[#85888B] transition hover:text-[#E7893C]">
+            <Link to="/" className="inline-flex items-center gap-1.5 text-[12.5px] text-ash transition hover:text-flame">
               <ArrowLeft size={13} /> Beranda
             </Link>
-            <Link to="/status" className="text-[12.5px] text-[#85888B] transition hover:text-[#E7893C]">
+            <Link to="/status" className="text-[12.5px] text-ash transition hover:text-flame">
               Status Layanan
             </Link>
           </div>
-          <span className="text-[12px] text-[#FAF8F4]/70">Dokumentasi</span>
+          <span className="text-[12px] text-warm/70">Dokumentasi</span>
         </div>
 
         <header className="mt-8">
-          <p className="text-[11px] uppercase tracking-[0.2em] text-[#E7893C]">Dokumentasi</p>
+          <p className="text-[12px] text-flame">Dokumentasi</p>
           <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.02em]">Satu API untuk Berbagai Model AI</h1>
-          <p className="mt-2 max-w-[640px] text-[14px] leading-7 text-[#a9a49c]">
+          <p className="mt-2 max-w-[640px] text-[14px] leading-7 text-ash">
             Akses berbagai model AI melalui satu endpoint yang kompatibel dengan OpenAI API. Gunakan{" "}
-            <code className="rounded bg-[#22242a] px-1 py-0.5 font-mono text-[12px]">base_url</code> dan{" "}
-            <code className="rounded bg-[#22242a] px-1 py-0.5 font-mono text-[12px]">api_key</code> AethinkAI pada
+            <code className="rounded bg-panel-2 px-1 py-0.5 font-mono text-[12px]">base_url</code> dan{" "}
+            <code className="rounded bg-panel-2 px-1 py-0.5 font-mono text-[12px]">api_key</code> AethinkAI pada
             aplikasi yang sudah mendukung OpenAI API.
           </p>
-          <p className="mt-2 max-w-[640px] text-[13.5px] leading-7 text-[#85888B]">
-            Pembayaran menggunakan saldo prabayar dengan sistem <strong className="text-[#a9a49c]">Pay As You Go (PAYG)</strong>.
+          <p className="mt-2 max-w-[640px] text-[13.5px] leading-7 text-ash">
+            Pembayaran menggunakan saldo prabayar dengan sistem <strong className="text-ash">Pay As You Go (PAYG)</strong>.
             Tidak ada biaya langganan bulanan atau biaya aktivasi model. Biaya penggunaan mengikuti jumlah token dan
             tarif masing-masing model.
           </p>
         </header>
 
         <div className="mt-8 space-y-8">
-          <section className="rounded-2xl border border-[#3A3B3D] bg-[#1B1C1F] p-5">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-[#85888B]">Informasi Koneksi</p>
+          <section className="rounded-xl border border-white/12 bg-panel p-5">
+            <p className="text-[12px] text-ash">Informasi Koneksi</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
               <div>
-                <p className="text-[10.5px] uppercase tracking-[0.14em] text-[#85888B]">Base URL</p>
-                <p className="mt-1 break-all font-mono text-[12.5px] text-[#FAF8F4]">{BASE}/v1</p>
+                <p className="text-[12px] text-ash">Base URL</p>
+                <p className="mt-1 break-all font-mono text-[12.5px] text-warm">{BASE}/v1</p>
               </div>
               <div>
-                <p className="text-[10.5px] uppercase tracking-[0.14em] text-[#85888B]">Autentikasi</p>
-                <p className="mt-1 break-all font-mono text-[12.5px] text-[#FAF8F4]">Authorization: Bearer sk-aeth_...</p>
+                <p className="text-[12px] text-ash">Autentikasi</p>
+                <p className="mt-1 break-all font-mono text-[12.5px] text-warm">Authorization: Bearer sk-aeth_...</p>
               </div>
               <div>
-                <p className="text-[10.5px] uppercase tracking-[0.14em] text-[#85888B]">Format</p>
-                <p className="mt-1 font-mono text-[12.5px] text-[#FAF8F4]">OpenAI-compatible Chat Completions</p>
+                <p className="text-[12px] text-ash">Format</p>
+                <p className="mt-1 font-mono text-[12.5px] text-warm">OpenAI-compatible Chat Completions</p>
               </div>
             </div>
           </section>
@@ -189,7 +189,7 @@ response = client.chat.completions.create(
 
 print(response.choices[0].message.content)`}
             />
-            <p className="text-[12.5px] text-[#6f6a63]">
+            <p className="text-[12.5px] text-dim">
               Pastikan ID model masih tersedia dalam katalog aktif sebelum menjalankan contoh.
             </p>
           </Section>
@@ -199,11 +199,11 @@ print(response.choices[0].message.content)`}
               Tarif dihitung per 1 juta token untuk input, output, dan input yang dilayani dari cache. Biaya aktual
               ditentukan berdasarkan pemakaian token serta tarif model yang berlaku saat permintaan diselesaikan.
             </p>
-            {err ? <p className="text-[#e08a5f]">Katalog gagal dimuat: {err}</p> : null}
-            <div className="overflow-x-auto rounded-xl border border-[#3A3B3D]">
+            {err ? <p className="text-bad">Katalog gagal dimuat: {err}</p> : null}
+            <div className="overflow-x-auto rounded-xl border border-white/12">
               <table className="w-full min-w-[720px] text-left">
                 <thead>
-                  <tr className="border-b border-white/8 text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
+                  <tr className="border-b border-white/8 text-[12px] text-ash">
                     <th className="px-3 py-2 font-medium">Model / ID</th>
                     <th className="px-3 py-2 font-medium">Context Window</th>
                     <th className="px-3 py-2 text-right font-medium">Input / 1 Juta</th>
@@ -212,21 +212,21 @@ print(response.choices[0].message.content)`}
                     <th className="px-3 py-2 text-right font-medium">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#23252A] font-mono text-[11.5px]">
+                <tbody className="divide-y divide-[#23252A] font-mono text-[12px]">
                   {models.map((m) => {
                     const status = m.status ?? "on";
                     return (
                       <tr key={m.id} className={cn(status !== "on" && "opacity-60")}>
-                        <td className="px-3 py-2 text-[#FAF8F4]">
+                        <td className="px-3 py-2 text-warm">
                           {m.display_name}
-                          <span className="ml-2 font-sans text-[10.5px] text-[#85888B]">{m.id}</span>
+                          <span className="ml-2 font-sans text-[12px] text-ash">{m.id}</span>
                         </td>
-                        <td className="px-3 py-2 text-[#a9a49c]">{ctxLabel(m.context_length)}</td>
-                        <td className="px-3 py-2 text-right text-[#FAF8F4]">{m.pricing_idr_per_1m.input.toLocaleString("id-ID")}</td>
-                        <td className="px-3 py-2 text-right text-[#a9a49c]">{m.pricing_idr_per_1m.output.toLocaleString("id-ID")}</td>
-                        <td className="px-3 py-2 text-right text-[#a9a49c]">{m.pricing_idr_per_1m.cached_input.toLocaleString("id-ID")}</td>
+                        <td className="px-3 py-2 text-ash">{ctxLabel(m.context_length)}</td>
+                        <td className="px-3 py-2 text-right text-warm">{m.pricing_idr_per_1m.input.toLocaleString("id-ID")}</td>
+                        <td className="px-3 py-2 text-right text-ash">{m.pricing_idr_per_1m.output.toLocaleString("id-ID")}</td>
+                        <td className="px-3 py-2 text-right text-ash">{m.pricing_idr_per_1m.cached_input.toLocaleString("id-ID")}</td>
                         <td className="px-3 py-2 text-right font-sans">
-                          <span className={cn("rounded px-1.5 py-0.5 text-[10px]", status !== "on" ? "bg-[#c4633a]/15 text-[#e79c78]" : "bg-[#E7893C]/12 text-[#E7893C]")}>
+                          <span className={cn("rounded px-1.5 py-0.5 text-[12px]", status !== "on" ? "bg-bad/15 text-bad" : "bg-flame/12 text-flame")}>
                             {status === "on" ? "Aktif" : status === "maintenance" ? "Pemeliharaan" : "Tidak tersedia"}
                           </span>
                         </td>
@@ -235,13 +235,13 @@ print(response.choices[0].message.content)`}
                   })}
                   {!models.length && !err ? (
                     <tr>
-                      <td colSpan={6} className="px-3 py-6 text-center font-sans text-[#85888B]">Memuat katalog…</td>
+                      <td colSpan={6} className="px-3 py-6 text-center font-sans text-ash">Memuat katalog…</td>
                     </tr>
                   ) : null}
                 </tbody>
               </table>
             </div>
-            <p className="text-[12.5px] text-[#6f6a63]">
+            <p className="text-[12.5px] text-dim">
               Semua tarif dalam Rupiah (IDR). Harga dan ketersediaan model dapat berubah sesuai konfigurasi layanan.
               Data yang ditampilkan mengikuti katalog gateway aktif.
             </p>
@@ -254,19 +254,19 @@ print(response.choices[0].message.content)`}
             </p>
             <ol className="list-decimal space-y-1.5 pl-5">
               <li>
-                <strong className="text-[#d7d3cc]">Isi saldo.</strong> Pilih paket kredit atau lakukan top-up sesuai
+                <strong className="text-warm/85">Isi saldo.</strong> Pilih paket kredit atau lakukan top-up sesuai
                 ketentuan yang berlaku. Saldo tersimpan pada akun, bukan pada API key.
               </li>
               <li>
-                <strong className="text-[#d7d3cc]">Kirim permintaan.</strong> Gateway mencadangkan perkiraan biaya
+                <strong className="text-warm/85">Kirim permintaan.</strong> Gateway mencadangkan perkiraan biaya
                 sebelum memproses request.
               </li>
               <li>
-                <strong className="text-[#d7d3cc]">Hitung penggunaan.</strong> Setelah request selesai, biaya aktual
+                <strong className="text-warm/85">Hitung penggunaan.</strong> Setelah request selesai, biaya aktual
                 dihitung berdasarkan token yang digunakan.
               </li>
               <li>
-                <strong className="text-[#d7d3cc]">Sesuaikan saldo.</strong> Biaya akhir dibebankan dan selisih dana
+                <strong className="text-warm/85">Sesuaikan saldo.</strong> Biaya akhir dibebankan dan selisih dana
                 yang dicadangkan dikembalikan sesuai hasil perhitungan.
               </li>
             </ol>
@@ -282,7 +282,7 @@ print(response.choices[0].message.content)`}
               Tidak ada biaya langganan bulanan. Akses model tetap mengikuti status model, izin akun, dan ketersediaan
               saldo.
             </p>
-            <h3 className="pt-1 text-[14px] font-semibold text-[#FAF8F4]">Cek Saldo dan Pemakaian</h3>
+            <h3 className="pt-1 text-[14px] font-semibold text-warm">Cek Saldo dan Pemakaian</h3>
             <p>Lihat saldo, riwayat penggunaan, dan informasi akun melalui Portal AethinkAI.</p>
             <CopyBlock
               label="Periksa akun · Buat sesi portal"
@@ -298,25 +298,25 @@ curl -X POST ${BASE}/api/portal/session \\
 
           <Section title="Paket Kredit dan Rate Limit" id="limits">
             <p>
-              Semua paket menggunakan batas standar <strong className="text-[#d7d3cc]">60 permintaan per menit (RPM) per akun Telegram</strong>.
+              Semua paket menggunakan batas standar <strong className="text-warm/85">60 permintaan per menit (RPM) per akun Telegram</strong>.
               Paket dengan nilai lebih besar menambah saldo, bukan meningkatkan batas RPM secara otomatis.
             </p>
-            <div className="overflow-x-auto rounded-xl border border-[#3A3B3D]">
+            <div className="overflow-x-auto rounded-xl border border-white/12">
               <table className="w-full min-w-[440px] text-left text-[12.5px]">
                 <thead>
-                  <tr className="border-b border-white/8 text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
+                  <tr className="border-b border-white/8 text-[12px] text-ash">
                     <th className="px-3 py-2 font-medium">Paket</th>
                     <th className="px-3 py-2 text-right font-medium">Harga</th>
                     <th className="px-3 py-2 text-right font-medium">Kredit</th>
                     <th className="px-3 py-2 text-right font-medium">RPM</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#23252A] text-[#a9a49c]">
+                <tbody className="divide-y divide-[#23252A] text-ash">
                   {packages.map((pkg) => (
                     <tr key={pkg.sku}>
-                      <td className="px-3 py-2 text-[#FAF8F4]">
+                      <td className="px-3 py-2 text-warm">
                         {pkg.name}
-                        {pkg.blurb ? <span className="ml-1.5 text-[10.5px] text-[#85888B]">{pkg.blurb}</span> : null}
+                        {pkg.blurb ? <span className="ml-1.5 text-[12px] text-ash">{pkg.blurb}</span> : null}
                       </td>
                       <td className="px-3 py-2 text-right">{idr(pkg.price_idr)}</td>
                       <td className="px-3 py-2 text-right">{idr(pkg.credits_micro / 1_000_000)}</td>
@@ -325,7 +325,7 @@ curl -X POST ${BASE}/api/portal/session \\
                   ))}
                   {!packages.length ? (
                     <tr>
-                      <td colSpan={4} className="px-3 py-3 text-[12px] text-[#85888B]">
+                      <td colSpan={4} className="px-3 py-3 text-[12px] text-ash">
                         Paket sedang tidak tersedia, cek portal.
                       </td>
                     </tr>
@@ -333,7 +333,7 @@ curl -X POST ${BASE}/api/portal/session \\
                 </tbody>
               </table>
             </div>
-            <p className="text-[12.5px] text-[#6f6a63]">
+            <p className="text-[12.5px] text-dim">
               Batas standar tetap 60 RPM untuk seluruh paket.{" "}
               {topup.enabled
                 ? `Top-up mulai ${idr(topup.min_idr)} menambah saldo tanpa mengubah RPM.`
@@ -344,7 +344,7 @@ curl -X POST ${BASE}/api/portal/session \\
               Penyesuaian tersebut tidak otomatis berubah ketika Anda membeli paket lain.
             </p>
 
-            <h3 className="pt-1 text-[14px] font-semibold text-[#FAF8F4]">Respons Saat Batas Tercapai</h3>
+            <h3 className="pt-1 text-[14px] font-semibold text-warm">Respons Saat Batas Tercapai</h3>
             <ul className="list-disc space-y-1.5 pl-5">
               <li>
                 <code className="font-mono text-[12px]">429 rate_limited</code>, batas RPM akun telah tercapai.
@@ -364,10 +364,10 @@ curl -X POST ${BASE}/api/portal/session \\
 
           <Section title="Kode Error API" id="errors">
             <p>Gunakan status HTTP dan kode error untuk mengenali penyebab kegagalan serta menentukan tindakan berikutnya.</p>
-            <div className="overflow-x-auto rounded-xl border border-[#3A3B3D]">
+            <div className="overflow-x-auto rounded-xl border border-white/12">
               <table className="w-full min-w-[600px] text-left text-[12.5px]">
                 <thead>
-                  <tr className="border-b border-white/8 text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
+                  <tr className="border-b border-white/8 text-[12px] text-ash">
                     <th className="px-3 py-2 font-medium">HTTP</th>
                     <th className="px-3 py-2 font-medium">Kode</th>
                     <th className="px-3 py-2 font-medium">Keterangan</th>
@@ -376,9 +376,9 @@ curl -X POST ${BASE}/api/portal/session \\
                 <tbody className="divide-y divide-[#23252A]">
                   {ERRORS.map(([status, code, meaning]) => (
                     <tr key={code}>
-                      <td className="px-3 py-2 font-mono text-[#a9a49c]">{status}</td>
-                      <td className="px-3 py-2 font-mono text-[#FAF8F4]">{code}</td>
-                      <td className="px-3 py-2 text-[#a9a49c]">{meaning}</td>
+                      <td className="px-3 py-2 font-mono text-ash">{status}</td>
+                      <td className="px-3 py-2 font-mono text-warm">{code}</td>
+                      <td className="px-3 py-2 text-ash">{meaning}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -387,13 +387,13 @@ curl -X POST ${BASE}/api/portal/session \\
           </Section>
 
           <Section title="Invoice dan Pengelolaan API Key" id="invoice">
-            <h3 className="text-[14px] font-semibold text-[#FAF8F4]">Riwayat Transaksi</h3>
+            <h3 className="text-[14px] font-semibold text-warm">Riwayat Transaksi</h3>
             <p>
               Setiap pembelian kredit memiliki nomor invoice unik dengan format{" "}
               <code className="font-mono text-[12px]">AETH-YYYYMMDD-XXXX</code>. Informasi transaksi, kredit yang
               diterima, dan saldo setelah pembelian dapat dilihat melalui portal pengguna.
             </p>
-            <h3 className="pt-1 text-[14px] font-semibold text-[#FAF8F4]">Rotasi API Key</h3>
+            <h3 className="pt-1 text-[14px] font-semibold text-warm">Rotasi API Key</h3>
             <p>
               Setiap akun Telegram memiliki satu API key aktif. Pembelian paket atau top-up berikutnya menambahkan saldo
               ke akun yang sama tanpa membuat API key baru.
@@ -408,17 +408,17 @@ curl -X POST ${BASE}/api/portal/session \\
           <Section title="Siap Menggunakan AethinkAI?" id="cta">
             <p>Kelola API key, pantau saldo, dan tinjau penggunaan API dari satu portal.</p>
             <div className="flex flex-wrap gap-2 pt-1">
-              <Link to="/portal" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#E7893C] px-3 text-[12.5px] font-semibold text-[#18191B]">
+              <Link to="/portal" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-flame px-3 text-[12.5px] font-semibold text-[#18191B]">
                 <Terminal size={13} /> Buka Portal
               </Link>
-              <Link to="/status" className="inline-flex h-9 items-center rounded-lg border border-[#3A3B3D] px-3 text-[12.5px] text-[#FAF8F4]/85">
+              <Link to="/status" className="inline-flex h-9 items-center rounded-lg border border-white/12 px-3 text-[12.5px] text-warm/85">
                 Lihat Status Layanan
               </Link>
             </div>
           </Section>
         </div>
 
-        <p className="mt-10 border-t border-white/8 pt-5 text-[11.5px] text-[#6f6a63]">
+        <p className="mt-10 border-t border-white/8 pt-5 text-[12px] text-dim">
           Informasi harga, paket, dan ketersediaan model mengikuti konfigurasi gateway yang aktif.
         </p>
       </div>

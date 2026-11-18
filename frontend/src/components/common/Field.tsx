@@ -26,12 +26,12 @@ export function Field({ label, hint, error, children, className, required }: Fie
       </label>
       {children(id, describedBy)}
       {hint && !error ? (
-        <p id={hintId} className="text-[11px] leading-4 text-dim">
+        <p id={hintId} className="text-[12px] leading-4 text-dim">
           {hint}
         </p>
       ) : null}
       {error ? (
-        <p id={errorId} className="text-[11px] leading-4 text-[#e08a5f]">
+        <p id={errorId} className="text-[12px] leading-4 text-bad">
           {error}
         </p>
       ) : null}

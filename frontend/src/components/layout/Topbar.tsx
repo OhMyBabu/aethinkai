@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, ChevronDown, LogOut, Menu, Settings, ShieldCheck } from "lucide-react";
+import { ChevronDown, LogOut, Menu, Settings } from "lucide-react";
 import { useStore } from "@/data/store";
 import type { Role } from "@/types";
 
@@ -15,16 +15,19 @@ function AccountMenu({ role }: { role: Role }) {
     const onClick = (event: MouseEvent) => {
       if (!ref.current?.contains(event.target as Node)) setOpen(false);
     };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
     document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   if (!currentUser) return null;
-  const initials = currentUser.name
-    .split(" ")
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("");
+  const admin = role === "admin";
 
   return (
     <div ref={ref} className="relative">
@@ -33,38 +36,31 @@ function AccountMenu({ role }: { role: Role }) {
         onClick={() => setOpen((value) => !value)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-11 items-center gap-2 rounded-xl border border-ash/20 pl-1 pr-2.5 text-[12.5px] text-ash transition active:scale-[0.98] hover:border-ash/35 hover:text-warm lg:h-9 lg:rounded-lg lg:text-[12px]"
+        className="flex h-11 items-center gap-2 rounded-lg px-2.5 text-[13px] text-ash transition-colors hover:bg-white/[0.05] hover:text-warm lg:h-9"
       >
-        <span className="grid size-7 place-items-center rounded-md bg-flame/12 text-[10.5px] font-semibold text-flame">
-          {initials}
-        </span>
-        <span className="hidden max-w-[130px] truncate sm:block">{currentUser.email}</span>
-        <ChevronDown size={13} aria-hidden />
+        <span className="hidden max-w-[180px] truncate sm:block">{currentUser.email}</span>
+        <ChevronDown size={14} aria-hidden />
       </button>
 
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-11 z-50 w-[248px] overflow-hidden rounded-xl border border-white/10 bg-[#151516] shadow-[0_18px_50px_-20px_rgba(0,0,0,0.9)]"
+          className="panel-enter absolute right-0 top-11 z-50 w-[232px] overflow-hidden rounded-lg border border-white/12 bg-[#101012]"
         >
-          <div className="border-b border-ash/12 px-3.5 py-3">
-            <p className="truncate text-[12.5px] font-medium text-warm">{currentUser.name}</p>
-            <p className="mt-0.5 truncate text-[11px] text-ash">{currentUser.email}</p>
-            <p className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-flame/25 bg-flame/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-flame">
-              <ShieldCheck size={10} aria-hidden />
-              {role === "admin" ? "Gateway admin" : currentUser.plan}
-            </p>
+          <div className="border-b border-white/8 px-3.5 py-3">
+            <p className="truncate text-[13px] font-medium text-warm">{currentUser.name}</p>
+            <p className="mt-0.5 truncate text-[12px] text-ash">{currentUser.email}</p>
           </div>
           <button
             type="button"
             role="menuitem"
             onClick={() => {
               setOpen(false);
-              navigate(role === "admin" ? "/admin/settings" : "/app/settings");
+              navigate(admin ? "/admin/settings" : "/app/settings");
             }}
-            className="flex min-h-12 w-full items-center gap-2.5 px-3.5 py-3 text-left text-[13px] text-ash transition hover:bg-warm/[0.05] hover:text-warm"
+            className="flex min-h-11 w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] text-ash transition-colors hover:bg-white/[0.05] hover:text-warm"
           >
-            <Settings size={14} aria-hidden /> Settings
+            <Settings size={14} aria-hidden /> Pengaturan
           </button>
           <button
             type="button"
@@ -74,9 +70,9 @@ function AccountMenu({ role }: { role: Role }) {
               logout();
               navigate("/login", { replace: true });
             }}
-            className="flex min-h-12 w-full items-center gap-2.5 border-t border-ash/12 px-3.5 py-3 text-left text-[13px] text-ash transition hover:bg-warm/[0.05] hover:text-warm"
+            className="flex min-h-11 w-full items-center gap-2.5 border-t border-white/8 px-3.5 py-2.5 text-left text-[13px] text-ash transition-colors hover:bg-white/[0.05] hover:text-warm"
           >
-            <LogOut size={14} aria-hidden /> Sign out
+            <LogOut size={14} aria-hidden /> Keluar
           </button>
         </div>
       ) : null}
@@ -84,38 +80,19 @@ function AccountMenu({ role }: { role: Role }) {
   );
 }
 
-export function Topbar({
-  onOpenNav,
-  title,
-  role,
-  onNotify,
-}: {
-  onOpenNav: () => void;
-  title: string;
-  role: Role;
-  onNotify?: () => void;
-}) {
+export function Topbar({ onOpenNav, title, role }: { onOpenNav: () => void; title: string; role: Role }) {
   return (
-    <div className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-white/8 bg-[#0A0A0A]/72 px-4 backdrop-blur-xl sm:px-6">
+    <div className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/8 bg-charcoal/90 px-4 backdrop-blur-md sm:px-6">
       <button
         type="button"
         onClick={onOpenNav}
-        className="grid size-11 place-items-center rounded-xl border border-ash/20 text-ash transition active:scale-95 active:bg-warm/10 hover:text-warm lg:hidden"
-        aria-label="Open navigation"
+        className="grid size-11 place-items-center rounded-lg text-ash transition-colors hover:bg-white/[0.06] hover:text-warm lg:hidden"
+        aria-label="Buka navigasi"
       >
-        <Menu size={16} />
+        <Menu size={18} />
       </button>
-      <p className="hidden text-[13px] font-medium text-warm/85 sm:block lg:hidden">{title}</p>
-
-      <div className="ml-auto flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => onNotify?.()}
-          className="relative grid size-11 place-items-center rounded-xl border border-ash/20 text-ash transition active:scale-95 hover:text-warm lg:size-9 lg:rounded-lg"
-          aria-label="Notifications"
-        >
-          <Bell size={15} aria-hidden />
-        </button>
+      <p className="text-[14px] font-medium text-warm lg:hidden">{title}</p>
+      <div className="ml-auto">
         <AccountMenu role={role} />
       </div>
     </div>

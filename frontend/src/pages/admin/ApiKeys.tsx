@@ -74,48 +74,48 @@ export default function AdminApiKeysPage() {
   const columns: Array<Column<Row>> = [
     {
       key: "owner",
-      header: "Owner",
+      header: "Pemilik",
       sortValue: (row) => row.email,
       render: (row) => (
         <div className="min-w-0">
           <p className="truncate font-medium text-warm">{row.email.split("@")[0]}</p>
-          <p className="mt-0.5 truncate text-[11px] text-ash">{row.email}</p>
+          <p className="mt-0.5 truncate text-[12px] text-ash">{row.email}</p>
         </div>
       ),
     },
     {
       key: "label",
-      header: "Key label",
+      header: "Label key",
       render: (row) => (
         <div className="min-w-0">
           <p className="truncate text-warm/90">{row.name}</p>
-          <p className="mt-0.5 truncate font-mono text-[10px] text-ash">{row.maskedKey}</p>
+          <p className="mt-0.5 truncate font-mono text-[12px] text-ash">{row.maskedKey}</p>
         </div>
       ),
     },
     {
       key: "requests",
-      header: "Requests",
+      header: "Request",
       align: "right",
       hideBelow: "sm",
       sortValue: (row) => row.requests,
       render: (row) => (
         <div className="text-right">
           <p className="text-warm/90">{row.requests.toLocaleString("id-ID")}</p>
-          <p className="text-[10.5px] text-ash">{formatIDR(row.costMicro / 1_000_000)}</p>
+          <p className="text-[12px] text-ash">{formatIDR(row.costMicro / 1_000_000)}</p>
         </div>
       ),
     },
     {
       key: "created",
-      header: "Created",
+      header: "Dibuat",
       hideBelow: "md",
       sortValue: (row) => row.createdAt,
       render: (row) => <span className="whitespace-nowrap text-ash">{formatDate(row.createdAt)}</span>,
     },
     {
       key: "used",
-      header: "Last used",
+      header: "Terakhir dipakai",
       hideBelow: "lg",
       render: (row) => (
         <span className="text-ash">{row.lastUsedAt ? relativeTime(row.lastUsedAt) : "Never"}</span>
@@ -138,9 +138,7 @@ export default function AdminApiKeysPage() {
           disabled={row.status === "revoked"}
           leadingIcon={<ShieldOff size={12} />}
           onClick={() => setRevoking(row)}
-        >
-          Revoke
-        </Button>
+        >Cabut</Button>
       ),
     },
   ];
@@ -150,21 +148,19 @@ export default function AdminApiKeysPage() {
   return (
     <div>
       <PageHeader
-        title="Customer API keys"
+        title="Key pelanggan"
         description="Setiap key yang dibuat user langsung tercatat di sini, lengkap dengan pemakaian dan biaya."
-        breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "API Keys" }]}
+        breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "API key" }]}
         actions={
           <div className="flex items-center gap-2">
             <StatusPill tone="active">{activeCount} active</StatusPill>
-            <Button variant="ghost" onClick={() => void load()} disabled={loading} leadingIcon={<RefreshCw size={14} />}>
-              Refresh
-            </Button>
+            <Button variant="ghost" onClick={() => void load()} disabled={loading} leadingIcon={<RefreshCw size={14} />}>Muat ulang</Button>
           </div>
         }
       />
 
       {error ? (
-        <Card className="mb-4 border-[#c4633a]/40 bg-[#c4633a]/10 p-4 text-[13px] text-[#e79c78]">{error}</Card>
+        <Card className="mb-4 border-bad/40 bg-bad/10 p-4 text-[13px] text-bad">{error}</Card>
       ) : null}
 
       <Card className="p-0">
@@ -180,12 +176,12 @@ export default function AdminApiKeysPage() {
             value={status}
             onChange={setStatus}
             options={[
-              { value: "all", label: "All statuses" },
-              { value: "active", label: "Active" },
-              { value: "revoked", label: "Revoked" },
+              { value: "all", label: "Semua status" },
+              { value: "active", label: "Aktif" },
+              { value: "revoked", label: "Dicabut" },
             ]}
           />
-          <p className="ml-auto text-[11.5px] text-ash">{filtered.length} keys</p>
+          <p className="ml-auto text-[12px] text-ash">{filtered.length} keys</p>
         </div>
         <DataTable
           columns={columns}
@@ -205,9 +201,9 @@ export default function AdminApiKeysPage() {
 
       <ConfirmDialog
         open={Boolean(revoking)}
-        title="Revoke this customer key?"
+        title="Cabut key pelanggan ini?"
         description={`${revoking?.name ?? "Key"} · ${revoking?.email ?? ""}`}
-        confirmLabel="Revoke key"
+        confirmLabel="Cabut key"
         destructive
         onConfirm={() => {
           const current = revoking;
@@ -215,7 +211,7 @@ export default function AdminApiKeysPage() {
           if (!current) return;
           void adminRevokeKey(current.id)
             .then(() => {
-              toast("Key revoked", { description: `${current.name} langsung ditolak gateway.`, variant: "warning" });
+              toast("Key dicabut", { description: `${current.name} langsung ditolak gateway.`, variant: "warning" });
               return load();
             })
             .catch((err: Error) => toast("Gagal revoke", { description: err.message, variant: "warning" }));

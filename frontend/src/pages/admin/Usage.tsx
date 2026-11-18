@@ -160,7 +160,7 @@ export default function AdminUsagePage() {
       })),
     );
     downloadCSV(`aethinkai-admin-usage-${range}d.csv`, csv);
-    toast("CSV exported", { description: `${rows.length} rows exported.` });
+    toast("CSV diekspor", { description: `${rows.length} rows exported.` });
   };
 
   const reset = () => {
@@ -169,13 +169,13 @@ export default function AdminUsagePage() {
     setModelFilter("all");
     setStatusFilter("all");
     setQuery("");
-    toast("Filters cleared", { variant: "info" });
+    toast("Filter dikosongkan", { variant: "info" });
   };
 
   const columns: Array<Column<Row>> = [
     {
       key: "at",
-      header: "Timestamp",
+      header: "Waktu",
       sortValue: (row) => row.at,
       render: (row) => <span className="whitespace-nowrap text-ash">{formatDateTime(row.at)}</span>,
     },
@@ -193,7 +193,7 @@ export default function AdminUsagePage() {
     },
     {
       key: "tokens",
-      header: "Tokens",
+      header: "Token",
       align: "right",
       hideBelow: "md",
       sortValue: (row) => row.inTokens + row.outTokens,
@@ -201,7 +201,7 @@ export default function AdminUsagePage() {
     },
     {
       key: "cost",
-      header: "Cost",
+      header: "Biaya",
       align: "right",
       sortValue: (row) => row.cost,
       render: (row) => <span className="tabular-nums text-warm/80">{formatIDR(row.cost)}</span>,
@@ -226,31 +226,29 @@ export default function AdminUsagePage() {
   return (
     <div>
       <PageHeader
-        title="Usage analytics"
-        description="Aggregated request telemetry with working filters, tooltips and CSV export."
-        breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Usage" }]}
+        title="Analitik pemakaian"
+        description="Telemetri request teragregasi, lengkap dengan filter dan ekspor CSV."
+        breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Pemakaian" }]}
         actions={
           <>
             <StatusPill tone={live === "live" ? "active" : live === "offline" ? "warning" : "neutral"} dot={live !== "offline"}>
               {live === "live" ? "Live" : live === "offline" ? "Reconnecting" : "Connecting"}
             </StatusPill>
             <DateRangeTabs value={range} onChange={setRange} />
-            <Button variant="secondary" size="sm" leadingIcon={<Download size={13} />} onClick={exportCSV}>
-              Export CSV
-            </Button>
+            <Button variant="secondary" size="sm" leadingIcon={<Download size={13} />} onClick={exportCSV}>Ekspor CSV</Button>
           </>
         }
       />
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {[
-          { label: "Requests", value: formatNumber(totals.requests) },
-          { label: "Tokens", value: formatCompact(totals.tokens) },
-          { label: "Errors", value: formatNumber(totals.errors) },
-          { label: "Metered cost", value: formatIDR(totals.cost) },
+          { label: "Request", value: formatNumber(totals.requests) },
+          { label: "Token", value: formatCompact(totals.tokens) },
+          { label: "Gagal", value: formatNumber(totals.errors) },
+          { label: "Biaya terukur", value: formatIDR(totals.cost) },
         ].map((item) => (
           <div key={item.label} className="surface p-4">
-            <p className="text-[10.5px] uppercase tracking-[0.14em] text-ash">{item.label}</p>
+            <p className="text-[12px] text-ash">{item.label}</p>
             <p className="mt-2 text-[20px] font-semibold tabular-nums text-warm">{item.value}</p>
           </div>
         ))}
@@ -258,35 +256,32 @@ export default function AdminUsagePage() {
 
       <Card className="mt-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.12em] text-ash">
-            <Filter size={12} aria-hidden /> Filters
-          </span>
+          <span className="flex items-center gap-1.5 text-[12px] text-ash">
+            <Filter size={12} aria-hidden />Filter</span>
           <FilterSelect
             label="User"
             value={userFilter}
             onChange={setUserFilter}
-            options={[{ value: "all", label: "All users" }, ...emails.map((email) => ({ value: email, label: email }))]}
+            options={[{ value: "all", label: "Semua pengguna" }, ...emails.map((email) => ({ value: email, label: email }))]}
           />
           <FilterSelect
             label="Model"
             value={modelFilter}
             onChange={setModelFilter}
-            options={[{ value: "all", label: "All models" }, ...Object.entries(names).map(([id, label]) => ({ value: id, label }))]}
+            options={[{ value: "all", label: "Semua model" }, ...Object.entries(names).map(([id, label]) => ({ value: id, label }))]}
           />
           <FilterSelect
             label="Status"
             value={statusFilter}
             onChange={setStatusFilter}
             options={[
-              { value: "all", label: "All statuses" },
+              { value: "all", label: "Semua status" },
               { value: "success", label: "Success" },
               { value: "error", label: "Error" },
             ]}
           />
-          <SearchInput value={query} onChange={setQuery} placeholder="Search user, model, status…" className="w-full sm:w-56" />
-          <Button variant="ghost" size="sm" leadingIcon={<RotateCcw size={12} />} onClick={reset} className="ml-auto">
-            Reset
-          </Button>
+          <SearchInput value={query} onChange={setQuery} placeholder="Cari pengguna, model, atau status…" className="w-full sm:w-56" />
+          <Button variant="ghost" size="sm" leadingIcon={<RotateCcw size={12} />} onClick={reset} className="ml-auto">Atur ulang</Button>
         </div>
       </Card>
 
@@ -294,7 +289,7 @@ export default function AdminUsagePage() {
         <Card>
           <CardHeader
             title={chartMode === "requests" ? "Request volume" : "Metered spend"}
-            description={`${range} days · ${rows.length} matching entries`}
+            description={`${range} hari · ${rows.length} entri cocok`}
             action={
               <div className="inline-flex rounded-lg border border-ash/20 p-1">
                 {(["requests", "cost"] as const).map((mode) => (
@@ -303,7 +298,7 @@ export default function AdminUsagePage() {
                     type="button"
                     onClick={() => setChartMode(mode)}
                     aria-pressed={chartMode === mode}
-                    className={`h-11 rounded-lg px-3.5 text-[12px] capitalize transition active:scale-[0.98] sm:h-8 sm:rounded-md sm:px-3 sm:text-[11px] ${
+                    className={`h-11 rounded-lg px-3.5 text-[12px] capitalize transition active:scale-[0.98] sm:h-8 sm:rounded-md sm:px-3 sm:text-[12px] ${
                       chartMode === mode ? "bg-flame text-[#1a1305]" : "text-ash hover:text-warm"
                     }`}
                   >
@@ -319,13 +314,13 @@ export default function AdminUsagePage() {
         </Card>
 
         <Card>
-          <CardHeader title="Traffic mix" description="Requests by model in range" />
+          <CardHeader title="Komposisi traffic" description="Request per model pada rentang ini" />
           <ul className="mt-3 space-y-2">
             {mix.map(({ id, count }) => {
               const max = Math.max(1, scoped.length);
               return (
                 <li key={id}>
-                  <div className="mb-1 flex items-center justify-between text-[11.5px]">
+                  <div className="mb-1 flex items-center justify-between text-[12px]">
                     <span className="truncate text-warm/85">
                       {rowsRaw.find((r) => r.modelId === id)?.modelName ?? names[id] ?? id}
                     </span>
@@ -333,7 +328,7 @@ export default function AdminUsagePage() {
                   </div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-ash/12">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-burnt to-flame"
+                      className="h-full rounded-full bg-flame/80"
                       style={{ width: `${Math.max(count ? 4 : 0, (count / max) * 100)}%` }}
                     />
                   </div>
@@ -347,7 +342,7 @@ export default function AdminUsagePage() {
 
       <Card className="mt-4 p-0">
         <div className="border-b border-ash/12 px-5 py-4">
-          <h3 className="text-[15px] font-semibold text-warm">Activity table</h3>
+          <h3 className="text-[15px] font-semibold text-warm">Tabel aktivitas</h3>
           <p className="mt-0.5 text-[12px] text-ash">{rows.length} requests after filters.</p>
         </div>
         <DataTable
@@ -359,7 +354,7 @@ export default function AdminUsagePage() {
           empty={
             <EmptyState
               icon={Search}
-              title={loading ? "Memuat dari gateway…" : "No rows match"}
+              title={loading ? "Memuat dari gateway…" : "Tidak ada baris yang cocok"}
               description={loading ? "Sebentar." : "Reset filters to see the full dataset."}
               action={
                 <Button size="sm" variant="secondary" onClick={reset}>

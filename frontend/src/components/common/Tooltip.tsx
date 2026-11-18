@@ -16,7 +16,7 @@ export function Tooltip({ label, children }: { label: string; children: ReactNod
         <span
           role="tooltip"
           className={cn(
-            "pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 w-max max-w-[200px] -translate-x-1/2 rounded-lg border border-ash/25 bg-[#111214] px-2.5 py-1.5 text-[11px] leading-4 text-warm/90 shadow-lg",
+            "pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 w-max max-w-[200px] -translate-x-1/2 rounded-lg border border-ash/25 bg-panel px-2.5 py-1.5 text-[12px] leading-4 text-warm/90 shadow-lg",
           )}
         >
           {label}

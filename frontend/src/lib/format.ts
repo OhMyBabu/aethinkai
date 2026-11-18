@@ -17,16 +17,27 @@ export function formatIDRCompact(value: number): string {
   return `Rp ${idrCompact.format(value)}`.replace(/\u00a0/g, " ");
 }
 
-const numberFmt = new Intl.NumberFormat("en-US");
+const numberFmt = new Intl.NumberFormat("id-ID");
 export function formatNumber(value: number): string {
   return numberFmt.format(Math.round(value));
 }
 
+/** 943400 -> "943,4K", 48200000 -> "48,2M". K/M/B stay English because that is how tokens are quoted. */
 export function formatCompact(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(value);
+  const abs = Math.abs(value);
+  const units: Array<[number, string]> = [
+    [1e9, "B"],
+    [1e6, "M"],
+    [1e3, "K"],
+  ];
+  for (const [size, suffix] of units) {
+    if (abs >= size) {
+      const scaled = value / size;
+      const text = new Intl.NumberFormat("id-ID", { maximumFractionDigits: abs >= size * 100 ? 0 : 1 }).format(scaled);
+      return `${text}${suffix}`;
+    }
+  }
+  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(value);
 }
 
 const dateFmt = new Intl.DateTimeFormat("id-ID", {
@@ -65,19 +76,21 @@ export function formatTime(iso: string): string {
   return timeFmt.format(new Date(iso));
 }
 
-export function daysAgo(n: number, from = new Date("2026-11-04T09:00:00+07:00")): string {
+export function daysAgo(n: number, from = new Date()): string {
   return new Date(from.getTime() - n * 86400000).toISOString();
 }
 
-export function relativeTime(iso: string, now = new Date("2026-11-04T09:00:00+07:00")): string {
-  const diff = now.getTime() - new Date(iso).getTime();
-  const mins = Math.round(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+export function relativeTime(iso: string | null | undefined, now = new Date()): string {
+  if (!iso) return "n/a";
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "n/a";
+  const mins = Math.round((now.getTime() - then) / 60000);
+  if (mins < 1) return "baru saja";
+  if (mins < 60) return `${mins} mnt lalu`;
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours} jam lalu`;
   const days = Math.round(hours / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return `${days} hari lalu`;
   return formatShortDate(iso);
 }
 

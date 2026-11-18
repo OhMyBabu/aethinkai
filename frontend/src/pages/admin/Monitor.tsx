@@ -110,9 +110,9 @@ export default function AdminMonitorPage() {
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {[
-          { label: "Keys", value: `${totals.activeKeys}/${totals.keys}`, hint: "aktif / total", icon: KeyRound },
+          { label: "Key", value: `${totals.activeKeys}/${totals.keys}`, hint: "aktif / total", icon: KeyRound },
           { label: "IP unik", value: formatNumber(totals.ips), hint: "pemakai key", icon: Globe },
-          { label: "Requests", value: formatNumber(totals.requests), hint: `${range} hari`, icon: Activity },
+          { label: "Request", value: formatNumber(totals.requests), hint: `${range} hari`, icon: Activity },
           {
             label: "In / out token",
             value: `${formatCompact(totals.tin)} / ${formatCompact(totals.tout)}`,
@@ -122,11 +122,11 @@ export default function AdminMonitorPage() {
         ].map((item) => (
           <div key={item.label} className="surface p-4">
             <div className="flex items-center justify-between">
-              <p className="text-[10.5px] uppercase tracking-[0.14em] text-ash">{item.label}</p>
+              <p className="text-[12px] text-ash">{item.label}</p>
               <item.icon size={13} className="text-ash" aria-hidden />
             </div>
             <p className="mt-2 truncate text-[19px] font-semibold tabular-nums text-warm">{item.value}</p>
-            <p className="mt-0.5 text-[10.5px] text-ash">{item.hint}</p>
+            <p className="mt-0.5 text-[12px] text-ash">{item.hint}</p>
           </div>
         ))}
       </div>
@@ -137,7 +137,7 @@ export default function AdminMonitorPage() {
             <div className="flex items-center gap-2">
               <Users size={13} className="text-ash" aria-hidden />
               <p className="text-[12.5px] font-medium text-warm">User & key</p>
-              <span className="ml-auto text-[11px] text-ash">{grouped.length} user</span>
+              <span className="ml-auto text-[12px] text-ash">{grouped.length} user</span>
             </div>
             <SearchInput
               value={query}
@@ -153,12 +153,12 @@ export default function AdminMonitorPage() {
                 <div className="flex items-start justify-between gap-2 px-4 pt-3">
                   <div className="min-w-0">
                     <p className="truncate text-[12.5px] font-medium text-warm">{entry.user?.email ?? userId}</p>
-                    <p className="mt-0.5 text-[10.5px] text-ash">
+                    <p className="mt-0.5 text-[12px] text-ash">
                       {entry.user?.keys_active ?? 0}/{entry.user?.keys_total ?? entry.keys.length} key aktif ·{" "}
                       {entry.user?.ip_count ?? 0} IP · {formatNumber(entry.user?.requests ?? 0)} req
                     </p>
                   </div>
-                  <span className="shrink-0 text-[10.5px] tabular-nums text-ash">{idr(entry.user?.cost_micro ?? 0)}</span>
+                  <span className="shrink-0 text-[12px] tabular-nums text-ash">{idr(entry.user?.cost_micro ?? 0)}</span>
                 </div>
 
                 <ul className="px-2 pb-2">
@@ -183,10 +183,10 @@ export default function AdminMonitorPage() {
                               aria-hidden
                             />
                           </div>
-                          <p className="mt-0.5 truncate font-mono text-[10px] text-ash">
+                          <p className="mt-0.5 truncate font-mono text-[12px] text-ash">
                             {key.prefix}… · {key.ip_count} IP · {formatNumber(Number(key.requests))} req
                           </p>
-                          <p className="mt-0.5 truncate text-[10px] text-ash">
+                          <p className="mt-0.5 truncate text-[12px] text-ash">
                             {key.models.length
                               ? key.models.map((model) => `${model.display_name} ×${model.requests}`).join(" · ")
                               : "belum ada traffic"}
@@ -219,10 +219,10 @@ export default function AdminMonitorPage() {
                     <h3 className="truncate text-[15px] font-semibold text-warm">{active.name}</h3>
                     <StatusPill tone={active.status === "active" ? "active" : "suspended"}>{active.status}</StatusPill>
                   </div>
-                  <p className="mt-0.5 truncate text-[11.5px] text-ash">
+                  <p className="mt-0.5 truncate text-[12px] text-ash">
                     {active.email} · <span className="font-mono">{active.prefix}…</span>
                   </p>
-                  <p className="mt-1 text-[10.5px] text-ash">
+                  <p className="mt-1 text-[12px] text-ash">
                     dibuat {formatDateTime(active.created_at)} · terakhir dipakai{" "}
                     {active.last_request ? relativeTime(active.last_request) : "belum pernah"}
                   </p>
@@ -235,7 +235,7 @@ export default function AdminMonitorPage() {
                     ["Biaya", idr(active.cost_micro)],
                   ].map(([label, value]) => (
                     <div key={label}>
-                      <p className="text-[10px] uppercase tracking-[0.12em] text-ash">{label}</p>
+                      <p className="text-[12px] text-ash">{label}</p>
                       <p className="mt-0.5 text-[13px] font-semibold tabular-nums text-warm">{value}</p>
                     </div>
                   ))}
@@ -247,7 +247,7 @@ export default function AdminMonitorPage() {
               <Card className="p-0">
                 <div className="border-b border-ash/12 px-4 py-3">
                   <p className="text-[12.5px] font-medium text-warm">Provider & model</p>
-                  <p className="mt-0.5 text-[10.5px] text-ash">Dipakai lewat key ini</p>
+                  <p className="mt-0.5 text-[12px] text-ash">Dipakai lewat key ini</p>
                 </div>
                 <ul className="divide-y divide-ash/10">
                   {active.models.map((model) => (
@@ -255,18 +255,18 @@ export default function AdminMonitorPage() {
                       <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
                           <p className="truncate text-[12.5px] text-warm">{model.display_name}</p>
-                          <p className="mt-0.5 truncate text-[10.5px] text-ash">
+                          <p className="mt-0.5 truncate text-[12px] text-ash">
                             {model.provider} · <span className="font-mono">{model.public_id}</span>
                           </p>
                         </div>
                         <div className="shrink-0 text-right">
                           <p className="text-[12px] tabular-nums text-warm">{formatNumber(Number(model.requests))} req</p>
-                          <p className="text-[10.5px] text-ash">
+                          <p className="text-[12px] text-ash">
                             {formatCompact(Number(model.tokens_in))} in / {formatCompact(Number(model.tokens_out))} out
                           </p>
                         </div>
                       </div>
-                      <p className="mt-1 text-[10.5px] tabular-nums text-ash">{idr(model.cost_micro)}</p>
+                      <p className="mt-1 text-[12px] tabular-nums text-ash">{idr(model.cost_micro)}</p>
                     </li>
                   ))}
                   {active.models.length === 0 ? (
@@ -278,7 +278,7 @@ export default function AdminMonitorPage() {
               <Card className="p-0">
                 <div className="border-b border-ash/12 px-4 py-3">
                   <p className="text-[12.5px] font-medium text-warm">IP pemakai</p>
-                  <p className="mt-0.5 text-[10.5px] text-ash">{active.ip_count} IP unik</p>
+                  <p className="mt-0.5 text-[12px] text-ash">{active.ip_count} IP unik</p>
                 </div>
                 <ul className="divide-y divide-ash/10">
                   {active.ips.map((ip) => (
@@ -291,8 +291,8 @@ export default function AdminMonitorPage() {
                           {formatNumber(Number(ip.requests))} req
                         </p>
                       </div>
-                      <p className="mt-0.5 truncate text-[10.5px] text-ash">{ip.user_agent}</p>
-                      <p className="mt-0.5 text-[10.5px] text-ash">
+                      <p className="mt-0.5 truncate text-[12px] text-ash">{ip.user_agent}</p>
+                      <p className="mt-0.5 text-[12px] text-ash">
                         {relativeTime(ip.last_seen)} · {idr(ip.cost_micro)}
                       </p>
                     </li>
@@ -309,7 +309,7 @@ export default function AdminMonitorPage() {
               <ul className="mt-3 space-y-2.5">
                 {active.daily.map((day) => (
                   <li key={day.day}>
-                    <div className="mb-1 flex items-center justify-between text-[11px]">
+                    <div className="mb-1 flex items-center justify-between text-[12px]">
                       <span className="text-ash">{day.day}</span>
                       <span className="tabular-nums text-ash">
                         {formatNumber(Number(day.requests))} req ·{" "}
@@ -326,7 +326,7 @@ export default function AdminMonitorPage() {
                       </div>
                       <div className="h-1.5 overflow-hidden rounded-full bg-ash/10">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-burnt to-flame"
+                          className="h-full rounded-full bg-flame/80"
                           style={{ width: `${Math.max(2, (Number(day.tokens_out) / maxDay) * 100)}%` }}
                         />
                       </div>
@@ -337,7 +337,7 @@ export default function AdminMonitorPage() {
                   <li className="text-[12px] text-ash">Belum ada traffic pada rentang ini.</li>
                 ) : null}
               </ul>
-              <div className="mt-3 flex items-center gap-4 border-t border-ash/12 pt-3 text-[10.5px] text-ash">
+              <div className="mt-3 flex items-center gap-4 border-t border-ash/12 pt-3 text-[12px] text-ash">
                 <span className="flex items-center gap-1.5">
                   <ArrowDownLeft size={11} aria-hidden /> token in
                 </span>

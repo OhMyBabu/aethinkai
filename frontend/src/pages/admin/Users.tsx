@@ -118,7 +118,7 @@ export default function AdminUsersPage() {
       render: (row) => (
         <div className="min-w-0">
           <p className="truncate font-medium text-warm">{row.email.split("@")[0]}</p>
-          <p className="mt-0.5 truncate text-[11px] text-ash">{row.email}</p>
+          <p className="mt-0.5 truncate text-[12px] text-ash">{row.email}</p>
         </div>
       ),
     },
@@ -132,7 +132,7 @@ export default function AdminUsersPage() {
     },
     {
       key: "role",
-      header: "Role",
+      header: "Peran",
       hideBelow: "sm",
       render: (row) => <span className="text-ash">{row.role}</span>,
     },
@@ -147,14 +147,14 @@ export default function AdminUsersPage() {
     },
     {
       key: "keys",
-      header: "Keys",
+      header: "Key",
       align: "center",
       hideBelow: "md",
       render: (row) => <span className="text-ash">{formatNumber(Number(row.keys))}</span>,
     },
     {
       key: "requests",
-      header: "Requests",
+      header: "Request",
       align: "right",
       hideBelow: "md",
       sortValue: (row) => Number(row.requests),
@@ -162,7 +162,7 @@ export default function AdminUsersPage() {
     },
     {
       key: "joined",
-      header: "Joined",
+      header: "Bergabung",
       hideBelow: "lg",
       sortValue: (row) => row.created_at,
       render: (row) => <span className="whitespace-nowrap text-ash">{formatDate(row.created_at)}</span>,
@@ -173,9 +173,7 @@ export default function AdminUsersPage() {
       align: "right",
       render: (row) => (
         <div className="flex justify-end gap-1.5">
-          <Button size="sm" variant="ghost" onClick={() => setDetail(row)}>
-            View
-          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setDetail(row)}>Lihat</Button>
           <Button
             size="sm"
             variant="secondary"
@@ -196,40 +194,36 @@ export default function AdminUsersPage() {
   return (
     <div>
       <PageHeader
-        title="Users"
+        title="Pengguna"
         description="Semua akun gateway: saldo, key, dan pemakaian, langsung dari Postgres."
-        breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Users" }]}
+        breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Pengguna" }]}
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => void load()} disabled={loading} leadingIcon={<RefreshCw size={14} />}>
-              Refresh
-            </Button>
-            <Button variant="primary" leadingIcon={<Plus size={14} />} onClick={openCreate}>
-              Add user
-            </Button>
+            <Button variant="ghost" onClick={() => void load()} disabled={loading} leadingIcon={<RefreshCw size={14} />}>Muat ulang</Button>
+            <Button variant="primary" leadingIcon={<Plus size={14} />} onClick={openCreate}>Tambah pengguna</Button>
           </div>
         }
       />
 
       {error ? (
-        <Card className="mb-4 border-[#c4633a]/40 bg-[#c4633a]/10 p-4 text-[13px] text-[#e79c78]">{error}</Card>
+        <Card className="mb-4 border-bad/40 bg-bad/10 p-4 text-[13px] text-bad">{error}</Card>
       ) : null}
 
       <Card className="p-0">
         <div className="flex flex-wrap items-center gap-2 border-b border-ash/12 px-5 py-4">
-          <SearchInput value={query} onChange={setQuery} placeholder="Search email…" className="w-full sm:w-72" />
+          <SearchInput value={query} onChange={setQuery} placeholder="Cari email…" className="w-full sm:w-72" />
           <FilterSelect
             label="Status"
             value={status}
             onChange={setStatus}
             options={[
-              { value: "all", label: "All statuses" },
-              { value: "active", label: "Active" },
-              { value: "suspended", label: "Suspended" },
+              { value: "all", label: "Semua status" },
+              { value: "active", label: "Aktif" },
+              { value: "suspended", label: "Ditangguhkan" },
             ]}
           />
-          <p className="ml-auto text-[11.5px] text-ash">
-            {rows.length} of {users.length} users
+          <p className="ml-auto text-[12px] text-ash">
+            {rows.length} dari {users.length} pengguna
           </p>
         </div>
 
@@ -296,13 +290,11 @@ export default function AdminUsersPage() {
       <Modal
         open={creating}
         onClose={() => setCreating(false)}
-        title="Add user"
+        title="Tambah pengguna"
         description="Password awal ditampilkan sekali, kirim ke user, minta segera diganti."
         footer={
           <>
-            <Button variant="ghost" size="sm" onClick={() => setCreating(false)}>
-              Cancel
-            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setCreating(false)}>Batal</Button>
             <Button variant="primary" size="sm" onClick={() => void submitCreate()} disabled={busy}>
               {busy ? "Creating…" : "Create user"}
             </Button>
@@ -351,20 +343,18 @@ export default function AdminUsersPage() {
       <Modal
         open={Boolean(invite)}
         onClose={() => setInvite(null)}
-        title="Account created"
+        title="Akun dibuat"
         description="Kredensial ini hanya tampil sekarang."
         size="sm"
         footer={
-          <Button size="sm" onClick={() => setInvite(null)}>
-            Done
-          </Button>
+          <Button size="sm" onClick={() => setInvite(null)}>Selesai</Button>
         }
       >
         <div className="space-y-3">
-          <div className="rounded-xl border border-ash/15 bg-[#141518] p-3">
-            <p className="text-[10px] uppercase tracking-[0.14em] text-ash">Email</p>
+          <div className="rounded-xl border border-ash/15 bg-panel p-3">
+            <p className="text-[12px] text-ash">Email</p>
             <p className="mt-1 font-mono text-[12.5px] text-warm">{invite?.email}</p>
-            <p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-ash">Temporary password</p>
+            <p className="mt-3 text-[12px] text-ash">Temporary password</p>
             <p className="mt-1 font-mono text-[12.5px] text-warm">{invite?.password}</p>
           </div>
           <Button
@@ -373,12 +363,12 @@ export default function AdminUsersPage() {
             onClick={() => {
               if (!invite) return;
               navigator.clipboard?.writeText(`${invite.email} / ${invite.password}`).catch(() => undefined);
-              toast("Credentials copied", { description: invite.email, variant: "info" });
+              toast("Kredensial disalin", { description: invite.email, variant: "info" });
             }}
           >
             Copy credentials
           </Button>
-          <p className="text-[11.5px] leading-5 text-ash">
+          <p className="text-[12px] leading-5 text-ash">
             Password disimpan sebagai hash PBKDF2 di gateway, tidak bisa ditampilkan lagi.
           </p>
         </div>
@@ -392,9 +382,7 @@ export default function AdminUsersPage() {
         size="sm"
         footer={
           <>
-            <Button variant="ghost" size="sm" onClick={() => setCrediting(null)}>
-              Cancel
-            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setCrediting(null)}>Batal</Button>
             <Button variant="primary" size="sm" onClick={() => void submitCredit()} disabled={busy}>
               {busy ? "Menyimpan…" : "Tambah saldo"}
             </Button>
@@ -434,7 +422,7 @@ export default function AdminUsersPage() {
               />
             )}
           </Field>
-          <p className="text-[11.5px] leading-5 text-ash">
+          <p className="text-[12px] leading-5 text-ash">
             Masuk ke <span className="font-mono">balances</span> dan tercatat sebagai{" "}
             <span className="font-mono">topup</span> di ledger user.
           </p>

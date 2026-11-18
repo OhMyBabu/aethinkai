@@ -79,12 +79,12 @@ export function TelegramConnect({
           <button
             type="button"
             onClick={() => void begin()}
-            className={`flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#E7893C] text-[13.5px] font-semibold text-[#18191B] transition-colors hover:bg-[#F09A55]${pulse ? " aethink-telegram-cta" : ""}`}
+            className={`flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-flame text-[13.5px] font-semibold text-[#18191B] transition-colors hover:bg-[#F09A55]${pulse ? " aethink-telegram-cta" : ""}`}
           >
             <Send size={15} /> Hubungkan Telegram
           </button>
           {!compact ? (
-            <p className="text-[11.5px] leading-5 text-[#85888B]">
+            <p className="text-[12px] leading-5 text-ash">
               Tanpa email, tanpa password. Akun diambil dari Telegram, jadi pembelian dan API key
               selalu terhubung ke chat Anda.
             </p>
@@ -93,7 +93,7 @@ export function TelegramConnect({
       ) : null}
 
       {phase === "waiting" && !link ? (
-        <p className="flex h-11 items-center justify-center gap-2 rounded-lg border border-[#3A3B3D] text-[13px] text-[#85888B]" role="status">
+        <p className="flex h-11 items-center justify-center gap-2 rounded-lg border border-white/12 text-[13px] text-ash" role="status">
           <Loader2 size={14} className="animate-spin" /> Menghubungkan ke Telegram…
         </p>
       ) : null}
@@ -104,15 +104,15 @@ export function TelegramConnect({
             href={link.deep_link}
             target="_blank"
             rel="noreferrer"
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#E7893C] text-[13.5px] font-semibold text-[#18191B] transition-colors hover:bg-[#F09A55]"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-flame text-[13.5px] font-semibold text-[#18191B] transition-colors hover:bg-[#F09A55]"
           >
             <ExternalLink size={15} /> Buka bot Telegram
           </a>
-          <div className="rounded-lg border border-[#3A3B3D] bg-[#141518] p-3">
+          <div className="rounded-lg border border-white/12 bg-panel p-3">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[10.5px] uppercase tracking-[0.14em] text-[#85888B]">Kode koneksi</p>
-                <code className="mt-0.5 block break-all font-mono text-[11.5px] text-[#FAF8F4]">{link.code}</code>
+                <p className="text-[12px] text-ash">Kode koneksi</p>
+                <code className="mt-0.5 block break-all font-mono text-[12px] text-warm">{link.code}</code>
               </div>
               <button
                 type="button"
@@ -121,18 +121,18 @@ export function TelegramConnect({
                   setCopied(true);
                   window.setTimeout(() => setCopied(false), 1500);
                 }}
-                className="grid size-8 shrink-0 place-items-center rounded-md border border-[#3A3B3D] text-[#FAF8F4]"
+                className="grid size-8 shrink-0 place-items-center rounded-md border border-white/12 text-warm"
                 aria-label="Salin link"
               >
                 {copied ? <Check size={13} /> : <Copy size={13} />}
               </button>
             </div>
-            <p className="mt-2 text-[11.5px] leading-5 text-[#85888B]">
-              Tekan <b className="text-[#FAF8F4]">Start</b> di bot, lalu balik ke tab ini. Otomatis masuk
+            <p className="mt-2 text-[12px] leading-5 text-ash">
+              Tekan <b className="text-warm">Start</b> di bot, lalu balik ke tab ini. Otomatis masuk
               dalam beberapa detik.
             </p>
           </div>
-          <div className="flex items-center justify-between text-[11.5px] text-[#85888B]">
+          <div className="flex items-center justify-between text-[12px] text-ash">
             <span className="inline-flex items-center gap-1.5">
               <Loader2 size={12} className="animate-spin" /> Menunggu konfirmasi
             </span>
@@ -145,13 +145,13 @@ export function TelegramConnect({
         <button
           type="button"
           onClick={() => void begin()}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#3A3B3D] text-[13px] font-medium text-[#FAF8F4] transition hover:bg-[#292B2E]"
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-white/12 text-[13px] font-medium text-warm transition hover:bg-panel-2"
         >
           <RefreshCw size={14} /> Buat kode baru
         </button>
       ) : null}
 
-      {error ? <p className="text-[12px] text-[#E7893C]">{error}</p> : null}
+      {error ? <p className="text-[12px] text-flame">{error}</p> : null}
     </div>
   );
 }

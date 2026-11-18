@@ -14,8 +14,8 @@ export function DateRangeTabs({
   return (
     <div
       role="tablist"
-      aria-label="Date range"
-      className={cn("inline-flex items-center gap-1 rounded-xl border border-ash/20 bg-[#141518] p-1", className)}
+      aria-label="Rentang waktu"
+      className={cn("inline-flex items-center gap-1 rounded-lg border border-white/10 bg-panel p-0.5", className)}
     >
       {ranges.map((range) => {
         const active = value === range;
@@ -27,13 +27,13 @@ export function DateRangeTabs({
             type="button"
             onClick={() => onChange(range)}
             className={cn(
-              "h-11 rounded-lg px-3.5 text-[13px] font-medium transition active:scale-[0.98] sm:h-9 sm:px-3 sm:text-[12px]",
+              "h-11 rounded-md px-3.5 text-[13px] font-medium transition sm:h-9 sm:px-3 sm:text-[12px]",
               active
-                ? "bg-flame/14 text-flame shadow-[inset_0_0_0_1px_rgba(231,137,60,0.28)]"
-                : "text-ash hover:bg-warm/[0.06] hover:text-warm",
+                ? "bg-white/10 text-warm"
+                : "text-ash hover:text-warm",
             )}
           >
-            {range} days
+            {range} hari
           </button>
         );
       })}

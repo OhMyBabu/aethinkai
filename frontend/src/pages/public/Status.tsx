@@ -73,44 +73,44 @@ export default function StatusPage() {
   const uptimeMinutes = Math.floor((uptime % 3600) / 60);
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-[#FAF8F4]">
+    <div className="min-h-screen bg-charcoal text-warm">
       <div className="mx-auto max-w-[900px] px-4 py-10 sm:px-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-4">
-            <Link to="/" className="inline-flex items-center gap-1.5 text-[12.5px] text-[#85888B] transition hover:text-[#E7893C]">
+            <Link to="/" className="inline-flex items-center gap-1.5 text-[12.5px] text-ash transition hover:text-flame">
               <ArrowLeft size={13} /> Beranda
             </Link>
-            <Link to="/panduan" className="text-[12.5px] text-[#85888B] transition hover:text-[#E7893C]">
+            <Link to="/panduan" className="text-[12.5px] text-ash transition hover:text-flame">
               Dokumentasi
             </Link>
           </div>
-          <span className="text-[12px] text-[#FAF8F4]/70">Status Layanan</span>
+          <span className="text-[12px] text-warm/70">Status Layanan</span>
         </div>
 
         <header className="mt-8">
-          <p className="text-[11px] uppercase tracking-[0.2em] text-[#E7893C]">Status Layanan</p>
+          <p className="text-[12px] text-flame">Status Layanan</p>
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <h1 className="text-[30px] font-semibold tracking-[-0.02em]">Kondisi Operasional Gateway</h1>
             <span
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px]",
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px]",
                 !status
-                  ? "border-[#3A3B3D] bg-[#22242a] text-[#85888B]"
+                  ? "border-white/12 bg-panel-2 text-ash"
                   : ok
-                    ? "border-[#E7893C]/45 bg-[#E7893C]/10 text-[#E7893C]"
-                    : "border-[#c4633a]/45 bg-[#c4633a]/10 text-[#e79c78]",
+                    ? "border-flame/45 bg-flame/10 text-flame"
+                    : "border-bad/45 bg-bad/10 text-bad",
               )}
             >
               <CircleDot size={11} /> {verdict}
             </span>
           </div>
-          <p className="mt-2 max-w-[680px] text-[13px] leading-6 text-[#85888B]">
+          <p className="mt-2 max-w-[680px] text-[13px] leading-6 text-ash">
             Pantau ketersediaan layanan, aktivitas permintaan, dan performa model AethinkAI berdasarkan data pemantauan
             terbaru. Data aktivitas diperbarui melalui pembaruan gateway dan pemeriksaan berkala setiap 30 detik sebagai
             cadangan
             {at ? (
               <>
-                . <span className="text-[#a9a49c]">Terakhir diperbarui: {at.toLocaleTimeString("id-ID")}</span>
+                . <span className="text-ash">Terakhir diperbarui: {at.toLocaleTimeString("id-ID")}</span>
               </>
             ) : (
               "."
@@ -119,13 +119,13 @@ export default function StatusPage() {
         </header>
 
         {err ? (
-          <p className="mt-4 rounded-lg border border-[#c4633a]/35 bg-[#c4633a]/10 px-3 py-2 text-[12.5px] text-[#e79c78]">
+          <p className="mt-4 rounded-lg border border-bad/35 bg-bad/10 px-3 py-2 text-[12.5px] text-bad">
             Status gagal dimuat: {err}. Ini berarti masalah jaringan atau gateway, bukan berarti layanan mati.
           </p>
         ) : null}
 
         <div className="mt-6">
-          <p className="text-[10.5px] uppercase tracking-[0.14em] text-[#85888B]">24 Jam Terakhir</p>
+          <p className="text-[12px] text-ash">24 Jam Terakhir</p>
           <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
@@ -149,26 +149,26 @@ export default function StatusPage() {
                 value: status ? String(status.models_active) : "n/a",
               },
             ].map((kpi) => (
-              <div key={kpi.label} className="rounded-xl border border-[#3A3B3D] bg-[#1B1C1F] p-4">
-                <div className="flex items-center gap-1.5 text-[#85888B]">
+              <div key={kpi.label} className="rounded-xl border border-white/12 bg-panel p-4">
+                <div className="flex items-center gap-1.5 text-ash">
                   {kpi.icon}
-                  <span className="text-[10.5px] uppercase tracking-[0.12em]">{kpi.label}</span>
+                  <span className="text-[12px]">{kpi.label}</span>
                 </div>
-                <p className="mt-2 font-mono text-[20px] text-[#FAF8F4]">{kpi.value}</p>
+                <p className="mt-2 font-mono text-[20px] text-warm">{kpi.value}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <section className="mt-6 rounded-xl border border-[#3A3B3D] bg-[#1B1C1F] p-4">
-          <h2 className="text-[13px] font-semibold text-[#FAF8F4]">Aktivitas {windowMinutes} Menit Terakhir</h2>
-          <div className="mt-2 grid gap-3 text-[12.5px] text-[#a9a49c] sm:grid-cols-3">
+        <section className="mt-6 rounded-xl border border-white/12 bg-panel p-4">
+          <h2 className="text-[13px] font-semibold text-warm">Aktivitas {windowMinutes} Menit Terakhir</h2>
+          <div className="mt-2 grid gap-3 text-[12.5px] text-ash sm:grid-cols-3">
             <p>
-              Total Permintaan: <span className="font-mono text-[#FAF8F4]">{windowRequests}</span>
+              Total Permintaan: <span className="font-mono text-warm">{windowRequests}</span>
             </p>
             <p>
               Tingkat Error:{" "}
-              <span className="font-mono text-[#FAF8F4]">
+              <span className="font-mono text-warm">
                 {hasWindowData
                   ? `${(status?.window_error_pct ?? 0).toLocaleString("id-ID", { maximumFractionDigits: 2 })}%`
                   : "Tidak ada data"}
@@ -176,25 +176,25 @@ export default function StatusPage() {
             </p>
             <p>
               Permintaan Terakhir:{" "}
-              <span className="font-mono text-[#FAF8F4]">{when(status?.last_request_at ?? null)}</span>
+              <span className="font-mono text-warm">{when(status?.last_request_at ?? null)}</span>
             </p>
           </div>
           {!hasWindowData ? (
-            <p className="mt-2 text-[11.5px] leading-5 text-[#6f6a63]">
+            <p className="mt-2 text-[12px] leading-5 text-dim">
               Belum ada permintaan dalam {windowMinutes} menit terakhir.
             </p>
           ) : null}
-          <p className="mt-2 text-[11.5px] leading-5 text-[#6f6a63]">
+          <p className="mt-2 text-[12px] leading-5 text-dim">
             Status performa dievaluasi berdasarkan aktivitas dalam jendela {windowMinutes} menit terakhir. Kondisi
             menurun ditandai jika terdapat setidaknya 10 permintaan dalam jendela tersebut dan tingkat error melebihi 5%.
             Jumlah sampel yang kecil belum cukup untuk menyimpulkan kualitas layanan.
           </p>
         </section>
 
-        <section className="mt-6 overflow-hidden rounded-xl border border-[#3A3B3D] bg-[#1B1C1F]">
+        <section className="mt-6 overflow-hidden rounded-xl border border-white/12 bg-panel">
           <div className="border-b border-white/8 px-4 py-3">
-            <h2 className="text-[13px] font-semibold text-[#FAF8F4]">Aktivitas per Model</h2>
-            <p className="mt-1 text-[11.5px] text-[#6f6a63]">
+            <h2 className="text-[13px] font-semibold text-warm">Aktivitas per Model</h2>
+            <p className="mt-1 text-[12px] text-dim">
               Ringkasan permintaan, penggunaan token, kegagalan, dan latensi setiap model dalam 24 jam terakhir.
               {status && models.length > 0 && models.length < status.models_active
                 ? " Menampilkan model dengan aktivitas terbanyak."
@@ -204,7 +204,7 @@ export default function StatusPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[600px] text-left">
               <thead>
-                <tr className="border-b border-white/8 text-[10.5px] uppercase tracking-[0.1em] text-[#85888B]">
+                <tr className="border-b border-white/8 text-[12px] text-ash">
                   <th className="px-4 py-2 font-medium">Model</th>
                   <th className="px-4 py-2 text-right font-medium">Permintaan</th>
                   <th className="px-4 py-2 text-right font-medium">Token</th>
@@ -212,23 +212,23 @@ export default function StatusPage() {
                   <th className="px-4 py-2 text-right font-medium">Latensi P95</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#23252A] font-mono text-[11.5px]">
+              <tbody className="divide-y divide-[#23252A] font-mono text-[12px]">
                 {models.map((m) => (
                   <tr key={m.model_id}>
-                    <td className="px-4 py-2 text-[#FAF8F4]">{m.model_id}</td>
-                    <td className="px-4 py-2 text-right text-[#a9a49c]">{m.requests.toLocaleString("id-ID")}</td>
-                    <td className="px-4 py-2 text-right text-[#a9a49c]">{compact(m.tokens)}</td>
-                    <td className={cn("px-4 py-2 text-right", m.errors ? "text-[#e79c78]" : "text-[#a9a49c]")}>
+                    <td className="px-4 py-2 text-warm">{m.model_id}</td>
+                    <td className="px-4 py-2 text-right text-ash">{m.requests.toLocaleString("id-ID")}</td>
+                    <td className="px-4 py-2 text-right text-ash">{compact(m.tokens)}</td>
+                    <td className={cn("px-4 py-2 text-right", m.errors ? "text-bad" : "text-ash")}>
                       {m.errors}
                     </td>
-                    <td className="px-4 py-2 text-right text-[#a9a49c]">
+                    <td className="px-4 py-2 text-right text-ash">
                       {m.p95_latency_ms ? `${m.p95_latency_ms.toLocaleString("id-ID")} ms` : "n/a"}
                     </td>
                   </tr>
                 ))}
                 {!models.length ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-6 text-center font-sans text-[#85888B]">
+                    <td colSpan={5} className="px-4 py-6 text-center font-sans text-ash">
                       Belum ada aktivitas model dalam periode ini.
                     </td>
                   </tr>
@@ -236,17 +236,17 @@ export default function StatusPage() {
               </tbody>
             </table>
           </div>
-          <p className="border-t border-white/8 px-4 py-2.5 text-[11px] text-[#6f6a63]">
+          <p className="border-t border-white/8 px-4 py-2.5 text-[12px] text-dim">
             Statistik mengikuti permintaan yang tercatat dan diperbarui secara otomatis.
           </p>
         </section>
 
-        <section className="mt-6 rounded-xl border border-[#3A3B3D] bg-[#1B1C1F] p-4">
-          <h2 className="text-[13px] font-semibold text-[#FAF8F4]">Waktu Aktif Gateway</h2>
-          <p className="mt-1.5 font-mono text-[18px] text-[#FAF8F4]">
+        <section className="mt-6 rounded-xl border border-white/12 bg-panel p-4">
+          <h2 className="text-[13px] font-semibold text-warm">Waktu Aktif Gateway</h2>
+          <p className="mt-1.5 font-mono text-[18px] text-warm">
             {uptimeHours} jam {uptimeMinutes} menit
           </p>
-          <p className="mt-1.5 text-[11.5px] leading-5 text-[#6f6a63]">
+          <p className="mt-1.5 text-[12px] leading-5 text-dim">
             Durasi proses gateway sejak deployment atau restart terakhir. Penghitungan dimulai ulang setiap kali proses
             dijalankan kembali. Angka ini bukan ukuran uptime atau SLA bulanan; untuk evaluasi ketersediaan jangka
             panjang, gunakan hasil monitoring uptime eksternal.
@@ -254,10 +254,10 @@ export default function StatusPage() {
         </section>
 
         <div className="mt-8 flex flex-wrap gap-2">
-          <Link to="/panduan" className="inline-flex h-9 items-center rounded-lg bg-[#E7893C] px-3 text-[12.5px] font-semibold text-[#18191B]">
+          <Link to="/panduan" className="inline-flex h-9 items-center rounded-lg bg-flame px-3 text-[12.5px] font-semibold text-[#18191B]">
             Lihat Dokumentasi
           </Link>
-          <Link to="/" className="inline-flex h-9 items-center rounded-lg border border-[#3A3B3D] px-3 text-[12.5px] text-[#FAF8F4]/85">
+          <Link to="/" className="inline-flex h-9 items-center rounded-lg border border-white/12 px-3 text-[12.5px] text-warm/85">
             Kembali ke Beranda
           </Link>
         </div>

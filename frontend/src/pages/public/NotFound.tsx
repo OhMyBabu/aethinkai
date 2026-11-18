@@ -7,7 +7,7 @@ export default function NotFoundPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-charcoal px-6 text-center">
       <BrandLogo size={44} />
-      <p className="mt-6 font-mono text-[12px] uppercase tracking-[0.3em] text-flame">404 · signal lost</p>
+      <p className="mt-6 font-mono text-[12px] text-flame">404 · signal lost</p>
       <h1 className="mt-3 text-[26px] font-semibold tracking-[-0.02em] text-warm sm:text-[32px]">
         This route is not in the nexus
       </h1>

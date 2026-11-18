@@ -88,7 +88,7 @@ export default function SignupPage() {
             onChange={(event) => setName(event.target.value)}
             autoComplete="name"
             placeholder="Alya Prameswari"
-            className="h-11 w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 text-[13.5px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
+            className="h-11 w-full rounded-xl border border-ash/25 bg-panel px-3.5 text-[13.5px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
           />
         </label>
 
@@ -100,7 +100,7 @@ export default function SignupPage() {
             onChange={(event) => setEmail(event.target.value)}
             autoComplete="email"
             placeholder="you@company.com"
-            className="h-11 w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 text-[13.5px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
+            className="h-11 w-full rounded-xl border border-ash/25 bg-panel px-3.5 text-[13.5px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
           />
         </label>
 
@@ -112,7 +112,7 @@ export default function SignupPage() {
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="new-password"
             placeholder={`At least ${PASSWORD_MIN} characters`}
-            className="h-11 w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 text-[13.5px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
+            className="h-11 w-full rounded-xl border border-ash/25 bg-panel px-3.5 text-[13.5px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
           />
           <span className="mt-2 flex gap-1" aria-hidden>
             {[0, 1, 2, 3].map((index) => (
@@ -122,7 +122,7 @@ export default function SignupPage() {
               />
             ))}
           </span>
-          <span className="mt-2 grid grid-cols-2 gap-1 text-[11px] text-ash">
+          <span className="mt-2 grid grid-cols-2 gap-1 text-[12px] text-ash">
             {[
               ["length", `${PASSWORD_MIN}+ characters`],
               ["upper", "Uppercase letter"],
@@ -148,7 +148,7 @@ export default function SignupPage() {
             onChange={(event) => setConfirm(event.target.value)}
             autoComplete="new-password"
             placeholder="Repeat password"
-            className="h-11 w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 text-[13.5px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
+            className="h-11 w-full rounded-xl border border-ash/25 bg-panel px-3.5 text-[13.5px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
           />
         </label>
 
@@ -166,7 +166,7 @@ export default function SignupPage() {
         </label>
 
         {error ? (
-          <p role="alert" className="flex items-start gap-2 rounded-lg border border-[#c4633a]/30 bg-[#c4633a]/10 px-3 py-2 text-[12px] text-[#e79c78]">
+          <p role="alert" className="flex items-start gap-2 rounded-lg border border-bad/30 bg-bad/10 px-3 py-2 text-[12px] text-bad">
             <AlertCircle size={14} className="mt-0.5 shrink-0" aria-hidden />
             {error}
           </p>

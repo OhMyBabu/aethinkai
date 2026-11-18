@@ -3,38 +3,37 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { AppAmbient } from "@/components/layout/AppAmbient";
 import { Topbar } from "@/components/layout/Topbar";
-import { useToast } from "@/components/common/Toast";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { useStore } from "@/data/store";
 import { me } from "@/lib/gw";
 import type { Role } from "@/types";
 
 const titles: Record<string, string> = {
-  "/app/overview": "Overview",
-  "/app/models": "AI Models",
-  "/app/api-keys": "API Keys",
-  "/app/usage": "Usage & Logs",
-  "/app/billing": "Credits & Billing",
-  "/app/settings": "Settings",
-  "/admin/overview": "Overview",
-  "/admin/access": "Access & keys",
-  "/admin/users": "Users",
-  "/admin/models": "Katalog & harga",
-  "/admin/pricing": "Paket & RPM",
-  "/admin/api-keys": "Customer API keys",
-  "/admin/monitor": "Key monitor",
-  "/admin/model-live": "Model monitor",
+  "/app/overview": "Ringkasan",
+  "/app/models": "Model & harga",
+  "/app/api-keys": "API key",
+  "/app/usage": "Pemakaian",
+  "/app/billing": "Saldo & tagihan",
+  "/app/settings": "Pengaturan",
+  "/admin/overview": "Ringkasan",
+  "/admin/access": "Akses & key",
+  "/admin/users": "Pengguna",
+  "/admin/models": "Model & harga",
+  "/admin/pricing": "Paket",
+  "/admin/api-keys": "Key pelanggan",
+  "/admin/monitor": "Monitor key",
+  "/admin/model-live": "Monitor model",
   "/admin/bansos": "Bansos",
-  "/admin/routing": "Model routing",
-  "/admin/fallbacks": "Model fallback",
-  "/admin/usage": "Usage analytics",
-  "/admin/settings": "Admin settings",
+  "/admin/routing": "Routing",
+  "/admin/fallbacks": "Fallback",
+  "/admin/usage": "Analitik pemakaian",
+  "/admin/settings": "Pengaturan",
 };
 
 export function AppShell({ role }: { role: Role }) {
   const [navOpen, setNavOpen] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
   const { state, currentUser, logout } = useStore();
-  const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -63,7 +62,7 @@ export function AppShell({ role }: { role: Role }) {
         role={role}
         open={navOpen}
         onClose={() => setNavOpen(false)}
-        credits={balance ?? 0}
+        credits={balance}
         userName={user.name}
         email={user.email}
         plan={role === "admin" ? "Admin" : user.plan}
@@ -77,16 +76,14 @@ export function AppShell({ role }: { role: Role }) {
           onOpenNav={() => setNavOpen(true)}
           title={titles[location.pathname] ?? "AethinkAI"}
           role={role}
-          onNotify={() => toast("You're all caught up", { description: "No new alerts for this workspace.", variant: "info" })}
         />
-        <main className="safe-b relative min-w-0 flex-1 px-4 py-5 pb-16 sm:px-6 sm:py-8">
-          <div key={location.pathname} className="page-enter mx-auto w-full max-w-[1240px]">
-            <Outlet />
+        <main className="safe-b relative min-w-0 flex-1 px-4 py-5 pb-16 sm:px-6 sm:py-7">
+          <div key={location.pathname} className="page-enter mx-auto w-full max-w-[1200px]">
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </div>
         </main>
-        <footer className="border-t border-white/6 px-6 py-4 text-[11px] text-dim">
-          AethinkAI Gateway · router.aethink.ai.id · v0.1.0
-        </footer>
       </div>
     </div>
   );

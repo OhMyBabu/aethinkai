@@ -224,17 +224,17 @@ export default function AdminPricingPage() {
 
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
         <Card className="p-4">
-          <p className="text-[10.5px] uppercase tracking-[0.12em] text-ash">Paket aktif</p>
+          <p className="text-[12px] text-ash">Paket aktif</p>
           <p className="mt-1 font-mono text-[20px] text-warm">{stats.active}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-[10.5px] uppercase tracking-[0.12em] text-ash">Termurah</p>
+          <p className="text-[12px] text-ash">Termurah</p>
           <p className="mt-1 text-[15px] text-warm">
             {stats.cheapest ? `${stats.cheapest.name} · ${idr(stats.cheapest.price_idr)}` : "n/a"}
           </p>
         </Card>
         <Card className="p-4">
-          <p className="text-[10.5px] uppercase tracking-[0.12em] text-ash">RPM</p>
+          <p className="text-[12px] text-ash">RPM</p>
           <p className="mt-1 text-[15px] text-warm">
             {stats.bestRpm ? `${stats.bestRpm.rpm_limit} rpm · flat semua paket` : "n/a"}
           </p>
@@ -242,10 +242,10 @@ export default function AdminPricingPage() {
       </div>
 
       <Card className="overflow-hidden p-0">
-        {err ? <p className="px-4 py-3 text-[12px] text-[#e08a5f]">{err}</p> : null}
+        {err ? <p className="px-4 py-3 text-[12px] text-bad">{err}</p> : null}
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b border-ash/15 text-[10.5px] uppercase tracking-[0.1em] text-ash">
+            <tr className="border-b border-ash/15 text-[12px] text-ash">
               <th className="px-4 py-2.5 font-medium">Paket</th>
               <th className="px-4 py-2.5 text-right font-medium">Harga</th>
               <th className="px-4 py-2.5 text-right font-medium">Kredit</th>
@@ -259,7 +259,7 @@ export default function AdminPricingPage() {
               <tr key={pkg.sku} className={cn(!pkg.active && "opacity-55")}>
                 <td className="px-4 py-3">
                   <div className="text-[13px] text-warm">{pkg.name}</div>
-                  <div className="font-mono text-[10.5px] text-ash">
+                  <div className="font-mono text-[12px] text-ash">
                     {pkg.sku} · {pkg.kind}
                     {pkg.blurb ? ` · ${pkg.blurb}` : ""}
                   </div>
@@ -268,13 +268,13 @@ export default function AdminPricingPage() {
                 <td className="px-4 py-3 text-right font-mono text-[12px] text-warm">
                   {idr(pkg.credits_micro / 1_000_000)}
                   {pkg.credits_micro === pkg.price_idr * 1_000_000 ? (
-                    <span className="ml-1 text-[10px] text-ash">= harga</span>
+                    <span className="ml-1 text-[12px] text-ash">= harga</span>
                   ) : (
-                    <span className="ml-1 text-[10px] text-flame">manual</span>
+                    <span className="ml-1 text-[12px] text-flame">manual</span>
                   )}
                 </td>
                 <td className="px-4 py-3 text-right font-mono text-[12px] text-warm">
-                  {pkg.rpm_limit} <span className="text-[10px] text-ash">flat</span>
+                  {pkg.rpm_limit} <span className="text-[12px] text-ash">flat</span>
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button type="button" onClick={() => void toggleActive(pkg)} title="klik untuk ubah">
@@ -294,7 +294,7 @@ export default function AdminPricingPage() {
                     <button
                       type="button"
                       onClick={() => void remove(pkg)}
-                      className="grid size-8 place-items-center rounded-lg text-ash transition hover:bg-[#c4633a]/15 hover:text-[#e79c78]"
+                      className="grid size-8 place-items-center rounded-lg text-ash transition hover:bg-bad/15 hover:text-bad"
                       aria-label={`Hapus ${pkg.name}`}
                     >
                       <Trash2 size={13} />
@@ -318,7 +318,7 @@ export default function AdminPricingPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <p className="text-[13px] font-semibold text-warm">Top-up nominal bebas</p>
-            <p className="mt-1 text-[11.5px] leading-5 text-ash">
+            <p className="mt-1 text-[12px] leading-5 text-ash">
               {topup.enabled
                 ? `Aktif · minimal ${idr(topup.min_idr)}${topup.max_idr ? ` · maksimal ${idr(topup.max_idr)}` : ""}`
                 : "Nonaktif, buyer hanya bisa beli paket"}
@@ -326,7 +326,7 @@ export default function AdminPricingPage() {
           </div>
           <StatusPill tone={topup.enabled ? "success" : "neutral"}>{topup.enabled ? "aktif" : "mati"}</StatusPill>
         </div>
-        <p className="mt-2 text-[11px] leading-5 text-dim">
+        <p className="mt-2 text-[12px] leading-5 text-dim">
           Top-up hanya menambah saldo. RPM tidak berubah, RPM naik hanya lewat pembelian paket, dan nilainya adalah
           paket tertinggi yang pernah dibeli akun itu.
         </p>
@@ -364,7 +364,7 @@ export default function AdminPricingPage() {
           <Field label="Harga (Rp)">
             {(id) => <TextInput id={id} type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />}
           </Field>
-          <div className="rounded-xl border border-ash/20 bg-warm/[0.02] px-3 py-2.5 text-[11.5px] leading-5 text-ash">
+          <div className="rounded-xl border border-ash/20 bg-warm/[0.02] px-3 py-2.5 text-[12px] leading-5 text-ash">
             RPM <span className="font-mono text-warm">60/menit</span> untuk semua paket, tidak diatur per paket.
             Mau diubah? Set <span className="font-mono">AETHINK_RPM_LIMIT</span> atau ubah di DB, satu angka untuk semua.
           </div>
@@ -373,7 +373,7 @@ export default function AdminPricingPage() {
               type="checkbox"
               checked={form.creditsSameAsPrice}
               onChange={(e) => setForm({ ...form, creditsSameAsPrice: e.target.checked })}
-              className="size-4 rounded border-ash/40 bg-[#141518]"
+              className="size-4 rounded border-ash/40 bg-panel"
             />
             Kredit = harga (default). Uncheck untuk isi manual.
           </label>
@@ -394,7 +394,7 @@ export default function AdminPricingPage() {
                   id={id}
                   value={form.kind}
                   onChange={(e) => setForm({ ...form, kind: e.target.value as "plan" | "topup" })}
-                  className="w-full rounded-xl border border-ash/25 bg-[#141518] px-3 py-2.5 text-sm text-warm"
+                  className="w-full rounded-xl border border-ash/25 bg-panel px-3 py-2.5 text-sm text-warm"
                 >
                   <option value="plan">plan</option>
                   <option value="topup">topup</option>
@@ -410,7 +410,7 @@ export default function AdminPricingPage() {
                   id={id}
                   value={form.active ? "1" : "0"}
                   onChange={(e) => setForm({ ...form, active: e.target.value === "1" })}
-                  className="w-full rounded-xl border border-ash/25 bg-[#141518] px-3 py-2.5 text-sm text-warm"
+                  className="w-full rounded-xl border border-ash/25 bg-panel px-3 py-2.5 text-sm text-warm"
                 >
                   <option value="1">aktif, dijual</option>
                   <option value="0">nonaktif, disembunyikan</option>
@@ -418,7 +418,7 @@ export default function AdminPricingPage() {
               )}
             </Field>
           </div>
-          {formErr ? <p className="text-[11.5px] text-[#e08a5f]">{formErr}</p> : null}
+          {formErr ? <p className="text-[12px] text-bad">{formErr}</p> : null}
         </div>
       </Modal>
 
@@ -447,7 +447,7 @@ export default function AdminPricingPage() {
               type="checkbox"
               checked={topupDraft.enabled}
               onChange={(e) => setTopupDraft({ ...topupDraft, enabled: e.target.checked })}
-              className="size-4 rounded border-ash/40 bg-[#141518]"
+              className="size-4 rounded border-ash/40 bg-panel"
             />
             Top-up nominal bebas dibuka
           </label>

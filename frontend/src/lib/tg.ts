@@ -126,8 +126,26 @@ export function webApp(): TgWebApp | null {
   return w.Telegram?.WebApp ?? null;
 }
 
-/** Telegram injects the SDK asynchronously; give it a moment before falling back. */
+const SDK_URL = "https://telegram.org/js/telegram-web-app.js";
+let sdkLoading: Promise<void> | null = null;
+
+/** Only the mini app needs the SDK, so it is fetched on demand instead of blocking every page. */
+function loadTelegramSdk(): Promise<void> {
+  if (webApp()) return Promise.resolve();
+  sdkLoading ??= new Promise<void>((resolve) => {
+    const script = document.createElement("script");
+    script.src = SDK_URL;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => resolve();
+    document.head.appendChild(script);
+  });
+  return sdkLoading;
+}
+
+/** Load the SDK, then give Telegram a moment to hand over initData before falling back. */
 export async function waitForWebApp(timeoutMs = 1500): Promise<TgWebApp | null> {
+  await Promise.race([loadTelegramSdk(), new Promise<void>((r) => setTimeout(r, 4000))]);
   const started = Date.now();
   for (;;) {
     const app = webApp();

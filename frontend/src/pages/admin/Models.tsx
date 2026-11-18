@@ -27,7 +27,7 @@ function Toggle({ on, label, onChange }: { on: boolean; label: string; onChange:
       aria-checked={on}
       aria-label={label}
       onClick={() => onChange(!on)}
-      className="inline-flex h-10 items-center gap-2 rounded-full border border-ash/25 px-2.5 text-[11.5px] text-ash transition hover:border-ash/40"
+      className="inline-flex h-10 items-center gap-2 rounded-full border border-ash/25 px-2.5 text-[12px] text-ash transition hover:border-ash/40"
     >
       <span
         className={`relative inline-flex h-5 w-9 items-center rounded-full border transition ${
@@ -91,7 +91,7 @@ function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute
     setter(event.target.value.replace(/[^0-9]/g, ""));
 
   const inputClass =
-    "h-10 w-[112px] rounded-lg border border-flame/45 bg-[#141518] px-2 text-right font-mono text-[12.5px] text-warm focus:border-flame focus:outline-none";
+    "h-10 w-[112px] rounded-lg border border-flame/45 bg-panel px-2 text-right font-mono text-[12.5px] text-warm focus:border-flame focus:outline-none";
 
   return (
     <tr className="border-b border-ash/10 align-top last:border-0">
@@ -104,7 +104,7 @@ function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute
               onKeyDown={(event) => event.key === "Enter" && void save()}
               placeholder="Nama tampilan"
               aria-label={`Nama tampilan ${model.model_id}`}
-              className="h-10 w-full rounded-lg border border-flame/45 bg-[#141518] px-2 text-[12.5px] text-warm focus:border-flame focus:outline-none"
+              className="h-10 w-full rounded-lg border border-flame/45 bg-panel px-2 text-[12.5px] text-warm focus:border-flame focus:outline-none"
             />
             <input
               value={publicId}
@@ -112,9 +112,9 @@ function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute
               onKeyDown={(event) => event.key === "Enter" && void save()}
               placeholder="id publik (dipakai buyer)"
               aria-label={`ID publik ${model.model_id}`}
-              className="h-9 w-full rounded-lg border border-ash/30 bg-[#141518] px-2 font-mono text-[11px] text-warm focus:border-flame focus:outline-none"
+              className="h-9 w-full rounded-lg border border-ash/30 bg-panel px-2 font-mono text-[12px] text-warm focus:border-flame focus:outline-none"
             />
-            <div className="truncate font-mono text-[10px] text-ash/70">
+            <div className="truncate font-mono text-[12px] text-ash/70">
               route: {model.model_id} · ctx {model.context_window ? `${Math.round(model.context_window / 1000)}K` : "n/a"} · out{" "}
               {model.max_output ? `${Math.round(model.max_output / 1000)}K` : "n/a"}
             </div>
@@ -122,10 +122,10 @@ function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute
         ) : (
           <>
             <div className="truncate text-[13px] font-medium text-warm">{model.display_name}</div>
-            <div className="truncate font-mono text-[10.5px] text-ash">{model.public_id || model.model_id}</div>
+            <div className="truncate font-mono text-[12px] text-ash">{model.public_id || model.model_id}</div>
             <Link
               to={`/admin/routing?model=${encodeURIComponent(model.model_id)}`}
-              className="mt-1 inline-flex items-center gap-1 rounded-md border border-ash/20 px-1.5 py-0.5 text-[10px] text-ash transition hover:border-flame/40 hover:text-flame"
+              className="mt-1 inline-flex items-center gap-1 rounded-md border border-ash/20 px-1.5 py-0.5 text-[12px] text-ash transition hover:border-flame/40 hover:text-flame"
               title="Atur provider yang melayani model ini"
             >
               <GitBranch size={9} aria-hidden />
@@ -187,7 +187,7 @@ function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute
 
       <td className="px-3 py-3 text-[12px] text-ash">
         {model.requests_30d} req
-        <div className="text-[10.5px]">{formatIDR(model.revenue_micro_30d / 1_000_000)}</div>
+        <div className="text-[12px]">{formatIDR(model.revenue_micro_30d / 1_000_000)}</div>
       </td>
 
       <td className="px-3 py-3">
@@ -196,7 +196,7 @@ function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute
             value={status}
             onChange={(event) => setStatus(event.target.value as "on" | "maintenance" | "off")}
             aria-label={`Status ${model.display_name}`}
-            className="h-10 rounded-lg border border-flame/45 bg-[#141518] px-2 text-[12px] text-warm focus:border-flame focus:outline-none"
+            className="h-10 rounded-lg border border-flame/45 bg-panel px-2 text-[12px] text-warm focus:border-flame focus:outline-none"
           >
             <option value="on">On, dijual</option>
             <option value="maintenance">Gangguan, tampil, tak bisa dipakai</option>
@@ -204,11 +204,11 @@ function ModelRow({ model, routes, onSaved }: { model: GwModel; routes?: GwRoute
           </select>
         ) : (
           <span
-            className={`inline-flex h-7 items-center rounded-full border px-2.5 text-[11px] ${
+            className={`inline-flex h-7 items-center rounded-full border px-2.5 text-[12px] ${
               (model.availability ?? (model.enabled ? "on" : "off")) === "on"
                 ? "border-flame/45 bg-flame/10 text-warm"
                 : (model.availability ?? "off") === "maintenance"
-                  ? "border-[#c4633a]/45 bg-[#c4633a]/10 text-[#e79c78]"
+                  ? "border-bad/45 bg-bad/10 text-bad"
                   : "border-ash/25 text-ash"
             }`}
           >
@@ -330,15 +330,13 @@ export default function AdminModelsPage() {
       <PageHeader
         title="Katalog & harga"
         description="Ini yang dijual: nama publik, harga per 1M token, dan status tayang. Provider mana yang melayani tiap model diatur di halaman Routing, bukan di sini."
-        breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Models" }]}
+        breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Model" }]}
         actions={
           <div className="flex items-center gap-2">
             <Button variant="primary" onClick={() => setPickerOpen(true)} leadingIcon={<Plus size={14} />}>
               Produk
             </Button>
-            <Button variant="ghost" onClick={() => void load()} disabled={loading} leadingIcon={<RefreshCw size={14} />}>
-              Refresh
-            </Button>
+            <Button variant="ghost" onClick={() => void load()} disabled={loading} leadingIcon={<RefreshCw size={14} />}>Muat ulang</Button>
           </div>
         }
       />
@@ -350,7 +348,7 @@ export default function AdminModelsPage() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Cari model…"
-            className="h-11 w-[240px] rounded-xl border border-ash/25 bg-[#141518] pl-9 pr-3 text-[13px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none sm:h-10"
+            className="h-11 w-[240px] rounded-xl border border-ash/25 bg-panel pl-9 pr-3 text-[13px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none sm:h-10"
           />
         </div>
         <button
@@ -368,14 +366,14 @@ export default function AdminModelsPage() {
       </div>
 
       {error ? (
-        <Card className="border-[#c4633a]/40 bg-[#c4633a]/10 p-4 text-[13px] text-[#e79c78]">{error}</Card>
+        <Card className="border-bad/40 bg-bad/10 p-4 text-[13px] text-bad">{error}</Card>
       ) : null}
 
       <Card className="overflow-hidden p-0">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[880px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-ash/15 text-[11px] uppercase tracking-[0.08em] text-ash">
+              <tr className="border-b border-ash/15 text-[12px] text-ash">
                 <th className="px-4 py-3 font-medium">Model</th>
                 <th className="px-3 py-3 text-right font-medium">Input / 1M</th>
                 <th className="px-3 py-3 text-right font-medium">Output / 1M</th>
@@ -407,7 +405,7 @@ export default function AdminModelsPage() {
         {loading ? <div className="px-4 py-6 text-center text-[12.5px] text-ash">Memuat model dari gateway…</div> : null}
       </Card>
 
-      <p className="text-[11.5px] leading-5 text-ash">
+      <p className="text-[12px] leading-5 text-ash">
         Model tanpa harga ditolak gateway (<span className="font-mono">403 model_not_allowed</span>). Harga di-snapshot
         per request, jadi riwayat tagihan tidak berubah saat harga diperbarui. Satu nama = satu produk; model yang
         sama dari provider lain ditambahkan sebagai route, bukan baris baru.
@@ -425,10 +423,10 @@ export default function AdminModelsPage() {
             value={variantName}
             onChange={(event) => setVariantName(event.target.value.replace(/[^a-zA-Z0-9._-]/g, ""))}
             placeholder="nama produk baru (untuk varian dari model yang sudah dijual)"
-            className="h-10 w-full rounded-lg border border-ash/30 bg-[#141518] px-3 font-mono text-[12px] text-warm focus:border-flame focus:outline-none"
+            className="h-10 w-full rounded-lg border border-ash/30 bg-panel px-3 font-mono text-[12px] text-warm focus:border-flame focus:outline-none"
           />
           {pickerError ? (
-            <div className="rounded-lg border border-[#c4633a]/40 bg-[#c4633a]/10 px-3 py-2 text-[12px] text-[#e79c78]">
+            <div className="rounded-lg border border-bad/40 bg-bad/10 px-3 py-2 text-[12px] text-bad">
               {pickerError}
             </div>
           ) : null}
@@ -445,11 +443,11 @@ export default function AdminModelsPage() {
                 >
                   <span className="min-w-0">
                     <span className="block truncate font-mono text-[12px] text-warm">{row.id}</span>
-                    <span className="block text-[10.5px] text-ash">
+                    <span className="block text-[12px] text-ash">
                       {row.provider} · ctx {row.context_window ?? "n/a"} · out {row.max_output ?? "n/a"}
                     </span>
                   </span>
-                  <span className="shrink-0 text-[10.5px] text-ash">
+                  <span className="shrink-0 text-[12px] text-ash">
                     {exists ? (variantName.trim() ? `varian "${variantName.trim()}"` : "isi nama untuk varian") : "tambah"}
                   </span>
                 </button>

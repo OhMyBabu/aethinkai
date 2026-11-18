@@ -38,7 +38,7 @@ export function Wordmark({ compact = false, className }: { compact?: boolean; cl
           Aethink<span className="text-flame">AI</span>
         </span>
         {!compact ? (
-          <span className="mt-1 block text-[10.5px] font-medium uppercase tracking-[0.26em] text-ash">
+          <span className="mt-1 block text-[12px] font-medium text-ash">
             Gateway
           </span>
         ) : null}

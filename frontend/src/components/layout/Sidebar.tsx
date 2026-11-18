@@ -1,35 +1,74 @@
 import { useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { Activity, ArrowRightLeft, Boxes, Cpu, CreditCard, Gauge, Gift, GitBranch, KeyRound, LayoutDashboard, Radar, Settings, ShieldCheck, Tag, Users, X } from "lucide-react";
+import {
+  Activity,
+  ArrowRightLeft,
+  Boxes,
+  Cpu,
+  CreditCard,
+  Gauge,
+  Gift,
+  GitBranch,
+  KeyRound,
+  LayoutDashboard,
+  Package,
+  Radar,
+  Settings,
+  ShieldCheck,
+  Users,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Wordmark } from "@/components/layout/BrandLogo";
-import { StatusPill } from "@/components/common/StatusPill";
 import type { Role } from "@/types";
 import { formatIDR } from "@/lib/format";
 
-const userNav = [
-  { to: "/app/overview", label: "Overview", icon: LayoutDashboard },
-  { to: "/app/models", label: "AI Models", icon: Boxes },
-  { to: "/app/api-keys", label: "API Keys", icon: KeyRound },
-  { to: "/app/usage", label: "Usage & Logs", icon: Activity },
-  { to: "/app/billing", label: "Credits & Billing", icon: CreditCard },
-  { to: "/app/settings", label: "Settings", icon: Settings },
+type Item = { to: string; label: string; icon: LucideIcon };
+type Group = { title?: string; items: Item[] };
+
+const userNav: Group[] = [
+  {
+    items: [
+      { to: "/app/overview", label: "Ringkasan", icon: LayoutDashboard },
+      { to: "/app/api-keys", label: "API key", icon: KeyRound },
+      { to: "/app/models", label: "Model & harga", icon: Boxes },
+      { to: "/app/usage", label: "Pemakaian", icon: Activity },
+      { to: "/app/billing", label: "Saldo & tagihan", icon: CreditCard },
+    ],
+  },
+  { items: [{ to: "/app/settings", label: "Pengaturan", icon: Settings }] },
 ];
 
-const adminNav = [
-  { to: "/admin/overview", label: "Overview", icon: Gauge },
-  { to: "/admin/access", label: "Access & Keys", icon: ShieldCheck },
-  { to: "/admin/users", label: "Users", icon: Users },
-  { to: "/admin/models", label: "Katalog & Harga", icon: Boxes },
-  { to: "/admin/pricing", label: "Packages & Pricing", icon: Tag },
-  { to: "/admin/api-keys", label: "Customer Keys", icon: KeyRound },
-  { to: "/admin/monitor", label: "Key Monitor", icon: Radar },
-  { to: "/admin/model-live", label: "Model Monitor", icon: Cpu },
-  { to: "/admin/bansos", label: "Bansos", icon: Gift },
-  { to: "/admin/routing", label: "Routing Provider", icon: GitBranch },
-  { to: "/admin/fallbacks", label: "Fallback", icon: ArrowRightLeft },
-  { to: "/admin/usage", label: "Usage Analytics", icon: Activity },
-  { to: "/admin/settings", label: "Admin Settings", icon: Settings },
+const adminNav: Group[] = [
+  { items: [{ to: "/admin/overview", label: "Ringkasan", icon: Gauge }] },
+  {
+    title: "Pelanggan",
+    items: [
+      { to: "/admin/users", label: "Pengguna", icon: Users },
+      { to: "/admin/access", label: "Akses & key", icon: ShieldCheck },
+      { to: "/admin/api-keys", label: "Key pelanggan", icon: KeyRound },
+      { to: "/admin/bansos", label: "Bansos", icon: Gift },
+    ],
+  },
+  {
+    title: "Katalog",
+    items: [
+      { to: "/admin/models", label: "Model & harga", icon: Boxes },
+      { to: "/admin/pricing", label: "Paket", icon: Package },
+      { to: "/admin/routing", label: "Routing", icon: GitBranch },
+      { to: "/admin/fallbacks", label: "Fallback", icon: ArrowRightLeft },
+    ],
+  },
+  {
+    title: "Pantau",
+    items: [
+      { to: "/admin/usage", label: "Analitik pemakaian", icon: Activity },
+      { to: "/admin/monitor", label: "Monitor key", icon: Radar },
+      { to: "/admin/model-live", label: "Monitor model", icon: Cpu },
+    ],
+  },
+  { items: [{ to: "/admin/settings", label: "Pengaturan", icon: Settings }] },
 ];
 
 const roleNav = { user: userNav, admin: adminNav } as const;
@@ -47,13 +86,13 @@ export function Sidebar({
   role: Role;
   open: boolean;
   onClose: () => void;
-  credits: number;
+  credits: number | null;
   userName: string;
   email: string;
   plan: string;
   onSwitchRole: () => void;
 }) {
-  const items = roleNav[role];
+  const groups = roleNav[role];
 
   useEffect(() => {
     if (!open) return;
@@ -64,97 +103,87 @@ export function Sidebar({
     };
   }, [open]);
 
+  const initials = userName
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("");
+
   return (
     <>
-      {open ? (
-        <div
-          className="overlay-enter fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px] lg:hidden"
-          onClick={onClose}
-          aria-hidden
-        />
-      ) : null}
+      {open ? <div className="overlay-enter fixed inset-0 z-40 bg-black/70 lg:hidden" onClick={onClose} aria-hidden /> : null}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col border-r border-white/8 bg-[#0A0A0A]/55 backdrop-blur-2xl transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col border-r border-white/8 bg-charcoal transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
-        aria-label={`${role} navigation`}
+        aria-label={role === "admin" ? "Navigasi admin" : "Navigasi"}
       >
-        <div className="flex h-16 items-center justify-between px-5">
-          <Wordmark />
+        <div className="flex h-14 items-center justify-between px-4">
+          <Wordmark compact />
           <button
             type="button"
             onClick={onClose}
-            className="grid size-11 place-items-center rounded-xl text-ash transition active:scale-95 active:bg-warm/[0.08] hover:bg-warm/[0.06] hover:text-warm lg:hidden"
-            aria-label="Close navigation"
+            className="grid size-11 place-items-center rounded-lg text-ash transition-colors hover:bg-white/[0.06] hover:text-warm lg:hidden"
+            aria-label="Tutup navigasi"
           >
             <X size={16} />
           </button>
         </div>
 
-        <div className="px-4 pb-4">
-          <div className="flex items-center justify-between rounded-xl border border-ash/15 bg-warm/[0.03] px-3 py-2">
-            <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-ash">
-              <ShieldCheck size={12} aria-hidden />
-              {role === "admin" ? "Admin" : "Workspace"}
-            </span>
-            <StatusPill tone="active" dot={false}>
-              {plan}
-            </StatusPill>
-          </div>
-        </div>
-
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
-          {items.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={onClose}
-              className={({ isActive }) =>
-                cn(
-                  "relative flex items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-medium transition lg:py-2.5 lg:text-[13px]",
-                  isActive
-                    ? "bg-white/[0.06] text-warm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[2px] before:-translate-y-1/2 before:rounded-full before:bg-flame"
-                    : "text-ash hover:bg-warm/[0.045] hover:text-warm",
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <item.icon size={16} className={cn(isActive && "text-flame")} aria-hidden />
-                  <span className="truncate">{item.label}</span>
-                </>
-              )}
-            </NavLink>
+        <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-3">
+          {groups.map((group, index) => (
+            <div key={group.title ?? index}>
+              {group.title ? <p className="mb-1 px-3 text-[12px] font-medium text-dim">{group.title}</p> : null}
+              <div className="space-y-0.5">
+                {group.items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] transition-colors lg:py-2 lg:text-[13px]",
+                        isActive ? "bg-white/[0.07] font-medium text-warm" : "text-ash hover:bg-white/[0.04] hover:text-warm",
+                      )
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <item.icon size={16} className={cn(isActive ? "text-flame" : "text-ash")} aria-hidden />
+                        <span>{item.label}</span>
+                      </>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
 
-        <div className="space-y-3 border-t border-ash/12 p-4">
+        <div className="border-t border-white/8 p-3">
           {role === "user" ? (
-            <div className="rounded-xl border border-ash/15 bg-warm/[0.03] px-3 py-2.5">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-ash">Credit balance</p>
-              <p className="mt-1 text-[15px] font-semibold tabular-nums text-warm">{formatIDR(credits)}</p>
+            <div className="mb-3 flex items-baseline justify-between px-3 text-[13px]">
+              <span className="text-ash">Saldo</span>
+              <span className="num font-semibold text-warm">{credits === null ? "n/a" : formatIDR(credits)}</span>
             </div>
           ) : null}
-          <div className="flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center rounded-full border border-flame/25 bg-flame/10 text-[12px] font-semibold text-flame">
-              {userName
-                .split(" ")
-                .map((part) => part[0])
-                .slice(0, 2)
-                .join("")}
+          <div className="flex items-center gap-2.5 px-3 py-1.5">
+            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/[0.08] text-[12px] font-semibold text-warm">
+              {initials}
             </span>
             <div className="min-w-0">
-              <p className="truncate text-[12.5px] font-medium text-warm">{userName}</p>
-              <p className="truncate text-[11px] text-ash">{email}</p>
+              <p className="truncate text-[13px] font-medium text-warm">{userName}</p>
+              <p className="truncate text-[12px] text-ash">{role === "admin" ? "Admin" : plan}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onSwitchRole}
-            className="w-full rounded-xl border border-ash/20 px-3 py-3 text-[13px] font-medium text-ash transition active:scale-[0.99] hover:border-ash/35 hover:text-warm lg:py-2 lg:text-[11.5px]"
+            className="mt-1 w-full rounded-lg px-3 py-2.5 text-left text-[13px] text-ash transition-colors hover:bg-white/[0.04] hover:text-warm lg:py-2"
+            title={email}
           >
-            Sign out
+            Keluar
           </button>
         </div>
       </aside>

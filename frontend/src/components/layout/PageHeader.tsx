@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 
 export function Breadcrumb({ items }: { items: Array<{ label: string; to?: string }> }) {
   return (
-    <nav aria-label="Breadcrumb" className="-mb-2 flex items-center gap-1.5 text-[12px] text-ash sm:mb-0 sm:text-[11.5px]">
+    <nav aria-label="Breadcrumb" className="-mb-2 flex items-center gap-1.5 text-[12px] text-ash sm:mb-0 sm:text-[12px]">
       {items.map((item, index) => (
         <span key={`${item.label}-${index}`} className="flex items-center gap-1.5">
           {index > 0 ? <ChevronRight size={11} className="text-ash/60" aria-hidden /> : null}
@@ -36,15 +36,14 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <header className={cn("mb-6 space-y-3", className)}>
-      {breadcrumb ? <Breadcrumb items={breadcrumb} /> : null}
+    <header className={cn("mb-5 sm:mb-6", className)}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.03em] text-warm sm:text-[30px]">
+          <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-warm sm:text-[24px]">
             {title}
           </h1>
           {description ? (
-            <p className="mt-1.5 max-w-2xl text-[13.5px] leading-6 text-ash sm:text-[13px]">{description}</p>
+            <p className="mt-1 max-w-2xl text-[13.5px] leading-6 text-ash sm:text-[13px]">{description}</p>
           ) : null}
         </div>
         {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}

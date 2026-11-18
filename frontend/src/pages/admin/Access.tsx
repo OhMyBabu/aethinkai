@@ -131,9 +131,9 @@ export default function AccessPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Access & keys"
+        title="Akses & key"
         description="Bot yang menjual, gateway yang mencatat. Semua key aktif di sini."
-        breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Access" }]}
+        breadcrumb={[{ label: "Admin", to: "/admin/overview" }, { label: "Akses" }]}
         actions={
           <Button variant="secondary" size="sm" leadingIcon={<RefreshCw size={13} />} onClick={() => void load()} disabled={busy}>
             Muat ulang
@@ -172,7 +172,7 @@ export default function AccessPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-8 rounded-lg border border-ash/25 bg-[#141518] px-2 text-[12px] text-warm focus:border-flame/50 focus:outline-none"
+              className="h-8 rounded-lg border border-ash/25 bg-panel px-2 text-[12px] text-warm focus:border-flame/50 focus:outline-none"
             >
               <option value="">Semua status</option>
               <option value="active">Active</option>
@@ -187,7 +187,7 @@ export default function AccessPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="cari…"
-                className="h-8 w-[190px] rounded-lg border border-ash/25 bg-[#141518] pl-8 pr-2 text-[12px] text-warm placeholder:text-ash/60 focus:border-flame/50 focus:outline-none"
+                className="h-8 w-[190px] rounded-lg border border-ash/25 bg-panel pl-8 pr-2 text-[12px] text-warm placeholder:text-ash/60 focus:border-flame/50 focus:outline-none"
               />
             </div>
           ) : null}
@@ -202,7 +202,7 @@ export default function AccessPage() {
         <div className="rounded-xl border border-flame/40 bg-flame/[0.08] p-3.5">
           <p className="text-[12px] font-semibold text-warm">Key baru, kirim ke pembeli sekarang</p>
           <div className="mt-2 flex items-center gap-2">
-            <code className="min-w-0 flex-1 break-all rounded-lg bg-[#0f1012] p-2 font-mono text-[11.5px] text-flame">{newKey}</code>
+            <code className="min-w-0 flex-1 break-all rounded-lg bg-[#0f1012] p-2 font-mono text-[12px] text-flame">{newKey}</code>
             <button
               type="button"
               onClick={() => { navigator.clipboard?.writeText(newKey).catch(() => undefined); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
@@ -210,7 +210,7 @@ export default function AccessPage() {
             >
               {copied ? <Check size={13} /> : <Copy size={13} />}
             </button>
-            <button type="button" onClick={() => setNewKey(null)} className="text-[11.5px] text-ash hover:text-warm">tutup</button>
+            <button type="button" onClick={() => setNewKey(null)} className="text-[12px] text-ash hover:text-warm">tutup</button>
           </div>
         </div>
       ) : null}
@@ -220,7 +220,7 @@ export default function AccessPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[980px] text-left">
               <thead>
-                <tr className="border-b border-ash/15 bg-warm/[0.02] text-[10.5px] uppercase tracking-[0.1em] text-ash">
+                <tr className="border-b border-ash/15 bg-warm/[0.02] text-[12px] text-ash">
                   <th className="px-4 py-2.5 font-medium">Key</th>
                   <th className="px-4 py-2.5 font-medium">Pembeli</th>
                   <th className="px-4 py-2.5 text-right font-medium">Saldo</th>
@@ -236,8 +236,8 @@ export default function AccessPage() {
                 {keys.map((k) => (
                   <tr key={k.id} className="border-b border-ash/10 text-[12px] last:border-0 hover:bg-warm/[0.02]">
                     <td className="px-4 py-2.5">
-                      <p className="font-mono text-[11.5px] text-warm">{k.prefix}…</p>
-                      <p className="text-[10.5px] text-ash">{k.label ?? k.name}</p>
+                      <p className="font-mono text-[12px] text-warm">{k.prefix}…</p>
+                      <p className="text-[12px] text-ash">{k.label ?? k.name}</p>
                     </td>
                     <td className="px-4 py-2.5">
                       {k.buyer_id ? (
@@ -247,10 +247,10 @@ export default function AccessPage() {
                           className="text-left text-[12px] text-warm hover:text-flame"
                         >
                           {k.username ? `@${k.username}` : `tg ${k.tg_id ?? "n/a"}`}
-                          <span className="block text-[10.5px] text-ash">{k.buyer_name ?? k.email}</span>
+                          <span className="block text-[12px] text-ash">{k.buyer_name ?? k.email}</span>
                         </button>
                       ) : (
-                        <span className="text-[11.5px] text-ash">{k.email}</span>
+                        <span className="text-[12px] text-ash">{k.email}</span>
                       )}
                     </td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-warm">{idr(k.balance_micro)}</td>
@@ -266,11 +266,11 @@ export default function AccessPage() {
                           const v = Number(e.target.value);
                           if (v && v !== k.rpm_limit) void patch(k.id, { rpm_limit: v });
                         }}
-                        className="h-8 w-[74px] rounded-md border border-ash/18 bg-[#101113] px-2 text-[11.5px] tabular-nums text-warm focus:border-flame/50 focus:outline-none"
+                        className="h-8 w-[74px] rounded-md border border-ash/18 bg-panel px-2 text-[12px] tabular-nums text-warm focus:border-flame/50 focus:outline-none"
                       />
                       {k.rpm_override ? (
                         <span
-                          className="ml-1 rounded-md bg-flame/12 px-1.5 py-0.5 text-[9.5px] text-flame"
+                          className="ml-1 rounded-md bg-flame/12 px-1.5 py-0.5 text-[12px] text-flame"
                           title="RPM di-set manual oleh admin, pembelian paket tidak menimpanya"
                         >
                           custom
@@ -278,25 +278,25 @@ export default function AccessPage() {
                       ) : null}
                     </td>
                     <td className="px-4 py-2.5">
-                      <span className={cn("rounded-md px-2 py-0.5 text-[10.5px]",
+                      <span className={cn("rounded-md px-2 py-0.5 text-[12px]",
                         k.status === "active" ? "bg-flame/12 text-flame" : "bg-warm/[0.06] text-ash")}>
                         {k.status}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-[11px] text-ash">{when(k.last_used_at)}</td>
+                    <td className="px-4 py-2.5 text-[12px] text-ash">{when(k.last_used_at)}</td>
                     <td className="px-4 py-2.5 text-right">
                       <div className="flex justify-end gap-1.5">
                         <button
                           type="button"
                           onClick={() => void patch(k.id, { status: k.status === "active" ? "suspended" : "active" })}
-                          className="h-8 rounded-md border border-ash/25 px-2 text-[11.5px] text-ash transition hover:border-flame/40 hover:text-warm"
+                          className="h-8 rounded-md border border-ash/25 px-2 text-[12px] text-ash transition hover:border-flame/40 hover:text-warm"
                         >
                           {k.status === "active" ? "Suspend" : "Aktifkan"}
                         </button>
                         <button
                           type="button"
                           onClick={() => void rotate(k.id)}
-                          className="h-8 rounded-md border border-ash/25 px-2 text-[11.5px] text-ash transition hover:border-flame/40 hover:text-warm"
+                          className="h-8 rounded-md border border-ash/25 px-2 text-[12px] text-ash transition hover:border-flame/40 hover:text-warm"
                         >
                           Rotate
                         </button>
@@ -319,7 +319,7 @@ export default function AccessPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[560px] text-left">
                 <thead>
-                  <tr className="border-b border-ash/15 bg-warm/[0.02] text-[10.5px] uppercase tracking-[0.1em] text-ash">
+                  <tr className="border-b border-ash/15 bg-warm/[0.02] text-[12px] text-ash">
                     <th className="px-4 py-2.5 font-medium">Pembeli</th>
                     <th className="px-4 py-2.5 text-right font-medium">Key</th>
                     <th className="px-4 py-2.5 text-right font-medium">Saldo</th>
@@ -333,7 +333,7 @@ export default function AccessPage() {
                       <td className="px-4 py-2.5">
                         <button type="button" onClick={async () => setDetail(await adminBuyerDetail(b.id))} className="text-left hover:text-flame">
                           <span className="text-warm">{b.username ? `@${b.username}` : b.name ?? "tanpa nama"}</span>
-                          <span className="block text-[10.5px] text-ash">tg {b.tg_id ?? "n/a"}</span>
+                          <span className="block text-[12px] text-ash">tg {b.tg_id ?? "n/a"}</span>
                         </button>
                       </td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-ash">{b.keys_active}</td>
@@ -343,7 +343,7 @@ export default function AccessPage() {
                         <button
                           type="button"
                           onClick={() => setCreditFor(b)}
-                          className="inline-flex items-center gap-1 rounded-md border border-ash/25 px-2 py-1 text-[10.5px] text-ash transition hover:border-flame/40 hover:text-warm"
+                          className="inline-flex items-center gap-1 rounded-md border border-ash/25 px-2 py-1 text-[12px] text-ash transition hover:border-flame/40 hover:text-warm"
                         >
                           <CreditCard size={11} /> kredit
                         </button>
@@ -362,35 +362,35 @@ export default function AccessPage() {
             {detail ? (
               <div className="space-y-3">
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-ash">Detail pembeli</p>
+                  <p className="text-[12px] text-ash">Detail pembeli</p>
                   <p className="mt-1 text-[15px] font-semibold text-warm">
                     {detail.buyer.username ? `@${detail.buyer.username}` : detail.buyer.name ?? detail.buyer.id}
                   </p>
-                  <p className="text-[11.5px] text-ash">tg {detail.buyer.tg_id ?? "n/a"} · {detail.buyer.status}</p>
+                  <p className="text-[12px] text-ash">tg {detail.buyer.tg_id ?? "n/a"} · {detail.buyer.status}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[12px]">
                   <div className="rounded-lg border border-ash/15 p-2.5">
-                    <p className="text-[10.5px] uppercase text-ash">Saldo</p>
+                    <p className="text-[12px] uppercase text-ash">Saldo</p>
                     <p className="text-warm">{idr(detail.balance_micro)}</p>
                   </div>
                   <div className="rounded-lg border border-ash/15 p-2.5">
-                    <p className="text-[10.5px] uppercase text-ash">Spend 30h</p>
+                    <p className="text-[12px] uppercase text-ash">Spend 30h</p>
                     <p className="text-warm">{idr(detail.usage_30d.cost_micro)}</p>
                   </div>
                   <div className="rounded-lg border border-ash/15 p-2.5">
-                    <p className="text-[10.5px] uppercase text-ash">Request</p>
+                    <p className="text-[12px] uppercase text-ash">Request</p>
                     <p className="text-warm">{detail.usage_30d.requests}</p>
                   </div>
                   <div className="rounded-lg border border-ash/15 p-2.5">
-                    <p className="text-[10.5px] uppercase text-ash">Token in/out</p>
+                    <p className="text-[12px] uppercase text-ash">Token in/out</p>
                     <p className="text-warm">{detail.usage_30d.tokens_in}/{detail.usage_30d.tokens_out}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-[10.5px] uppercase tracking-[0.12em] text-ash">Key</p>
+                  <p className="text-[12px] text-ash">Key</p>
                   <ul className="mt-1 space-y-1">
                     {detail.keys.map((k) => (
-                      <li key={k.id} className="flex items-center justify-between text-[11.5px]">
+                      <li key={k.id} className="flex items-center justify-between text-[12px]">
                         <span className="font-mono text-warm">{k.prefix}…</span>
                         <span className="text-ash">{k.rpm_limit} rpm · {k.status}</span>
                       </li>
@@ -398,15 +398,15 @@ export default function AccessPage() {
                   </ul>
                 </div>
                 <div>
-                  <p className="text-[10.5px] uppercase tracking-[0.12em] text-ash">Order</p>
+                  <p className="text-[12px] text-ash">Order</p>
                   <ul className="mt-1 space-y-1">
                     {detail.orders.map((o) => (
-                      <li key={o.id} className="flex items-center justify-between text-[11.5px]">
+                      <li key={o.id} className="flex items-center justify-between text-[12px]">
                         <span className="text-warm">{o.sku} · {idr(o.credits_micro)}</span>
                         <span className="text-ash">{o.status}</span>
                       </li>
                     ))}
-                    {!detail.orders.length ? <li className="text-[11.5px] text-ash">Belum ada order.</li> : null}
+                    {!detail.orders.length ? <li className="text-[12px] text-ash">Belum ada order.</li> : null}
                   </ul>
                 </div>
               </div>
@@ -422,7 +422,7 @@ export default function AccessPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left">
               <thead>
-                <tr className="border-b border-ash/15 bg-warm/[0.02] text-[10.5px] uppercase tracking-[0.1em] text-ash">
+                <tr className="border-b border-ash/15 bg-warm/[0.02] text-[12px] text-ash">
                   <th className="px-4 py-2.5 font-medium">Order</th>
                   <th className="px-4 py-2.5 font-medium">Pembeli</th>
                   <th className="px-4 py-2.5 font-medium">SKU</th>
@@ -435,17 +435,17 @@ export default function AccessPage() {
               <tbody>
                 {orders.map((o) => (
                   <tr key={o.id} className="border-b border-ash/10 text-[12px] last:border-0">
-                    <td className="px-4 py-2.5 font-mono text-[11px] text-ash">{o.id}</td>
+                    <td className="px-4 py-2.5 font-mono text-[12px] text-ash">{o.id}</td>
                     <td className="px-4 py-2.5 text-warm">{o.username ? `@${o.username}` : `tg ${o.tg_id ?? "n/a"}`}</td>
                     <td className="px-4 py-2.5 text-ash">{o.sku}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-warm">{idr(o.credits_micro)}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-ash">{idr(o.price_idr * 1_000_000)}</td>
                     <td className="px-4 py-2.5">
-                      <span className={cn("rounded-md px-2 py-0.5 text-[10.5px]", o.status === "granted" ? "bg-flame/12 text-flame" : "bg-warm/[0.06] text-ash")}>
+                      <span className={cn("rounded-md px-2 py-0.5 text-[12px]", o.status === "granted" ? "bg-flame/12 text-flame" : "bg-warm/[0.06] text-ash")}>
                         {o.status}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-[11px] text-ash">{when(o.created_at)}</td>
+                    <td className="px-4 py-2.5 text-[12px] text-ash">{when(o.created_at)}</td>
                   </tr>
                 ))}
                 {!orders.length ? (
@@ -463,12 +463,12 @@ export default function AccessPage() {
             <p className="flex items-center gap-1.5 text-[12.5px] font-medium text-warm">
               <ShieldAlert size={13} className="text-flame" /> Percobaan login gagal
             </p>
-            <p className="mt-0.5 text-[11.5px] text-ash">Portal session dan admin login. Lockout otomatis setelah 5 percobaan.</p>
+            <p className="mt-0.5 text-[12px] text-ash">Portal session dan admin login. Lockout otomatis setelah 5 percobaan.</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] text-left">
               <thead>
-                <tr className="border-b border-ash/15 bg-warm/[0.02] text-[10.5px] uppercase tracking-[0.1em] text-ash">
+                <tr className="border-b border-ash/15 bg-warm/[0.02] text-[12px] text-ash">
                   <th className="px-4 py-2.5 font-medium">Waktu</th>
                   <th className="px-4 py-2.5 font-medium">Scope</th>
                   <th className="px-4 py-2.5 font-medium">Identitas</th>
@@ -479,9 +479,9 @@ export default function AccessPage() {
                 {failures.map((f, i) => (
                   <tr key={`${f.at}-${i}`} className="border-b border-ash/10 text-[12px] last:border-0">
                     <td className="px-4 py-2.5 text-ash">{when(f.at)}</td>
-                    <td className="px-4 py-2.5 font-mono text-[11px] text-warm">{f.scope}</td>
-                    <td className="px-4 py-2.5 font-mono text-[11px] text-ash">{f.ident ?? "n/a"}</td>
-                    <td className="px-4 py-2.5 font-mono text-[11px] text-ash">{f.ip ?? "n/a"}</td>
+                    <td className="px-4 py-2.5 font-mono text-[12px] text-warm">{f.scope}</td>
+                    <td className="px-4 py-2.5 font-mono text-[12px] text-ash">{f.ident ?? "n/a"}</td>
+                    <td className="px-4 py-2.5 font-mono text-[12px] text-ash">{f.ip ?? "n/a"}</td>
                   </tr>
                 ))}
                 {!failures.length ? (
@@ -495,7 +495,7 @@ export default function AccessPage() {
 
       {creditFor ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" role="dialog" aria-modal="true">
-          <div className="w-full max-w-[380px] rounded-xl border border-[#3A3B3D] bg-[#222325] p-5">
+          <div className="w-full max-w-[380px] rounded-xl border border-white/12 bg-panel-2 p-5">
             <p className="text-[14px] font-semibold text-warm">Tambah kredit</p>
             <p className="mt-1 text-[12px] text-ash">
               {creditFor.username ? `@${creditFor.username}` : `tg ${creditFor.tg_id}`} · saldo {idr(creditFor.balance_micro)}
@@ -504,9 +504,9 @@ export default function AccessPage() {
               value={creditAmount}
               onChange={(e) => setCreditAmount(e.target.value.replace(/[^\d]/g, ""))}
               inputMode="numeric"
-              className="mt-3 h-10 w-full rounded-lg border border-ash/25 bg-[#141518] px-3 text-[13px] text-warm focus:border-flame/50 focus:outline-none"
+              className="mt-3 h-10 w-full rounded-lg border border-ash/25 bg-panel px-3 text-[13px] text-warm focus:border-flame/50 focus:outline-none"
             />
-            <p className="mt-1 text-[11px] text-ash">dalam Rupiah</p>
+            <p className="mt-1 text-[12px] text-ash">dalam Rupiah</p>
             <div className="mt-4 flex justify-end gap-2">
               <button type="button" onClick={() => setCreditFor(null)} className="h-9 rounded-lg border border-ash/25 px-3 text-[12.5px] text-ash hover:text-warm">Batal</button>
               <button type="button" onClick={() => void credit()} disabled={busy} className="flex h-9 items-center gap-1.5 rounded-lg bg-flame px-3 text-[12.5px] font-semibold text-[#18191B] disabled:opacity-60">

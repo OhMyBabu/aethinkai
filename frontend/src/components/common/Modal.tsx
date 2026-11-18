@@ -89,7 +89,7 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "panel-enter relative z-10 w-full overflow-hidden rounded-t-2xl border border-ash/20 bg-[#171717] shadow-[0_40px_90px_-40px_rgba(0,0,0,0.95)] sm:rounded-2xl",
+          "panel-enter relative z-10 w-full overflow-hidden rounded-t-2xl border border-ash/20 bg-panel sm:rounded-xl",
           widths[size],
         )}
       >
@@ -111,7 +111,7 @@ export function Modal({
         </div>
         <div className="max-h-[65vh] overflow-y-auto px-5 py-4">{children}</div>
         {footer ? (
-          <div className="flex flex-col-reverse gap-2 border-t border-ash/12 bg-[#121213] px-5 py-3.5 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 border-t border-ash/12 bg-panel px-5 py-3.5 sm:flex-row sm:justify-end">
             {footer}
           </div>
         ) : null}

@@ -268,12 +268,12 @@ function StorePanel({
         </div>
 
         {pending ? (
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#E7893C]/30 bg-[#E7893C]/[0.06] px-3 py-2.5">
-            <p className="text-[11.5px] text-ash">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-flame/30 bg-flame/[0.06] px-3 py-2.5">
+            <p className="text-[12px] text-ash">
               Pembayaran <span className="font-mono text-dim">{pending.order_id}</span> masih berjalan. Lunasi atau batalkan dulu sebelum membeli lagi.
             </p>
             <button type="button" onClick={onShowPending}
-              className="h-8 rounded-lg border border-[#E7893C]/40 px-2.5 text-[11.5px] font-medium text-[#F0B47A] transition hover:bg-[#E7893C]/10">
+              className="h-8 rounded-lg border border-flame/40 px-2.5 text-[12px] font-medium text-flame transition hover:bg-flame/10">
               Lihat Invoice
             </button>
           </div>
@@ -286,16 +286,16 @@ function StorePanel({
               <div
                 key={pkg.sku}
                 className={cn(
-                  "aethink-package-card relative flex h-full flex-col rounded-[16px] border p-4",
+                  "aethink-package-card relative flex h-full flex-col rounded-xl border p-4",
                   featured
-                    ? "aethink-package-card--featured border-[#E7893C]/35 bg-[radial-gradient(120%_100%_at_18%_0%,rgba(231,137,60,0.10),transparent_62%)]"
-                    : "border-white/8 bg-[#171717]",
+                    ? "aethink-package-card--featured border-flame/35"
+                    : "border-white/8 bg-panel",
                 )}
               >
                 <div className="flex items-baseline justify-between gap-2">
                   <h3 className="text-[15px] font-semibold text-warm">{pkg.name}</h3>
                   {featured ? (
-                    <span className="rounded-full border border-[#E7893C]/30 bg-[#E7893C]/10 px-2 py-0.5 text-[10px] text-[#F0B27A]">
+                    <span className="rounded-full border border-flame/30 bg-flame/10 px-2 py-0.5 text-[12px] text-flame">
                       Pilihan Praktis
                     </span>
                   ) : null}
@@ -304,14 +304,14 @@ function StorePanel({
                   {rp(pkg.price_idr)}
                 </p>
                 <p className="mt-2 text-[12px] leading-5 text-ash">{PACKAGE_COPY[pkg.sku] ?? pkg.blurb}</p>
-                <p className="mt-1 pb-3 text-[11.5px] text-dim">{pkg.rpm_limit} RPM</p>
+                <p className="mt-1 pb-3 text-[12px] text-dim">{pkg.rpm_limit} RPM</p>
                 <button
                   type="button"
                   onClick={() => buy(pkg)}
                   className={cn(
                     "mt-auto flex h-11 w-full items-center justify-center gap-1.5 rounded-xl pt-0 text-[12.5px] font-semibold transition disabled:opacity-50",
                     featured
-                      ? "bg-[#E7893C] text-[#18191B] hover:bg-[#F09A55]"
+                      ? "bg-flame text-[#18191B] hover:bg-[#F09A55]"
                       : "border border-white/10 bg-white/[0.03] text-warm hover:bg-white/[0.06]",
                   )}
                 >
@@ -323,10 +323,10 @@ function StorePanel({
         </div>
 
         {topup.enabled ? (
-          <div className="mt-3 rounded-[16px] border border-white/8 bg-[#171717] p-4 sm:p-5">
+          <div className="mt-3 rounded-xl border border-white/8 bg-panel p-4 sm:p-5">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="text-[14px] font-semibold text-warm">Nominal Lainnya</h3>
-              <p className="text-[11.5px] tabular-nums text-dim">
+              <p className="text-[12px] tabular-nums text-dim">
                 Min. {rp(topup.min_idr)}{topup.max_idr ? ` · Maks. ${rp(topup.max_idr)}` : ""}
               </p>
             </div>
@@ -338,7 +338,7 @@ function StorePanel({
                   onChange={(event) => setTopupAmount(event.target.value.replace(/\D/g, "").slice(0, 9))}
                   inputMode="numeric"
                   aria-label="Nominal isi saldo"
-                  className="h-11 w-full rounded-xl border border-white/10 bg-[#101113] pl-9 pr-3 text-[13px] text-warm tabular-nums placeholder:text-dim focus:border-[#E7893C]/50 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-flame"
+                  className="h-11 w-full rounded-xl border border-white/10 bg-panel pl-9 pr-3 text-[13px] text-warm tabular-nums placeholder:text-dim focus:border-flame/50 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-flame"
                 />
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -348,9 +348,9 @@ function StorePanel({
                     type="button"
                     onClick={() => setTopupAmount(String(value))}
                     className={cn(
-                      "h-11 rounded-lg border px-3 text-[11.5px] tabular-nums transition sm:h-9 sm:px-2.5",
+                      "h-11 rounded-lg border px-3 text-[12px] tabular-nums transition sm:h-9 sm:px-2.5",
                       Number(topupAmount) === value
-                        ? "border-[#E7893C]/40 bg-[#E7893C]/12 text-[#F0B27A]"
+                        ? "border-flame/40 bg-flame/12 text-flame"
                         : "border-white/10 text-ash hover:bg-white/[0.04] hover:text-warm",
                     )}
                   >
@@ -362,31 +362,31 @@ function StorePanel({
                 type="button"
                 onClick={() => void buyTopup()}
                 disabled={!amountValid}
-                className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[#E7893C] px-4 text-[12.5px] font-semibold text-[#18191B] transition hover:bg-[#F09A55] disabled:cursor-not-allowed disabled:opacity-40 sm:ml-auto"
+                className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-flame px-4 text-[12.5px] font-semibold text-[#18191B] transition hover:bg-[#F09A55] disabled:cursor-not-allowed disabled:opacity-40 sm:ml-auto"
               >
                 Isi Saldo
               </button>
             </div>
             {amountTooSmall ? (
-              <p className="mt-2 text-[11.5px] text-[#E7893C]">Minimal isi saldo {rp(topup.min_idr)}.</p>
+              <p className="mt-2 text-[12px] text-flame">Minimal isi saldo {rp(topup.min_idr)}.</p>
             ) : null}
             {amountTooLarge ? (
-              <p className="mt-2 text-[11.5px] text-[#E7893C]">Maksimal isi saldo {rp(topup.max_idr ?? 0)}.</p>
+              <p className="mt-2 text-[12px] text-flame">Maksimal isi saldo {rp(topup.max_idr ?? 0)}.</p>
             ) : null}
           </div>
         ) : null}
 
         {notice ? (
-          <p className="mt-3 rounded-xl border border-[#E7893C]/35 bg-[#E7893C]/10 px-3 py-2 text-[11.5px] leading-5 text-[#F0B27A]">
+          <p className="mt-3 rounded-xl border border-flame/35 bg-flame/10 px-3 py-2 text-[12px] leading-5 text-flame">
             {notice}
           </p>
         ) : null}
       </section>
 
-      <section className="mt-6 rounded-[16px] border border-white/8 bg-[#171717]">
+      <section className="mt-6 rounded-xl border border-white/8 bg-panel">
         <div className="flex items-center justify-between gap-3 border-b border-white/8 px-4 py-3">
           <h2 className="text-[15px] font-semibold text-warm">Riwayat Transaksi</h2>
-          <span className="text-[11.5px] text-dim">{orders.length} transaksi</span>
+          <span className="text-[12px] text-dim">{orders.length} transaksi</span>
         </div>
         {orders.length ? (
           <div className="divide-y divide-white/6">
@@ -398,23 +398,23 @@ function StorePanel({
                 className="flex min-h-[60px] w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition hover:bg-white/[0.03]"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-mono text-[11.5px] text-warm">{order.id}</p>
-                  <p className="mt-0.5 text-[11px] text-dim">
+                  <p className="truncate font-mono text-[12px] text-warm">{order.id}</p>
+                  <p className="mt-0.5 text-[12px] text-dim">
                     {rpDate(order.created_at)} · {order.sku} · {rp(order.price_idr)}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                   <span
                     className={cn(
-                      "rounded-md px-2 py-0.5 text-[10.5px]",
+                      "rounded-md px-2 py-0.5 text-[12px]",
                       order.status === "granted"
-                        ? "bg-[#3E5E46]/35 text-[#9FD3A9]"
+                        ? "bg-ok/35 text-ok"
                         : "bg-white/[0.06] text-ash",
                     )}
                   >
                     {orderStatusLabel(order.status)}
                   </span>
-                  <span className="hidden items-center gap-1 text-[11px] text-ash sm:flex">
+                  <span className="hidden items-center gap-1 text-[12px] text-ash sm:flex">
                     {receiptBusy === order.id ? "Memuat" : "Lihat Invoice"}
                     <Receipt size={12} aria-hidden />
                   </span>
@@ -446,15 +446,15 @@ function StorePanel({
           onClick={() => setReceipt(null)}
         >
           <div
-            className="w-full max-w-[440px] rounded-[16px] border border-white/10 bg-[#171717] p-5"
+            className="w-full max-w-[440px] rounded-xl border border-white/10 bg-panel p-5"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10.5px] uppercase tracking-[0.14em] text-dim">Invoice</p>
+                <p className="text-[12px] text-dim">Invoice</p>
                 <p className="mt-1 font-mono text-[14px] text-warm">{String(receipt.invoice_id)}</p>
               </div>
-              <button type="button" onClick={() => setReceipt(null)} className="text-[11.5px] text-ash hover:text-warm">
+              <button type="button" onClick={() => setReceipt(null)} className="text-[12px] text-ash hover:text-warm">
                 tutup
               </button>
             </div>
@@ -476,12 +476,12 @@ function StorePanel({
                 return rows.map(([key, value]) => (
                   <div key={key} className="flex items-center justify-between gap-3 border-b border-white/6 pb-1.5 last:border-0">
                     <span className="text-ash">{key}</span>
-                    <span className="text-right font-mono text-[11.5px] text-warm">{value}</span>
+                    <span className="text-right font-mono text-[12px] text-warm">{value}</span>
                   </div>
                 ));
               })()}
             </div>
-            <p className="mt-3 text-[10.5px] leading-5 text-dim">{String(receipt.note ?? "")}</p>
+            <p className="mt-3 text-[12px] leading-5 text-dim">{String(receipt.note ?? "")}</p>
           </div>
         </div>
       ) : null}
@@ -819,16 +819,16 @@ export default function PortalPage() {
   if (!token) {
     return (
       <div className="relative grid min-h-screen place-items-center px-4 py-14">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(600px_circle_at_50%_-10%,rgba(231,137,60,0.10),transparent_65%)]" />
+        <div className="pointer-events-none absolute inset-0" />
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          className="relative w-full max-w-[460px] rounded-2xl border border-white/10 bg-[#171717] p-6 shadow-[0_30px_70px_-40px_rgba(0,0,0,0.9)]"
+          className="relative w-full max-w-[460px] rounded-xl border border-white/10 bg-panel p-6"
         >
           <Link to="/" className="inline-flex"><Wordmark /></Link>
-          <h1 className="mt-5 text-[22px] font-semibold tracking-[-0.02em] text-[#FAF8F4]">Masuk ke portal</h1>
-          <p className="mt-1.5 text-[13px] leading-6 text-[#A1A3A7]">
+          <h1 className="mt-5 text-[22px] font-semibold tracking-[-0.02em] text-warm">Masuk ke portal</h1>
+          <p className="mt-1.5 text-[13px] leading-6 text-ash">
             Portal pembeli untuk melihat saldo, riwayat pembelian, dan API key. Masuk dengan akun
             Telegram yang dipakai saat membeli.
           </p>
@@ -839,14 +839,14 @@ export default function PortalPage() {
             />
           </div>
 
-          <details className="mt-5 rounded-lg border border-white/10 bg-[#101113]/60 p-3">
-            <summary className="cursor-pointer text-[12px] text-[#85888B] marker:content-none">
+          <details className="mt-5 rounded-lg border border-white/10 bg-panel/60 p-3">
+            <summary className="cursor-pointer text-[12px] text-ash marker:content-none">
               Sudah punya API key? Masuk langsung
             </summary>
           <form onSubmit={openSession} className="mt-3 space-y-3">
-            <label htmlFor="apikey" className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#85888B]">API key</label>
+            <label htmlFor="apikey" className="text-[12px] font-medium text-ash">API key</label>
             <div className="relative">
-              <KeyRound size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#85888B]" />
+              <KeyRound size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ash" />
               <input
                 id="apikey"
                 value={apiKey}
@@ -854,18 +854,18 @@ export default function PortalPage() {
                 placeholder="sk-aeth_…"
                 spellCheck={false}
                 autoComplete="off"
-                className="h-11 w-full rounded-lg border border-white/10 bg-[#101113] pl-9 pr-3 font-mono text-[13px] text-[#FAF8F4] placeholder:text-[#85888B]/60 focus:border-[#E7893C]/60 focus:outline-none focus:ring-2 focus:ring-[#E7893C]/20"
+                className="h-11 w-full rounded-lg border border-white/10 bg-panel pl-9 pr-3 font-mono text-[13px] text-warm placeholder:text-ash/60 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-[#E7893C]/20"
               />
             </div>
             {error ? (
-              <p className="flex items-start gap-1.5 text-[12px] text-[#E7893C]">
+              <p className="flex items-start gap-1.5 text-[12px] text-flame">
                 <ShieldAlert size={13} className="mt-0.5 shrink-0" /> {error}
               </p>
             ) : null}
             <button
               type="submit"
               disabled={busy || apiKey.trim().length < 12}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#E7893C] text-[13.5px] font-semibold text-[#18191B] transition-colors hover:bg-[#F09A55] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-flame text-[13.5px] font-semibold text-[#18191B] transition-colors hover:bg-[#F09A55] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy ? <Loader2 size={15} className="animate-spin" /> : <ArrowRight size={15} />} Masuk
             </button>
@@ -877,13 +877,13 @@ export default function PortalPage() {
   }
 
   return (
-    <div className="relative isolate min-h-screen bg-[#0A0A0A]">
+    <div className="relative isolate min-h-screen bg-charcoal">
       <AppAmbient />
-      <header className="sticky top-0 z-20 border-b border-white/8 bg-[#0A0A0A]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-white/8 bg-charcoal/80 backdrop-blur-xl">
         <div className="mx-auto flex h-[64px] max-w-[1200px] items-center justify-between gap-3 px-4 sm:px-6">
           <Link to="/" aria-label="AethinkAI home"><Wordmark /></Link>
           <div className="flex items-center gap-2">
-            <span className="hidden items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1 font-mono text-[11px] text-ash sm:flex">
+            <span className="hidden items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1 font-mono text-[12px] text-ash sm:flex">
               <KeyRound size={11} /> {me?.key?.prefix ?? "belum ada key"}
             </span>
             <button
@@ -908,7 +908,7 @@ export default function PortalPage() {
 
       <main className="mx-auto max-w-[1200px] px-4 pb-16 pt-6 sm:px-6">
         {payNotice ? (
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#E7893C]/30 bg-[#E7893C]/[0.08] px-4 py-3">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-flame/30 bg-flame/[0.08] px-4 py-3">
             <p className="text-[12.5px] text-warm">{payNotice}</p>
             <button type="button" onClick={() => setPayNotice(null)} className="text-[12px] text-dim hover:text-warm">
               Tutup
@@ -916,10 +916,10 @@ export default function PortalPage() {
           </div>
         ) : null}
         {fresh ? (
-          <div className="mb-4 rounded-xl border border-[#E7893C]/40 bg-[#E7893C]/10 p-4">
+          <div className="mb-4 rounded-xl border border-flame/40 bg-flame/10 p-4">
             <p className="text-[12.5px] font-semibold text-warm">Key baru, simpan sekarang, tidak ditampilkan lagi</p>
             <div className="mt-2 flex items-center gap-2">
-              <code className="min-w-0 flex-1 break-all rounded-lg bg-[#101113] p-2 font-mono text-[12px] text-[#F0B27A]">{fresh}</code>
+              <code className="min-w-0 flex-1 break-all rounded-lg bg-panel p-2 font-mono text-[12px] text-flame">{fresh}</code>
               <button
                 type="button"
                 aria-label="Salin API key"
@@ -933,7 +933,7 @@ export default function PortalPage() {
         ) : null}
 
         {error ? (
-          <p className="mb-4 rounded-xl border border-[#E7893C]/40 bg-[#E7893C]/10 px-3 py-2 text-[12.5px] text-[#F0B27A]">{error}</p>
+          <p className="mb-4 rounded-xl border border-flame/40 bg-flame/10 px-3 py-2 text-[12.5px] text-flame">{error}</p>
         ) : null}
 
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -945,7 +945,7 @@ export default function PortalPage() {
           </div>
           <a
             href="#isi-saldo"
-            className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[#E7893C] px-4 text-[12.5px] font-semibold text-[#18191B] transition hover:bg-[#F09A55]"
+            className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-flame px-4 text-[12.5px] font-semibold text-[#18191B] transition hover:bg-[#F09A55]"
           >
             <Wallet size={14} aria-hidden /> Isi Saldo
           </a>
@@ -958,19 +958,19 @@ export default function PortalPage() {
             { icon: BarChart3, label: "Token Terpakai", value: compact((me?.lifetime.tokens_in ?? 0) + (me?.lifetime.tokens_out ?? 0)), note: "Input dan output" },
             { icon: Timer, label: "Batas Permintaan", value: `${me?.key?.rpm_limit ?? "n/a"} RPM`, note: "Per API key" },
           ].map((item) => (
-            <div key={item.label} className="rounded-[16px] border border-white/8 bg-[#171717] p-4 sm:p-5">
+            <div key={item.label} className="rounded-xl border border-white/8 bg-panel p-4 sm:p-5">
               <item.icon size={15} className="text-dim" aria-hidden />
               <p className="mt-2.5 text-[24px] font-semibold leading-none tracking-[-0.02em] text-warm tabular-nums sm:text-[26px]">
                 {item.value}
               </p>
-              <p className="mt-2 text-[11.5px] font-medium text-ash">{item.label}</p>
-              <p className="mt-0.5 text-[10.5px] text-dim">{item.note}</p>
+              <p className="mt-2 text-[12px] font-medium text-ash">{item.label}</p>
+              <p className="mt-0.5 text-[12px] text-dim">{item.note}</p>
             </div>
           ))}
         </section>
 
         <div className="mt-4 grid items-start gap-4 lg:grid-cols-[1.5fr_1fr]">
-          <section className="rounded-[16px] border border-white/8 bg-[#171717] p-4 sm:p-5" aria-label="Aktivitas API">
+          <section className="rounded-xl border border-white/8 bg-panel p-4 sm:p-5" aria-label="Aktivitas API">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="text-[15px] font-semibold text-warm">Aktivitas API</h2>
@@ -985,8 +985,8 @@ export default function PortalPage() {
                     aria-selected={days === value}
                     onClick={() => setDays(value)}
                     className={cn(
-                      "rounded-md px-2.5 py-1 text-[11.5px] transition",
-                      days === value ? "bg-white/[0.10] text-warm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]" : "text-ash hover:text-warm",
+                      "rounded-md px-2.5 py-1 text-[12px] transition",
+                      days === value ? "bg-white/[0.10] text-warm" : "text-ash hover:text-warm",
                     )}
                   >
                     {value} Hari
@@ -1018,13 +1018,13 @@ export default function PortalPage() {
             )}
           </section>
 
-          <section className="rounded-[16px] border border-white/8 bg-[#171717] p-4 sm:p-5" aria-label="API key">
+          <section className="rounded-xl border border-white/8 bg-panel p-4 sm:p-5" aria-label="API key">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-[15px] font-semibold text-warm">API Key Anda</h2>
               <span className={cn(
-                "rounded-md px-2 py-0.5 text-[10.5px]",
+                "rounded-md px-2 py-0.5 text-[12px]",
                 (me?.keys ?? []).some((key) => key.status === "active")
-                  ? "bg-[#3E5E46]/35 text-[#9FD3A9]"
+                  ? "bg-ok/35 text-ok"
                   : "bg-white/[0.06] text-ash",
               )}>
                 {(me?.keys ?? []).some((key) => key.status === "active") ? "Aktif" : "Tidak Aktif"}
@@ -1034,9 +1034,9 @@ export default function PortalPage() {
             {(me?.keys ?? []).length ? (
               <div className="mt-3 space-y-2">
                 {(me?.keys ?? []).map((key) => (
-                  <div key={key.id} className="rounded-xl border border-white/8 bg-[#101113] px-3 py-2.5">
+                  <div key={key.id} className="rounded-xl border border-white/8 bg-panel px-3 py-2.5">
                     <p className="font-mono text-[12px] text-warm">{key.prefix}••••••••</p>
-                    <dl className="mt-1.5 space-y-1 text-[11.5px]">
+                    <dl className="mt-1.5 space-y-1 text-[12px]">
                       <div className="flex items-center justify-between gap-3">
                         <dt className="text-ash">Batas</dt>
                         <dd className="tabular-nums text-warm">{key.rpm_limit} RPM</dd>
@@ -1067,7 +1067,7 @@ export default function PortalPage() {
                 </button>
               ) : (
                 <div className="space-y-2">
-                  <p className="text-[11.5px] text-[#F0B27A]">{rotMsg}</p>
+                  <p className="text-[12px] text-flame">{rotMsg}</p>
                   <div className="flex flex-wrap gap-2">
                     <input
                       value={rotCode}
@@ -1077,13 +1077,13 @@ export default function PortalPage() {
                       inputMode="numeric"
                       autoComplete="one-time-code"
                       aria-label="Kode verifikasi rotasi"
-                      className="h-10 w-32 rounded-xl border border-white/10 bg-[#101113] px-2 text-center font-mono text-[13px] tracking-[0.2em] text-warm focus:border-[#E7893C] focus:outline-none"
+                      className="h-10 w-32 rounded-xl border border-white/10 bg-panel px-2 text-center font-mono text-[13px] text-warm focus:border-flame focus:outline-none"
                     />
                     <button
                       type="button"
                       disabled={busy || rotCode.trim().length < 4}
                       onClick={() => void confirmRotate()}
-                      className="h-10 rounded-xl bg-[#E7893C] px-3 text-[12px] font-semibold text-[#18191B] disabled:opacity-40"
+                      className="h-10 rounded-xl bg-flame px-3 text-[12px] font-semibold text-[#18191B] disabled:opacity-40"
                     >
                       {busy ? "Memproses" : "Konfirmasi"}
                     </button>
@@ -1097,7 +1097,7 @@ export default function PortalPage() {
                   </div>
                 </div>
               )}
-              <p className="mt-3 text-[11.5px] leading-5 text-ash">
+              <p className="mt-3 text-[12px] leading-5 text-ash">
                 Mengganti key lama dengan key baru. Saldo dan riwayat akun tetap tersimpan. Verifikasi dikirim
                 melalui bot Telegram.
               </p>
@@ -1105,7 +1105,7 @@ export default function PortalPage() {
           </section>
         </div>
 
-        <section className="mt-4 rounded-[16px] border border-white/8 bg-[#171717]" aria-label="Penggunaan per model">
+        <section className="mt-4 rounded-xl border border-white/8 bg-panel" aria-label="Penggunaan per model">
           <div className="border-b border-white/8 px-4 py-3">
             <h2 className="text-[15px] font-semibold text-warm">Penggunaan Model</h2>
             <p className="mt-0.5 text-[12px] text-ash">Ringkasan penggunaan selama {days} hari terakhir.</p>
@@ -1116,7 +1116,7 @@ export default function PortalPage() {
                 <div key={model.model_id} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
                     <p className="truncate font-mono text-[12px] text-warm">{model.model_id}</p>
-                    <p className="mt-0.5 text-[11px] text-dim">
+                    <p className="mt-0.5 text-[12px] text-dim">
                       {model.requests} permintaan · {compact(model.tokens_in + model.tokens_out)} token
                     </p>
                   </div>
@@ -1137,19 +1137,19 @@ export default function PortalPage() {
           )}
         </section>
 
-        <section className="mt-4 overflow-hidden rounded-[16px] border border-white/8 bg-[#171717]" aria-label="Permintaan terbaru">
+        <section className="mt-4 overflow-hidden rounded-xl border border-white/8 bg-panel" aria-label="Permintaan terbaru">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/8 px-4 py-3">
             <div>
               <h2 className="text-[15px] font-semibold text-warm">Riwayat Request</h2>
               <p className="mt-0.5 text-[12px] text-ash">40 permintaan API terbaru.</p>
             </div>
-            <Link to="/panduan" className="text-[11.5px] text-ash transition hover:text-warm">Panduan API</Link>
+            <Link to="/panduan" className="text-[12px] text-ash transition hover:text-warm">Panduan API</Link>
           </div>
           {(requests?.requests ?? []).length ? (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[720px] text-left">
                 <thead>
-                  <tr className="border-b border-white/8 text-[10.5px] uppercase tracking-[0.08em] text-dim">
+                  <tr className="border-b border-white/8 text-[12px] text-dim">
                     <th className="px-4 py-2.5 font-medium">Waktu</th>
                     <th className="px-4 py-2.5 font-medium">Model</th>
                     <th className="px-4 py-2.5 text-right font-medium">Token</th>
@@ -1163,15 +1163,15 @@ export default function PortalPage() {
                   {(requests?.requests ?? []).map((request) => (
                     <tr key={request.request_id} className="border-b border-white/6 text-[12px] transition last:border-0 hover:bg-white/[0.02]">
                       <td className="whitespace-nowrap px-4 py-2.5 text-ash">{when(request.created_at)}</td>
-                      <td className="px-4 py-2.5 font-mono text-[11.5px] text-warm">{request.model_id}</td>
+                      <td className="px-4 py-2.5 font-mono text-[12px] text-warm">{request.model_id}</td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-ash">{request.tokens_in}/{request.tokens_out}</td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-warm">{idr(request.cost_micro)}</td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-ash">{request.latency_ms} ms</td>
-                      <td className="px-4 py-2.5 font-mono text-[11px] text-ash">{request.client_ip ?? "n/a"}</td>
+                      <td className="px-4 py-2.5 font-mono text-[12px] text-ash">{request.client_ip ?? "n/a"}</td>
                       <td className="px-4 py-2.5 text-right">
                         <span className={cn(
-                          "rounded-md px-1.5 py-0.5 text-[10.5px]",
-                          request.status === "ok" ? "bg-[#3E5E46]/35 text-[#9FD3A9]" : "bg-white/[0.06] text-ash",
+                          "rounded-md px-1.5 py-0.5 text-[12px]",
+                          request.status === "ok" ? "bg-ok/35 text-ok" : "bg-white/[0.06] text-ash",
                         )}>
                           {request.status === "ok" ? "ok" : request.status}
                         </span>
@@ -1209,12 +1209,12 @@ export default function PortalPage() {
 
         {checkout ? (
           <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
-            <div className="w-full max-w-[430px] rounded-2xl border border-white/10 bg-[#171717] p-5 shadow-[0_40px_90px_-50px_rgba(0,0,0,0.95)]">
+            <div className="w-full max-w-[430px] rounded-xl border border-white/10 bg-panel p-5">
               <h2 id="checkout-title" className="text-[16px] font-semibold text-warm">Konfirmasi pembelian</h2>
               <p className="mt-1 text-[12.5px] leading-5 text-ash">
                 Periksa nominalnya. QRIS tidak dibuat di langkah ini, jadi tidak ada permintaan ke penyedia pembayaran sampai kamu menekan Buat QRIS.
               </p>
-              <dl className="mt-4 space-y-2 rounded-xl border border-white/8 bg-[#101113] p-4 text-[12.5px]">
+              <dl className="mt-4 space-y-2 rounded-xl border border-white/8 bg-panel p-4 text-[12.5px]">
                 <div className="flex items-baseline justify-between gap-3">
                   <dt className="text-dim">{checkout.kind === "plan" ? "Paket" : "Isi saldo"}</dt>
                   <dd className="font-medium text-warm">{checkout.kind === "plan" ? checkout.name : rp(checkout.amount)}</dd>
@@ -1234,14 +1234,14 @@ export default function PortalPage() {
                   </div>
                 ) : null}
               </dl>
-              {payError ? <p className="mt-3 text-[12px] text-[#E7893C]">{payError}</p> : null}
+              {payError ? <p className="mt-3 text-[12px] text-flame">{payError}</p> : null}
               <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
                 <button type="button" onClick={() => setCheckout(null)} disabled={payBusy}
                   className="h-11 rounded-xl border border-white/10 bg-white/[0.03] px-4 text-[12.5px] font-medium text-warm transition hover:bg-white/[0.06] disabled:opacity-50">
                   Batal
                 </button>
                 <button type="button" onClick={() => void confirmPurchase()} disabled={payBusy}
-                  className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[#E7893C] px-4 text-[12.5px] font-semibold text-[#18191B] transition hover:bg-[#F09A55] disabled:opacity-50">
+                  className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-flame px-4 text-[12.5px] font-semibold text-[#18191B] transition hover:bg-[#F09A55] disabled:opacity-50">
                   {payBusy ? <Loader2 size={13} className="animate-spin" /> : null}
                   Lanjutkan
                 </button>
@@ -1252,11 +1252,11 @@ export default function PortalPage() {
 
         {pending && payOpen ? (
           <div className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="pay-title">
-            <div className="w-full max-w-[440px] rounded-2xl border border-white/10 bg-[#171717] p-5 shadow-[0_40px_90px_-50px_rgba(0,0,0,0.95)]">
+            <div className="w-full max-w-[440px] rounded-xl border border-white/10 bg-panel p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 id="pay-title" className="text-[16px] font-semibold text-warm">Pembayaran</h2>
-                  <p className="mt-0.5 font-mono text-[11.5px] text-dim">{pending.order_id}</p>
+                  <p className="mt-0.5 font-mono text-[12px] text-dim">{pending.order_id}</p>
                 </div>
                 <button type="button" onClick={() => { setCancelAsk(false); setPayOpen(false); }} aria-label="Minimalkan pembayaran"
                   className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 text-dim transition hover:text-warm">
@@ -1265,41 +1265,41 @@ export default function PortalPage() {
               </div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className={cn("rounded-full border px-2.5 py-1 text-[11px] font-medium",
+                <span className={cn("rounded-full border px-2.5 py-1 text-[12px] font-medium",
                   pending.payment.live
-                    ? "border-[#E7893C]/40 bg-[#E7893C]/10 text-[#F0B47A]"
+                    ? "border-flame/40 bg-flame/10 text-flame"
                     : "border-white/10 bg-white/[0.03] text-dim")}>
                   {pending.payment.live ? "Menunggu pembayaran" : "QRIS belum dibuat"}
                 </span>
-                <span className="text-[11.5px] tabular-nums text-dim">
+                <span className="text-[12px] tabular-nums text-dim">
                   {pending.sku === "topup" ? "Isi saldo" : pending.sku}
                 </span>
                 {remaining && pending.payment.live ? (
-                  <span className="text-[11.5px] tabular-nums text-dim">sisa {remaining}</span>
+                  <span className="text-[12px] tabular-nums text-dim">sisa {remaining}</span>
                 ) : null}
               </div>
 
-              <div className="mt-4 grid place-items-center rounded-xl border border-white/8 bg-[#101113] p-4">
+              <div className="mt-4 grid place-items-center rounded-xl border border-white/8 bg-panel p-4">
                 <QrCode value={pending.payment.qr_string} image={pending.payment.qr_image} />
                 <p className="mt-3 text-[28px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-warm">
                   {rp(pending.payment.total_bayar)}
                 </p>
                 {pending.payment.fee_idr > 0 ? (
-                  <p className="mt-1 text-[11.5px] text-dim">
+                  <p className="mt-1 text-[12px] text-dim">
                     termasuk biaya layanan {rp(pending.payment.fee_idr)}
                   </p>
                 ) : null}
-                <p className="mt-2 max-w-[300px] text-center text-[11.5px] leading-5 text-ash">
+                <p className="mt-2 max-w-[300px] text-center text-[12px] leading-5 text-ash">
                   {pending.payment.live
                     ? "Scan dengan aplikasi bank atau e-wallet. Status diperbarui otomatis setelah pembayaran diterima."
                     : "Tekan Buat QRIS untuk meminta kode pembayaran. Satu akun hanya boleh punya satu pembayaran berjalan."}
                 </p>
               </div>
 
-              {payError ? <p className="mt-3 text-[12px] text-[#E7893C]">{payError}</p> : null}
+              {payError ? <p className="mt-3 text-[12px] text-flame">{payError}</p> : null}
 
               {cancelAsk ? (
-                <div className="mt-4 rounded-xl border border-white/10 bg-[#101113] p-3">
+                <div className="mt-4 rounded-xl border border-white/10 bg-panel p-3">
                   <p className="text-[12px] leading-5 text-ash">
                     Batalkan pembayaran ini? QRIS yang sudah tampil tidak bisa dipakai lagi, dan kamu bisa membuat yang baru.
                   </p>
@@ -1309,7 +1309,7 @@ export default function PortalPage() {
                       Kembali
                     </button>
                     <button type="button" onClick={() => void cancelPayment()} disabled={payBusy}
-                      className="flex h-10 items-center justify-center gap-1.5 rounded-lg bg-[#E7893C] px-3 text-[12px] font-semibold text-[#18191B] disabled:opacity-50">
+                      className="flex h-10 items-center justify-center gap-1.5 rounded-lg bg-flame px-3 text-[12px] font-semibold text-[#18191B] disabled:opacity-50">
                       {payBusy ? <Loader2 size={12} className="animate-spin" /> : null}
                       Ya, batalkan
                     </button>
@@ -1324,7 +1324,7 @@ export default function PortalPage() {
                     </button>
                   ) : (
                     <button type="button" onClick={() => void createQr()} disabled={payBusy}
-                      className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#E7893C] text-[12.5px] font-semibold text-[#18191B] transition hover:bg-[#F09A55] disabled:opacity-50">
+                      className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-flame text-[12.5px] font-semibold text-[#18191B] transition hover:bg-[#F09A55] disabled:opacity-50">
                       {payBusy ? <Loader2 size={13} className="animate-spin" /> : null}
                       Buat QRIS
                     </button>
@@ -1336,7 +1336,7 @@ export default function PortalPage() {
                 </div>
               )}
               <button type="button" onClick={() => { setCancelAsk(false); setPayOpen(false); }}
-                className="mt-3 w-full text-center text-[11.5px] text-dim transition hover:text-warm">
+                className="mt-3 w-full text-center text-[12px] text-dim transition hover:text-warm">
                 Minimalkan, lanjut lihat dashboard
               </button>
             </div>
@@ -1344,18 +1344,18 @@ export default function PortalPage() {
         ) : null}
 
         {pending && !payOpen ? (
-          <div className="fixed inset-x-4 bottom-4 z-[60] mx-auto max-w-[380px] rounded-xl border border-[#E7893C]/30 bg-[#141414]/95 p-3 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)] backdrop-blur-xl sm:inset-x-auto sm:right-5">
+          <div className="fixed inset-x-4 bottom-4 z-[60] mx-auto max-w-[380px] rounded-xl border border-flame/30 bg-panel/95 p-3 backdrop-blur-xl sm:inset-x-auto sm:right-5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="flex items-center gap-1.5 text-[11.5px] font-medium text-[#F0B47A]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#E7893C]" />
+                <p className="flex items-center gap-1.5 text-[12px] font-medium text-flame">
+                  <span className="h-1.5 w-1.5 rounded-full bg-flame" />
                   {pending.payment.live ? "Pembayaran menunggu" : "Pembayaran belum selesai"}
                 </p>
-                <p className="mt-0.5 truncate font-mono text-[11px] text-dim">{pending.order_id}</p>
+                <p className="mt-0.5 truncate font-mono text-[12px] text-dim">{pending.order_id}</p>
                 <p className="mt-0.5 text-[12px] tabular-nums text-ash">{rp(pending.payment.total_bayar)}</p>
               </div>
               <button type="button" onClick={() => setPayOpen(true)}
-                className="h-9 shrink-0 rounded-lg bg-[#E7893C] px-3 text-[11.5px] font-semibold text-[#18191B] transition hover:bg-[#F09A55]">
+                className="h-9 shrink-0 rounded-lg bg-flame px-3 text-[12px] font-semibold text-[#18191B] transition hover:bg-[#F09A55]">
                 Lihat Invoice
               </button>
             </div>

@@ -94,7 +94,7 @@ export default function LoginPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="you@company.com"
-            className="h-11 w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 text-[13.5px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
+            className="h-11 w-full rounded-xl border border-ash/25 bg-panel px-3.5 text-[13.5px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
           />
         </label>
 
@@ -115,7 +115,7 @@ export default function LoginPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="••••••••"
-              className="h-11 w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 pr-11 text-[13.5px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
+              className="h-11 w-full rounded-xl border border-ash/25 bg-panel px-3.5 pr-11 text-[13.5px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
             />
             <button
               type="button"
@@ -142,16 +142,16 @@ export default function LoginPage() {
               onChange={(event) => setTotp(event.target.value.replace(/\D/g, ""))}
               placeholder="123456"
               autoFocus
-              className="h-11 w-full rounded-xl border border-ash/25 bg-[#141518] px-3.5 font-mono text-[15px] tracking-[0.3em] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
+              className="h-11 w-full rounded-xl border border-ash/25 bg-panel px-3.5 font-mono text-[15px] text-warm placeholder:text-ash/50 focus:border-flame/60 focus:outline-none focus:ring-2 focus:ring-flame/20"
             />
-            <span className="mt-1.5 block text-[11px] text-ash">
+            <span className="mt-1.5 block text-[12px] text-ash">
               Password sudah benar, masukkan 6 digit dari aplikasi authenticator.
             </span>
           </label>
         ) : null}
 
         {error ? (
-          <p role="alert" className="flex items-start gap-2 rounded-lg border border-[#c4633a]/30 bg-[#c4633a]/10 px-3 py-2 text-[12px] text-[#e79c78]">
+          <p role="alert" className="flex items-start gap-2 rounded-lg border border-bad/30 bg-bad/10 px-3 py-2 text-[12px] text-bad">
             <AlertCircle size={14} className="mt-0.5 shrink-0" aria-hidden />
             {error}
             {locked ? ` (${lockedSeconds}s)` : ""}
@@ -164,7 +164,7 @@ export default function LoginPage() {
           {!busy ? <ArrowRight size={14} aria-hidden /> : null}
         </Button>
 
-        <p className="text-center text-[11.5px] leading-5 text-dim">
+        <p className="text-center text-[12px] leading-5 text-dim">
           Authenticated by the AethinkAI gateway. The session token stays in this browser.
         </p>
       </form>

@@ -20,7 +20,7 @@ export function FilterSelect({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-11 w-full appearance-none rounded-xl border border-ash/22 bg-[#141518] pl-3 pr-9 text-[13.5px] text-warm sm:h-10 sm:text-[13px] focus:border-flame/55 focus:outline-none focus:ring-2 focus:ring-flame/20"
+        className="h-11 w-full appearance-none rounded-xl border border-ash/22 bg-panel pl-3 pr-9 text-[13.5px] text-warm sm:h-10 sm:text-[13px] focus:border-flame/55 focus:outline-none focus:ring-2 focus:ring-flame/20"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

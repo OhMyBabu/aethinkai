@@ -1,27 +1,38 @@
 @import "tailwindcss";
 
+/*
+ * AethinkAI design tokens. Direction lives in docs/DESIGN.md.
+ * Flat panels, hairline borders, one accent (flame) reserved for the primary action and live state.
+ * No glow, no shimmer, no breathing buttons: motion only explains a state change.
+ */
 @theme {
   --color-charcoal: #0a0a0a;
-  --color-charcoal-soft: #171717;
+  --color-charcoal-soft: #111113;
+  --color-panel: #111113;
+  --color-panel-2: #17171a;
   --color-warm: #faf8f4;
-  --color-ash: #85888b;
+  --color-ash: #9a9da1;
   --color-burnt: #9c542f;
   --color-flame: #e7893c;
+  --color-ok: #6fbf8e;
+  --color-bad: #e5736a;
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --radius-card: 18px;
+  --radius-card: 12px;
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 * {
-  border-color: color-mix(in srgb, var(--color-ash) 18%, transparent);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: 4.5rem;
 }
 
 body {
@@ -29,9 +40,11 @@ body {
   background-color: var(--color-charcoal);
   color: var(--color-warm);
   font-family: var(--font-sans);
-  font-feature-settings: "cv11", "ss01";
+  font-feature-settings: "cv11", "ss03";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
   overflow-x: hidden;
 }
 
@@ -46,19 +59,14 @@ body {
   border-radius: 6px;
 }
 
-/* thin, quiet scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--color-ash) 45%, transparent) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
 }
 *::-webkit-scrollbar { width: 9px; height: 9px; }
-*::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--color-ash) 40%, transparent);
-  border-radius: 999px;
-}
+*::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.16); border-radius: 999px; }
 *::-webkit-scrollbar-track { background: transparent; }
 
-/* Tailwind v4 preflight leaves buttons on `cursor: default` — restore the hand. */
 @layer base {
   button:not(:disabled),
   [role="button"]:not(:disabled),
@@ -72,153 +80,12 @@ body {
   [aria-disabled="true"] {
     cursor: not-allowed;
   }
-}
-
-@layer utilities {
-  .surface {
-    background-color: var(--color-charcoal-soft);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-card);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.05),
-      0 10px 24px rgba(0, 0, 0, 0.16);
-    transition: border-color 220ms ease, box-shadow 220ms ease, transform 220ms var(--ease-out-soft);
-  }
-  .surface:hover {
-    border-color: rgba(255, 255, 255, 0.14);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.07),
-      0 18px 42px rgba(0, 0, 0, 0.24);
-  }
-  .surface-raised {
-    background-image:
-      radial-gradient(120% 80% at 20% 0%, rgba(255, 255, 255, 0.03), transparent 60%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.006));
-  }
-  .hairline { border-color: color-mix(in srgb, var(--color-ash) 16%, transparent); }
-  .text-soft { color: color-mix(in srgb, var(--color-ash) 92%, var(--color-warm)); }
-  .text-dim { color: color-mix(in srgb, var(--color-ash) 78%, transparent); }
-  .glow-ring { box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-flame) 22%, transparent); }
-  .grid-noise {
-    background-image:
-      radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--color-ash) 22%, transparent) 1px, transparent 0);
-    background-size: 22px 22px;
-  }
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-}
-
-/* Motion primitives. Duration band 180-350ms per spec. */
-.page-enter {
-  animation: pageIn 240ms var(--ease-out-soft) both;
-}
-@keyframes pageIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.overlay-enter { animation: fadeIn 200ms ease-out both; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.panel-enter { animation: panelIn 240ms var(--ease-out-soft) both; }
-@keyframes panelIn {
-  from { opacity: 0; transform: translateY(8px) scale(0.995); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.lift {
-  transition: transform 220ms var(--ease-out-soft),
-    border-color 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
-}
-.lift:hover { transform: translateY(-2px); }
-
-.signal-dot {
-  animation: drift 14s linear infinite;
-  transform-origin: center;
-}
-@keyframes drift {
-  from { offset-distance: 0%; }
-  to { offset-distance: 100%; }
-}
-
-.wave-dot { animation: wavePulse 9s ease-in-out infinite; }
-@keyframes wavePulse {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 0.9; }
-}
-
-.shimmer {
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--color-ash) 10%, transparent) 0%,
-    color-mix(in srgb, var(--color-ash) 22%, transparent) 50%,
-    color-mix(in srgb, var(--color-ash) 10%, transparent) 100%
-  );
-  background-size: 220% 100%;
-  animation: shimmerMove 1.6s ease-in-out infinite;
-}
-@keyframes shimmerMove {
-  from { background-position: 120% 0; }
-  to { background-position: -120% 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-  }
-}
-
-/* Explicit user preference from Settings > Reduced motion */
-html[data-reduced-motion="true"] {
-  scroll-behavior: auto;
-}
-html[data-reduced-motion="true"] *,
-html[data-reduced-motion="true"] *::before,
-html[data-reduced-motion="true"] *::after {
-  animation-duration: 0.001ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.001ms !important;
-}
-html[data-reduced-motion="true"] .lift:hover { transform: none; }
-
-/* Signal-Nexus ambient lane flow (disabled by the reduced-motion block above). */
-@keyframes nexus-flow {
-  to {
-    stroke-dashoffset: -180;
-  }
-}
-
-.nexus-dash {
-  stroke-dasharray: 5 15;
-  animation: nexus-flow 7s linear infinite;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Mobile-native baseline                                             */
-/* ------------------------------------------------------------------ */
-@layer base {
-  html {
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-    scroll-padding-top: 4.5rem;
-  }
-
-  body {
-    -webkit-tap-highlight-color: transparent;
-    overscroll-behavior-y: none;
-    text-rendering: optimizeLegibility;
-  }
 
   @media (max-width: 899px) {
     /* 16px inputs stop iOS Safari from zooming the viewport on focus */
     input,
     textarea,
     select {
-      /* !important: beats the per-component text-[13.5px] utilities; without it
-         iOS Safari zooms the layout on focus */
       font-size: 16px !important;
     }
 
@@ -235,708 +102,92 @@ html[data-reduced-motion="true"] .lift:hover { transform: none; }
   }
 }
 
-.safe-b {
-  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
-}
-
-.safe-t {
-  padding-top: env(safe-area-inset-top);
-}
-
-/* Landing aurora — transform-only drift, frozen for reduced motion. */
-@keyframes aurora-drift-a {
-  0%   { transform: translate3d(0, 0, 0) scale(1); }
-  50%  { transform: translate3d(2.5%, -2%, 0) scale(1.06); }
-  100% { transform: translate3d(0, 0, 0) scale(1); }
-}
-
-@keyframes aurora-drift-b {
-  0%   { transform: translate3d(0, 0, 0) scale(1.04); }
-  50%  { transform: translate3d(-2%, 2.5%, 0) scale(1); }
-  100% { transform: translate3d(0, 0, 0) scale(1.04); }
-}
-
-.aurora-a {
-  animation: aurora-drift-a 34s ease-in-out infinite;
-  will-change: transform;
-}
-
-.aurora-b {
-  animation: aurora-drift-b 46s ease-in-out infinite;
-  will-change: transform;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .aurora-a,
-  .aurora-b {
-    animation: none;
+@layer utilities {
+  .surface {
+    background-color: var(--color-panel);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-card);
+    transition: border-color 160ms ease, background-color 160ms ease;
   }
+  .surface-raised { background-image: none; }
+  .hairline { border-color: rgba(255, 255, 255, 0.08); }
+  .text-soft { color: color-mix(in srgb, var(--color-ash) 92%, var(--color-warm)); }
+  .text-dim { color: color-mix(in srgb, var(--color-ash) 80%, transparent); }
+  .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum", "cv11"; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .safe-b { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+  .safe-t { padding-top: env(safe-area-inset-top); }
 }
 
-/* ------------------------------------------------------------------ */
-/*  Header — transparent over the grid, glass once you scroll          */
-/* ------------------------------------------------------------------ */
+/* Wire grid: the routing-fabric motif. Static, 3% white, fades out down the page. */
+.fabric-grid {
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.5) 40%, transparent 78%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.5) 40%, transparent 78%);
+}
+
+/* Motion: state changes only. 160-240ms. */
+.page-enter { animation: pageIn 200ms var(--ease-out-soft) both; }
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.overlay-enter { animation: fadeIn 160ms ease-out both; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.panel-enter { animation: panelIn 200ms var(--ease-out-soft) both; }
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.lift { transition: border-color 160ms ease, background-color 160ms ease; }
+
+/* Loading skeletons only. A single quiet pulse, not a sweeping gradient. */
+.shimmer {
+  background: rgba(255, 255, 255, 0.07);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: 0.5; } }
+
+/* Live indicator: the only decorative motion left, and it means "data is flowing". */
+.live-dot { animation: livePulse 2s ease-in-out infinite; }
+@keyframes livePulse { 50% { opacity: 0.35; } }
+
 .site-header {
-  -webkit-backdrop-filter: blur(0);
-  backdrop-filter: blur(0);
-  /* unlayered on purpose: the global `* { border-color: … }` rule sits outside
-     @layer, so it beats the utility classes. Without this the bar keeps a 1px
-     line even in the transparent state. */
-  border-bottom-color: transparent;
+  border-bottom: 1px solid transparent;
+  transition: background-color 160ms ease, border-color 160ms ease;
 }
-
 .site-header--scrolled {
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  border-bottom-color: rgba(255, 255, 255, 0.07);
+  background-color: rgba(10, 10, 10, 0.86);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
-/* ------------------------------------------------------------------ */
-/*  Landing ambient light — three soft white radials, nothing else      */
-/* ------------------------------------------------------------------ */
-.aethink-landing-ambient {
-  pointer-events: none;
-  user-select: none;
-  background:
-    radial-gradient(820px 620px at 18% 12%, rgba(255, 255, 255, 0.11), transparent 60%),
-    radial-gradient(720px 540px at 86% 78%, rgba(255, 255, 255, 0.08), transparent 65%),
-    radial-gradient(620px 420px at 52% 48%, rgba(255, 255, 255, 0.04), transparent 60%);
-  animation: aethink-ambient-drift 18s ease-in-out infinite alternate;
-  will-change: transform, opacity;
-}
-
-@keyframes aethink-ambient-drift {
-  from { transform: translate3d(-2%, -1%, 0) scale(1.05); opacity: 0.82; }
-  to   { transform: translate3d(2%, 2%, 0) scale(1.16); opacity: 1; }
-}
+.aethink-telegram-cta { border-radius: 10px; }
+.aethink-package-card { transition: border-color 160ms ease; }
+.aethink-package-card--featured { border-color: rgba(231, 137, 60, 0.4); }
 
 @media (prefers-reduced-motion: reduce) {
-  .aethink-landing-ambient {
-    animation: none;
-    transform: none;
-    opacity: 0.9;
-    will-change: auto;
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }
 
-/* legacy ambient drift — 9Remote cadence, transform/opacity only */
-@keyframes landing-ambient-drift {
-  from { transform: translate3d(-1%, -1%, 0) scale(1.04); opacity: 0.75; }
-  to   { transform: translate3d(1%, 1%, 0) scale(1.1); opacity: 1; }
-}
-
-.landing-ambient-a { animation: landing-ambient-drift 22s ease-in-out infinite alternate; }
-.landing-ambient-b { animation: landing-ambient-drift 26s ease-in-out infinite alternate-reverse; }
-
-@media (prefers-reduced-motion: reduce) {
-  .landing-ambient-a,
-  .landing-ambient-b { animation: none !important; }
-}
-
-/* ------------------------------------------------------------------ */
-/*  Header CTA — 9remote-sized, thin orange heartbeat ring             */
-/* ------------------------------------------------------------------ */
-.aethink-header-cta {
-  position: relative;
-  /* display is owned by the component (`hidden sm:inline-flex`); setting it
-     here would beat Tailwind's `hidden` and drop the CTA onto mobile. */
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 18px;
-  border-radius: 8px;
-  border: 1px solid rgba(226, 160, 95, 0.32);
-  background: #f8f4ef;
-  color: #171717;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1;
-  white-space: nowrap;
-  transition:
-    background-color 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    transform 180ms ease,
-    color 180ms ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
-  animation: aethink-cta-heartbeat 2.4s ease-in-out infinite;
-}
-
-/* thin ring expands and fades — the pulse lives on the outline, never on the
-   border width or the button box */
-@keyframes aethink-cta-heartbeat {
-  0%, 100% {
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.22),
-      0 0 0 0 rgba(230, 138, 53, 0.55);
-  }
-  50% {
-    box-shadow:
-      0 4px 16px -6px rgba(230, 138, 53, 0.55),
-      0 0 0 8px rgba(230, 138, 53, 0);
-  }
-}
-
-/* the heartbeat animates box-shadow, so hover/focus step it aside to paint
-   their own state */
-.aethink-header-cta:hover {
-  animation: none;
-  background: #fcfaf7;
-  border-color: rgba(230, 138, 53, 0.44);
-  box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(230, 138, 53, 0.4),
-    0 0 16px rgba(230, 138, 53, 0.22);
-  transform: translateY(-1px);
-}
-
-.aethink-header-cta:active {
-  animation: none;
-  transform: translateY(0);
-  box-shadow:
-    0 1px 6px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(230, 138, 53, 0.3);
-}
-
-/* one ring, and nothing else: no outline + ring + glow stacking */
-.aethink-header-cta:focus-visible {
-  animation: none;
-  outline: none;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.22),
-    0 0 0 3px rgba(230, 138, 53, 0.34),
-    0 0 14px rgba(230, 138, 53, 0.24);
-}
-
-/* scrolled navbar: same button, ring a touch more present */
-.site-header--scrolled .aethink-header-cta {
-  border-color: rgba(230, 138, 53, 0.4);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .aethink-header-cta { animation: none; }
-}
-
-/* ------------------------------------------------------------------ */
-/*  Landing CTAs — alive, but never louder than the product            */
-/* ------------------------------------------------------------------ */
-.cta-landing {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  color: #18191b;
-  border: 1px solid rgba(240, 154, 85, 0.5);
-  background: linear-gradient(100deg, #e7893c 0%, #f3a05a 26%, #e7893c 52%, #b9622f 78%, #e7893c 100%);
-  background-size: 220% 100%;
-  box-shadow:
-    inset 0 1px 0 rgba(250, 248, 244, 0.3),
-    inset 0 -1px 0 rgba(24, 25, 27, 0.18),
-    0 6px 18px -12px rgba(231, 137, 60, 0.6);
-  animation:
-    cta-gradient 9s ease-in-out infinite,
-    cta-breathe 4.8s ease-in-out infinite;
-  transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
-}
-
-@keyframes cta-gradient {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-/* glow lives in filter: it can spill outside the clipped button, and it never
-   fights the hover box-shadow */
-@keyframes cta-breathe {
-  0%, 100% {
-    filter: drop-shadow(0 4px 10px rgba(231, 137, 60, 0.16))
-            brightness(1);
-  }
-  50% {
-    filter: drop-shadow(0 8px 20px rgba(231, 137, 60, 0.42))
-            brightness(1.04);
-  }
-}
-
-.cta-landing:hover {
-  transform: translateY(-1px) scale(1.012);
-  filter: drop-shadow(0 10px 24px rgba(231, 137, 60, 0.5)) brightness(1.06);
-  animation-play-state: paused;
-  box-shadow:
-    inset 0 1px 0 rgba(250, 248, 244, 0.34),
-    0 12px 26px -14px rgba(231, 137, 60, 0.7);
-}
-
-.cta-landing:active {
-  transform: translateY(0) scale(0.996);
-}
-
-/* one slow autonomous sheen, only on the primary */
-.cta-landing::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    104deg,
-    transparent 38%,
-    rgba(250, 248, 244, 0.26) 50%,
-    transparent 62%
-  );
-  transform: translateX(-140%);
-  animation: cta-sheen 7.5s ease-in-out infinite;
-}
-
-@keyframes cta-sheen {
-  0%, 55% { transform: translateX(-140%); }
-  85%, 100% { transform: translateX(140%); }
-}
-
-.cta-landing svg {
-  transition: transform 0.24s ease;
-}
-.cta-landing:hover svg {
-  transform: translateX(2px);
-}
-
-/* secondary — dark, raised, with an accent edge on hover */
-.cta-landing-soft {
-  position: relative;
-  overflow: hidden;
-  background-image: linear-gradient(
-    180deg,
-    rgba(250, 248, 244, 0.06) 0%,
-    rgba(250, 248, 244, 0.015) 55%,
-    rgba(0, 0, 0, 0.06) 100%
-  );
-  box-shadow:
-    inset 0 1px 0 rgba(250, 248, 244, 0.09),
-    0 1px 2px rgba(0, 0, 0, 0.45);
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.cta-landing-soft:hover {
-  transform: translateY(-1px) scale(1.006);
-  border-color: rgba(231, 137, 60, 0.45);
-  box-shadow:
-    inset 0 1px 0 rgba(250, 248, 244, 0.12),
-    0 10px 24px -18px rgba(231, 137, 60, 0.55);
-}
-
-.cta-landing-soft:active {
-  transform: translateY(0) scale(0.996);
-}
-
-.cta-landing-soft::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    104deg,
-    transparent 38%,
-    rgba(231, 137, 60, 0.16) 50%,
-    transparent 62%
-  );
-  transform: translateX(-140%);
-  transition: transform 0.85s ease;
-}
-
-.cta-landing-soft:hover::after {
-  transform: translateX(140%);
-}
-
-.cta-landing-soft svg {
-  transition: transform 0.24s ease, color 0.24s ease;
-}
-.cta-landing-soft:hover svg {
-  transform: translateX(2px);
-  color: #e7893c;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cta-landing,
-  .cta-landing-soft,
-  .cta-landing::after,
-  .cta-landing-soft::after,
-  .cta-landing svg,
-  .cta-landing-soft svg {
-    animation: none !important;
-    transition: none !important;
-    transform: none !important;
-  }
-  .cta-landing:hover,
-  .cta-landing-soft:hover {
-    filter: none;
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/*  Login — Telegram CTA: 2.4s glow, 2.8s shimmer                      */
-/* ------------------------------------------------------------------ */
-.aethink-telegram-cta {
-  --login-glow-rgb: 231, 137, 60;
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  border-radius: 9px;
-  animation: aethink-telegram-glow 2.4s ease-in-out infinite;
-}
-
-@keyframes aethink-telegram-glow {
-  0%, 100% {
-    box-shadow:
-      0 8px 24px -8px rgba(231, 137, 60, 0.42),
-      0 0 0 0 rgba(231, 137, 60, 0.46);
-  }
-  50% {
-    box-shadow:
-      0 12px 32px -8px rgba(231, 137, 60, 0.58),
-      0 0 0 8px rgba(231, 137, 60, 0);
-  }
-}
-
-.aethink-telegram-cta::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.24), transparent);
-  pointer-events: none;
-  z-index: 1;
-  animation: aethink-telegram-shimmer 2.8s ease-in-out infinite;
-}
-
-@keyframes aethink-telegram-shimmer {
-  from { transform: translateX(-120%) skewX(-20deg); }
-  to { transform: translateX(220%) skewX(-20deg); }
-}
-
-.aethink-telegram-cta > * {
-  position: relative;
-  z-index: 2;
-}
-
-/* the glow keeps going while idle; keyboard focus needs one clean ring */
-.aethink-telegram-cta:focus-visible {
-  outline: 2px solid rgba(231, 137, 60, 0.9);
-  outline-offset: 3px;
-  animation: none;
-}
-
-.aethink-telegram-cta:focus-visible::before {
-  animation: none;
-  opacity: 0;
-}
-
-.aethink-telegram-cta:disabled,
-.aethink-telegram-cta[aria-disabled="true"] {
-  animation: none;
-}
-
-.aethink-telegram-cta:disabled::before,
-.aethink-telegram-cta[aria-disabled="true"]::before {
-  animation: none;
-  opacity: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .aethink-telegram-cta,
-  .aethink-telegram-cta::before { animation: none; }
-}
-
-/* ------------------------------------------------------------------ */
-/*  Hero CTA — 58px pair, 9remote finishing, orange pulse + shimmer    */
-/* ------------------------------------------------------------------ */
-.aethink-hero-cta-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  overflow: visible;
-}
-
-.aethink-hero-cta {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  height: 52px;
-  min-height: 52px;
-  padding: 0 26px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.1;
-  white-space: nowrap;
-  transition:
-    background-color 200ms ease,
-    border-color 200ms ease,
-    color 200ms ease,
-    transform 200ms ease;
-}
-
-.aethink-hero-cta--primary {
-  min-width: 176px;
-  background: #e7893c;
-  color: #18191b;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  isolation: isolate;
-  /* clips the shimmer; the outer box-shadow is painted outside the border */
-  overflow: hidden;
-  animation: aethink-hero-glow 2.4s ease-in-out infinite;
-}
-
-.aethink-hero-cta--primary::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  width: 50%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
-  pointer-events: none;
-  transform: translateX(-120%) skewX(-20deg);
-  animation: aethink-hero-shimmer 2.8s ease-in-out infinite;
-}
-
-.aethink-hero-cta--primary > * {
-  position: relative;
-  z-index: 1;
-}
-
-@keyframes aethink-hero-glow {
-  0%, 100% {
-    box-shadow:
-      0 8px 24px -8px rgba(231, 137, 60, 0.42),
-      0 0 0 0 rgba(231, 137, 60, 0.45);
-  }
-  50% {
-    box-shadow:
-      0 12px 32px -8px rgba(231, 137, 60, 0.6),
-      0 0 0 7px rgba(231, 137, 60, 0);
-  }
-}
-
-@keyframes aethink-hero-shimmer {
-  from { transform: translateX(-120%) skewX(-20deg); }
-  to { transform: translateX(220%) skewX(-20deg); }
-}
-
-.aethink-hero-cta--secondary {
-  min-width: 205px;
-  background: #1e1f22;
-  color: #faf8f4;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 4px 14px rgba(0, 0, 0, 0.18);
-}
-
-.aethink-hero-cta--primary:hover {
-  background: #f09a52;
-}
-
-.aethink-hero-cta--secondary:hover {
-  background: #26282c;
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.aethink-hero-cta:active {
-  transform: translateY(1px);
-}
-
-/* keyboard only — never a permanent ring */
-.aethink-hero-cta:focus-visible {
-  outline: 2px solid rgba(241, 176, 114, 0.95);
-  outline-offset: 3px;
-}
-
-/* arrow nudge */
-.aethink-hero-cta--primary:hover svg {
-  transform: translateX(3px);
-}
-
-.aethink-hero-cta--primary svg {
-  transition: transform 200ms ease;
-}
-
-@media (max-width: 480px) {
-  .aethink-hero-cta-row { gap: 10px; }
-  .aethink-hero-cta { height: 48px; min-height: 48px; font-size: 14px; padding: 0 18px; }
-  .aethink-hero-cta--primary,
-  .aethink-hero-cta--secondary { min-width: 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .aethink-hero-cta--primary,
-  .aethink-hero-cta--primary::before { animation: none; }
-  .aethink-hero-cta { transition: none; }
-}
-
-/* ------------------------------------------------------------------ */
-/*  Pricing — 18px glass cards, one featured plan, 9remote buttons     */
-/* ------------------------------------------------------------------ */
-.aethink-pricing-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    radial-gradient(120% 80% at 20% 0%, rgba(231, 137, 60, 0.05), transparent 60%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.008)),
-    #171717;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
-  transition:
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 220ms ease,
-    border-color 220ms ease,
-    background 220ms ease;
-}
-
-.aethink-pricing-card--featured {
-  border-color: rgba(230, 138, 53, 0.34);
-  background:
-    radial-gradient(120% 90% at 50% 112%, rgba(231, 137, 60, 0.14), transparent 62%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
-    #191715;
-  box-shadow:
-    0 12px 32px -12px rgba(231, 137, 60, 0.35),
-    0 10px 24px rgba(0, 0, 0, 0.2);
-}
-
-/* pointer spotlight, painted under the content */
-.aethink-pricing-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(
-    260px circle at var(--mx, 50%) var(--my, 50%),
-    rgba(255, 255, 255, 0.06),
-    transparent 60%
-  );
-  opacity: 0;
-  transition: opacity 180ms ease;
-}
-
-.aethink-pricing-card > * {
-  position: relative;
-  z-index: 1;
-}
-
-.aethink-pricing-card:hover {
-  transform: translateY(-5px);
-  border-color: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
-}
-
-.aethink-pricing-card--featured:hover {
-  border-color: rgba(230, 138, 53, 0.46);
-  box-shadow:
-    0 22px 48px -14px rgba(231, 137, 60, 0.42),
-    0 18px 42px rgba(0, 0, 0, 0.26);
-}
-
-.aethink-pricing-card:hover::after {
-  opacity: 1;
-}
-
-.aethink-pricing-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 9px;
-  border-radius: 10px;
-  background: rgba(230, 138, 53, 0.12);
-  border: 1px solid rgba(230, 138, 53, 0.24);
-  color: #f0a253;
-  font-size: 11.5px;
-  font-weight: 600;
-  line-height: 1;
-}
-
-.aethink-pricing-btn {
-  min-height: 46px;
-  border-radius: 12px;
-  font-size: 15.5px;
-  font-weight: 600;
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    border-color 180ms ease,
-    background-color 180ms ease;
-}
-
-.aethink-pricing-btn--default {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #f3f3f3;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.aethink-pricing-btn--default:hover {
-  transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.16);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-}
-
-.aethink-pricing-btn--featured {
-  background: #ea923e;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #171717;
-  box-shadow: 0 10px 22px -8px rgba(234, 146, 62, 0.42);
-}
-
-.aethink-pricing-btn--featured:hover {
-  transform: translateY(-1px);
-  background: #f09a4c;
-  box-shadow: 0 14px 28px -8px rgba(234, 146, 62, 0.52);
-}
-
-.aethink-pricing-btn:active {
-  transform: translateY(0);
-}
-
-.aethink-pricing-btn:focus-visible {
-  outline: 2px solid rgba(241, 176, 114, 0.95);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .aethink-pricing-card,
-  .aethink-pricing-card::after,
-  .aethink-pricing-btn { transition: none; }
-  .aethink-pricing-card:hover,
-  .aethink-pricing-btn:hover { transform: none; }
-}
-
-/* Package cards: one hover gesture, written outside Tailwind's hover media
-   wrapper so the state is testable in a headless browser and identical on
-   devices that report no hover capability. */
-.aethink-package-card {
-  transition: translate 200ms ease, border-color 200ms ease;
-}
-.aethink-package-card:hover {
-  translate: 0 -3px;
-  border-color: rgba(255, 255, 255, 0.16);
-}
-.aethink-package-card--featured:hover {
-  border-color: rgba(231, 137, 60, 0.5);
-}
-@media (prefers-reduced-motion: reduce) {
-  .aethink-package-card,
-  .aethink-package-card:hover {
-    transition: none;
-    translate: none;
-  }
+/* Explicit user preference from Settings > Reduced motion */
+html[data-reduced-motion="true"] { scroll-behavior: auto; }
+html[data-reduced-motion="true"] *,
+html[data-reduced-motion="true"] *::before,
+html[data-reduced-motion="true"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
 }

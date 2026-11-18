@@ -73,16 +73,16 @@ export default function UserApiKeysPage() {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
-      toast("Copied to clipboard", { description: "Paste it into your client configuration." });
+      toast("Tersalin", { description: "Tempel ke konfigurasi klien kamu." });
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
-      toast("Clipboard unavailable", { description: "Copy manually from the field.", variant: "warning" });
+      toast("Clipboard tidak tersedia", { description: "Salin manual dari kolom di atas.", variant: "warning" });
     }
   };
 
   const createKey = async () => {
     if (name.trim().length < 3) {
-      setError("Give the key a name of at least 3 characters.");
+      setError("Beri nama key minimal 3 karakter.");
       return;
     }
     setCreating(true);
@@ -92,7 +92,7 @@ export default function UserApiKeysPage() {
       setError(null);
       setCreateOpen(false);
       setName("");
-      toast("API key created", { description: "Shown once. It will be masked after you close the dialog." });
+      toast("API key dibuat", { description: "Hanya tampil sekali. Nilainya disembunyikan setelah dialog ditutup." });
       await load();
     } catch (err) {
       setError((err as Error).message);
@@ -104,12 +104,12 @@ export default function UserApiKeysPage() {
   const columns: Array<Column<ApiKey>> = [
     {
       key: "name",
-      header: "Name",
+      header: "Nama",
       sortValue: (row) => row.name,
       render: (row) => (
         <div className="min-w-0">
           <p className="truncate font-medium text-warm">{row.name}</p>
-          <p className="mt-0.5 font-mono text-[10.5px] text-ash">{row.maskedKey}</p>
+          <p className="mt-0.5 font-mono text-[12px] text-ash">{row.maskedKey}</p>
         </div>
       ),
     },
@@ -121,14 +121,14 @@ export default function UserApiKeysPage() {
     },
     {
       key: "created",
-      header: "Created",
+      header: "Dibuat",
       hideBelow: "md",
       sortValue: (row) => row.createdAt,
       render: (row) => <span className="text-ash">{formatDate(row.createdAt)}</span>,
     },
     {
       key: "used",
-      header: "Last used",
+      header: "Terakhir dipakai",
       hideBelow: "sm",
       render: (row) => (
         <span className="text-ash">{row.lastUsedAt ? relativeTime(row.lastUsedAt) : "Never"}</span>
@@ -150,7 +150,7 @@ export default function UserApiKeysPage() {
             <MoreHorizontal size={15} />
           </button>
           {menuFor === row.id ? (
-            <div className="absolute right-0 top-8 z-20 w-40 overflow-hidden rounded-xl border border-ash/20 bg-[#1b1c1f] shadow-xl">
+            <div className="absolute right-0 top-8 z-20 w-40 overflow-hidden rounded-xl border border-ash/20 bg-panel shadow-xl">
               <button
                 type="button"
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-warm/90 hover:bg-warm/[0.05]"
@@ -160,8 +160,7 @@ export default function UserApiKeysPage() {
                   setMenuFor(null);
                 }}
               >
-                <Pencil size={12} aria-hidden /> Rename
-              </button>
+                <Pencil size={12} aria-hidden />Ganti nama</button>
               <button
                 type="button"
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-warm/90 hover:bg-warm/[0.05]"
@@ -170,19 +169,17 @@ export default function UserApiKeysPage() {
                   setMenuFor(null);
                 }}
               >
-                <Copy size={12} aria-hidden /> Copy identifier
-              </button>
+                <Copy size={12} aria-hidden />Salin ID</button>
               <button
                 type="button"
                 disabled={row.status === "revoked"}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-[#e08a5f] hover:bg-[#c4633a]/10 disabled:opacity-40"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-bad hover:bg-bad/10 disabled:opacity-40"
                 onClick={() => {
                   setRevoking(row);
                   setMenuFor(null);
                 }}
               >
-                <Trash2 size={12} aria-hidden /> Revoke key
-              </button>
+                <Trash2 size={12} aria-hidden />Cabut key</button>
             </div>
           ) : null}
         </div>
@@ -193,40 +190,36 @@ export default function UserApiKeysPage() {
   return (
     <div>
       <PageHeader
-        title="API Keys"
-        description="Keys live in the gateway. Anything you create here is immediately usable and visible to admin."
-        breadcrumb={[{ label: "Workspace", to: "/app/overview" }, { label: "API Keys" }]}
+        title="API key"
+        description="Key tersimpan di gateway dan langsung bisa dipakai. Admin dapat melihat key yang kamu buat."
+        breadcrumb={[{ label: "Workspace", to: "/app/overview" }, { label: "API key" }]}
         actions={
-          <Button variant="primary" leadingIcon={<Plus size={14} />} onClick={() => setCreateOpen(true)}>
-            Create key
-          </Button>
+          <Button variant="primary" leadingIcon={<Plus size={14} />} onClick={() => setCreateOpen(true)}>Buat key</Button>
         }
       />
 
       {loadError ? (
-        <Card className="mb-4 border-[#c4633a]/40 bg-[#c4633a]/10 p-4 text-[13px] text-[#e79c78]">{loadError}</Card>
+        <Card className="mb-4 border-bad/40 bg-bad/10 p-4 text-[13px] text-bad">{loadError}</Card>
       ) : null}
 
       <Card className="p-0">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ash/12 px-5 py-4">
           <div>
-            <h3 className="text-[14px] font-semibold text-warm">Workspace keys</h3>
+            <h3 className="text-[14px] font-semibold text-warm">Key kamu</h3>
             <p className="mt-0.5 text-[12px] text-ash">
-              {rows.filter((key) => key.status === "active").length} active · {rows.length} total
+              {rows.filter((key) => key.status === "active").length} aktif · {rows.length} total
             </p>
           </div>
-          <SearchInput value={query} onChange={setQuery} placeholder="Search keys…" className="w-full sm:w-60" />
+          <SearchInput value={query} onChange={setQuery} placeholder="Cari key…" className="w-full sm:w-60" />
         </div>
 
         {!loading && rows.length === 0 ? (
           <EmptyState
             icon={KeyRound}
-            title="No API keys yet"
-            description="Create your first key to start sending requests."
+            title="Belum ada API key"
+            description="Buat key pertama untuk mulai mengirim request."
             action={
-              <Button variant="primary" size="sm" leadingIcon={<Plus size={13} />} onClick={() => setCreateOpen(true)}>
-                Create API key
-              </Button>
+              <Button variant="primary" size="sm" leadingIcon={<Plus size={13} />} onClick={() => setCreateOpen(true)}>Buat API key</Button>
             }
           />
         ) : (
@@ -239,15 +232,15 @@ export default function UserApiKeysPage() {
             empty={
               <EmptyState
                 icon={Search}
-                title="No keys match that search"
-                description="Try another name or clear the search field."
+                title="Tidak ada key yang cocok"
+                description="Coba nama lain atau kosongkan pencarian."
               />
             }
           />
         )}
       </Card>
 
-      <p className="mt-3 text-[11px] leading-5 text-dim">
+      <p className="mt-3 text-[12px] leading-5 text-dim">
         {loading ? "Memuat key dari gateway…" : "Key disimpan sebagai hash di gateway, nilai penuh hanya tampil sekali saat dibuat."}
       </p>
 
@@ -257,21 +250,19 @@ export default function UserApiKeysPage() {
           setCreateOpen(false);
           setError(null);
         }}
-        title="Create API key"
-        description="The key value is displayed once after creation."
+        title="Buat API key"
+        description="Nilai key hanya ditampilkan sekali setelah dibuat."
         footer={
           <>
-            <Button variant="ghost" size="sm" onClick={() => setCreateOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setCreateOpen(false)}>Batal</Button>
             <Button variant="primary" size="sm" onClick={() => void createKey()} disabled={creating}>
-              {creating ? "Creating…" : "Create key"}
+              {creating ? "Creating…" : "Buat key"}
             </Button>
           </>
         }
       >
         <div className="space-y-4">
-          <Field label="Key name" error={error ?? undefined} required>
+          <Field label="Nama key" error={error ?? undefined} required>
             {(id, describedBy) => (
               <TextInput
                 id={id}
@@ -282,12 +273,12 @@ export default function UserApiKeysPage() {
                   if (error) setError(null);
                 }}
                 onKeyDown={(event) => event.key === "Enter" && void createKey()}
-                placeholder="e.g. Production router"
+                placeholder="mis. Produksi"
                 autoFocus
               />
             )}
           </Field>
-          <p className="text-[11.5px] leading-5 text-ash">
+          <p className="text-[12px] leading-5 text-ash">
             Key berlaku untuk semua model yang aktif di katalog. Batasi per model belum didukung gateway.
           </p>
         </div>
@@ -296,14 +287,12 @@ export default function UserApiKeysPage() {
       <Modal
         open={Boolean(revealed)}
         onClose={() => setRevealed(null)}
-        title="Your new API key"
-        description="Copy it now, this value is shown only once."
+        title="API key baru kamu"
+        description="Salin sekarang, nilai ini hanya tampil sekali."
         size="md"
         footer={
           <>
-            <Button variant="ghost" size="sm" onClick={() => setRevealed(null)}>
-              Done
-            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setRevealed(null)}>Selesai</Button>
             <Button
               variant="primary"
               size="sm"
@@ -316,10 +305,10 @@ export default function UserApiKeysPage() {
         }
       >
         <div className="space-y-3">
-          <div className="flex items-center gap-2 rounded-xl border border-ash/20 bg-[#121316] p-3">
+          <div className="flex items-center gap-2 rounded-xl border border-ash/20 bg-panel p-3">
             <code className="flex-1 break-all font-mono text-[12px] text-warm">{revealed}</code>
           </div>
-          <p className="rounded-lg border border-flame/25 bg-flame/[0.07] px-3 py-2 text-[11.5px] leading-5 text-flame">
+          <p className="rounded-lg border border-flame/25 bg-flame/[0.07] px-3 py-2 text-[12px] leading-5 text-flame">
             Sudah aktif di gateway. Pakai sebagai <span className="font-mono">Authorization: Bearer …</span> ke base URL
             gateway.
           </p>
@@ -329,13 +318,11 @@ export default function UserApiKeysPage() {
       <Modal
         open={Boolean(renaming)}
         onClose={() => setRenaming(null)}
-        title="Rename key"
+        title="Ganti nama key"
         size="sm"
         footer={
           <>
-            <Button variant="ghost" size="sm" onClick={() => setRenaming(null)}>
-              Cancel
-            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setRenaming(null)}>Batal</Button>
             <Button
               variant="primary"
               size="sm"
@@ -346,18 +333,16 @@ export default function UserApiKeysPage() {
                 if (!current || next.length < 3) return;
                 void gwRenameKey(current.id, next)
                   .then(() => {
-                    toast("Key renamed", { description: next });
+                    toast("Nama key diganti", { description: next });
                     return load();
                   })
                   .catch((err: Error) => toast("Gagal rename", { description: err.message, variant: "warning" }));
               }}
-            >
-              Save
-            </Button>
+            >Simpan</Button>
           </>
         }
       >
-        <Field label="Key name" required>
+        <Field label="Nama key" required>
           {(id) => (
             <TextInput
               id={id}
@@ -371,9 +356,9 @@ export default function UserApiKeysPage() {
 
       <ConfirmDialog
         open={Boolean(revoking)}
-        title="Revoke this key?"
+        title="Cabut key ini?"
         description={`${revoking?.name ?? "This key"} stops working immediately at the gateway.`}
-        confirmLabel="Revoke key"
+        confirmLabel="Cabut key"
         destructive
         onConfirm={() => {
           const current = revoking;
@@ -381,7 +366,7 @@ export default function UserApiKeysPage() {
           if (!current) return;
           void gwRevokeKey(current.id)
             .then(() => {
-              toast("Key revoked", { description: current.name, variant: "warning" });
+              toast("Key dicabut", { description: current.name, variant: "warning" });
               return load();
             })
             .catch((err: Error) => toast("Gagal revoke", { description: err.message, variant: "warning" }));

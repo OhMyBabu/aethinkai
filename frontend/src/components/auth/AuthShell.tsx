@@ -19,7 +19,7 @@ export function AuthShell({
     <div className="relative flex min-h-screen flex-col bg-charcoal lg:grid lg:grid-cols-[1.05fr_1fr]">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_20%_0%,rgba(231,137,60,0.13),transparent_65%)]"
+        className="pointer-events-none absolute inset-0"
       />
 
       <aside className="relative hidden flex-col justify-between border-r border-ash/12 px-10 py-10 lg:flex xl:px-14">
@@ -38,7 +38,7 @@ export function AuthShell({
             provider degrades.
           </p>
 
-          <div className="mt-7 rounded-xl border border-ash/15 bg-[#141518]/90 p-4 font-mono text-[11.5px] leading-6">
+          <div className="mt-7 rounded-xl border border-ash/15 bg-panel/90 p-4 font-mono text-[12px] leading-6">
             <p className="text-ash">
               <span className="text-flame">curl</span> -X POST \
             </p>
@@ -62,7 +62,7 @@ export function AuthShell({
           </ul>
         </div>
 
-        <p className="text-[11px] text-dim">© {new Date().getFullYear()} AethinkAI, gateway for frontier models</p>
+        <p className="text-[12px] text-dim">© {new Date().getFullYear()} AethinkAI, gateway for frontier models</p>
       </aside>
 
       <main className="relative flex flex-1 flex-col justify-center px-4 py-8 sm:px-8">

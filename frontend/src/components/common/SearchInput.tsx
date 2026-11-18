@@ -64,7 +64,7 @@ export function SearchInput({
         spellCheck={false}
         onChange={(event) => emit(event.target.value)}
         placeholder={placeholder}
-        className="h-11 w-full rounded-xl border border-ash/22 bg-[#101113] pl-9 pr-9 text-sm text-warm outline-none transition placeholder:text-ash/60 focus:border-flame/55 focus:ring-2 focus:ring-flame/20 sm:h-10"
+        className="h-11 w-full rounded-xl border border-ash/22 bg-panel pl-9 pr-9 text-sm text-warm outline-none transition placeholder:text-ash/60 focus:border-flame/55 focus:ring-2 focus:ring-flame/20 sm:h-10"
       />
       {local ? (
         <button

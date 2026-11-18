@@ -115,7 +115,7 @@ export default function UserUsagePage() {
     setModel("all");
     setKeyName("all");
     setQuery("");
-    toast("Filters reset", { description: "Showing the last 30 days across all models and keys.", variant: "info" });
+    toast("Filter diatur ulang", { description: "Menampilkan 30 hari terakhir untuk semua model dan key.", variant: "info" });
   };
 
   const exportCSV = () => {
@@ -132,13 +132,13 @@ export default function UserUsagePage() {
       })),
     );
     downloadCSV(`aethinkai-usage-${range}d.csv`, csv);
-    toast("CSV exported", { description: `${rows.length} rows exported.` });
+    toast("CSV diekspor", { description: `${rows.length} rows exported.` });
   };
 
   const columns: Array<Column<UsageEntry>> = [
     {
       key: "at",
-      header: "Timestamp",
+      header: "Waktu",
       sortValue: (row) => row.at,
       render: (row) => <span className="whitespace-nowrap text-ash">{formatDateTime(row.at)}</span>,
     },
@@ -155,7 +155,7 @@ export default function UserUsagePage() {
     },
     {
       key: "tokens",
-      header: "In / out",
+      header: "Masuk / keluar",
       align: "right",
       hideBelow: "sm",
       sortValue: (row) => row.inputTokens + row.outputTokens,
@@ -167,7 +167,7 @@ export default function UserUsagePage() {
     },
     {
       key: "cost",
-      header: "Cost",
+      header: "Biaya",
       align: "right",
       sortValue: (row) => row.cost ?? 0,
       render: (row) => <span className="tabular-nums text-warm/80">{formatIDR(row.cost ?? 0)}</span>,
@@ -180,7 +180,7 @@ export default function UserUsagePage() {
     },
     {
       key: "latency",
-      header: "Latency",
+      header: "Latensi",
       align: "right",
       hideBelow: "lg",
       sortValue: (row) => row.latencyMs,
@@ -191,33 +191,30 @@ export default function UserUsagePage() {
   return (
     <div>
       <PageHeader
-        title="Usage & Logs"
-        description="Every filter recomputes the chart and table from your recorded requests."
-        breadcrumb={[{ label: "Workspace", to: "/app/overview" }, { label: "Usage" }]}
+        title="Pemakaian"
+        description="Setiap filter menghitung ulang grafik dan tabel dari request yang tercatat."
+        breadcrumb={[{ label: "Workspace", to: "/app/overview" }, { label: "Pemakaian" }]}
         actions={
           <>
             <StatusPill tone={live === "live" ? "active" : live === "offline" ? "warning" : "neutral"} dot={live !== "offline"}>
               {live === "live" ? "Live" : live === "offline" ? "Reconnecting" : "Connecting"}
             </StatusPill>
             <DateRangeTabs value={range} onChange={setRange} />
-            <Button variant="secondary" size="sm" leadingIcon={<Download size={13} />} onClick={exportCSV}>
-              Export CSV
-            </Button>
+            <Button variant="secondary" size="sm" leadingIcon={<Download size={13} />} onClick={exportCSV}>Ekspor CSV</Button>
           </>
         }
       />
 
       <Card className="mb-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.12em] text-ash">
-            <Filter size={12} aria-hidden /> Filters
-          </span>
+          <span className="flex items-center gap-1.5 text-[12px] text-ash">
+            <Filter size={12} aria-hidden />Filter</span>
           <FilterSelect
             label="Model"
             value={model}
             onChange={setModel}
             options={[
-              { value: "all", label: "All models" },
+              { value: "all", label: "Semua model" },
               ...Object.entries(names).map(([id, label]) => ({ value: id, label })),
             ]}
           />
@@ -226,11 +223,11 @@ export default function UserUsagePage() {
             value={keyName}
             onChange={setKeyName}
             options={[
-              { value: "all", label: "All keys" },
+              { value: "all", label: "Semua key" },
               ...keys.map((key) => ({ value: key.name, label: key.name })),
             ]}
           />
-          <SearchInput value={query} onChange={setQuery} placeholder="Search model, key, status…" className="w-full sm:w-64" />
+          <SearchInput value={query} onChange={setQuery} placeholder="Cari model, key, atau status…" className="w-full sm:w-64" />
           <Button variant="ghost" size="sm" leadingIcon={<RotateCcw size={12} />} onClick={resetFilters} className="ml-auto">
             Reset filters
           </Button>
@@ -239,13 +236,13 @@ export default function UserUsagePage() {
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {[
-          { label: "Requests", value: formatNumber(totals.requests) },
-          { label: "Successful", value: formatNumber(totals.requests - totals.errors) },
-          { label: "Failed", value: formatNumber(totals.errors) },
-          { label: "Metered cost", value: formatIDR(totals.cost) },
+          { label: "Request", value: formatNumber(totals.requests) },
+          { label: "Berhasil", value: formatNumber(totals.requests - totals.errors) },
+          { label: "Gagal", value: formatNumber(totals.errors) },
+          { label: "Biaya terukur", value: formatIDR(totals.cost) },
         ].map((item) => (
           <div key={item.label} className="surface p-4">
-            <p className="text-[10.5px] uppercase tracking-[0.14em] text-ash">{item.label}</p>
+            <p className="text-[12px] text-ash">{item.label}</p>
             <p className="mt-2 text-[20px] font-semibold tabular-nums text-warm">{item.value}</p>
           </div>
         ))}
@@ -254,7 +251,7 @@ export default function UserUsagePage() {
       <Card className="mt-4">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-[15px] font-semibold text-warm">Traffic over time</h3>
+            <h3 className="text-[15px] font-semibold text-warm">Traffic dari waktu ke waktu</h3>
             <p className="mt-0.5 text-[12px] text-ash">
               {range} days · {model === "all" ? "all models" : names[model] ?? model} ·{" "}
               {keyName === "all" ? "all keys" : keyName}
@@ -270,7 +267,7 @@ export default function UserUsagePage() {
       <Card className="mt-4 p-0">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ash/12 px-5 py-4">
           <div>
-            <h3 className="text-[15px] font-semibold text-warm">Request log</h3>
+            <h3 className="text-[15px] font-semibold text-warm">Log request</h3>
             <p className="mt-0.5 text-[12px] text-ash">{rows.length} requests match the filters.</p>
           </div>
         </div>

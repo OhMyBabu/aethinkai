@@ -8,6 +8,7 @@ import {
 import { StoreProvider, useStore } from "@/data/store";
 import { getSessionUser } from "@/lib/gw";
 import { ToastProvider } from "@/components/common/Toast";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { AppShell } from "@/components/layout/AppShell";
 import LandingPage from "@/pages/public/Landing";
 import LoginPage from "@/pages/public/Login";
@@ -77,6 +78,7 @@ function RequireRole({ role, children }: { role: "user" | "admin"; children: Rea
 
 export default function App() {
   return (
+    <ErrorBoundary scope="app">
     <StoreProvider>
       <ToastProvider>
         <ScrollToTop />
@@ -137,5 +139,6 @@ export default function App() {
         </Routes>
       </ToastProvider>
     </StoreProvider>
+    </ErrorBoundary>
   );
 }
