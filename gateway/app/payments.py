@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import html
 import json
 import os
 import secrets
@@ -295,40 +296,70 @@ async def settle_order(order_id: str, source: str, raw: Any = None) -> dict[str,
         return {"settled": False, "reason": "grant_failed", "detail": str(exc)[:160]}
     await db.log_audit(f"pay:{source}", "payment.paid", order_id,
                        {"paid_total": paid_total, "trx": data.get("trx_reference")})
-    if granted.get("key"):
+    if granted.get("already_granted") is False:
         await notify_buyer(order_id, granted)
     return {"settled": True, "granted": granted.get("already_granted") is False, **granted}
 
 
-async def notify_buyer(order_id: str, granted: dict[str, Any]) -> None:
-    """Deliver the key over Telegram — the bot may be offline, the token is the same."""
-    token = portal._bot_token()
-    if not token:
-        print(f"[pay] no bot token, key for {order_id} not delivered", flush=True)
-        return
-    row = await db.pool().fetchrow(
-        """SELECT o.sku, o.credits_micro, o.rpm_limit, b.tg_id
-             FROM orders o JOIN buyers b ON b.id = o.buyer_id WHERE o.id = $1""", order_id)
-    if row is None or not row["tg_id"]:
-        return
+def _rupiah(micro: int) -> str:
+    return "Rp" + f"{round((micro or 0) / 1_000_000):,}".replace(",", ".")
+
+
+def notify_text(order_id: str, row: dict[str, Any], granted: dict[str, Any]) -> str:
+    """Receipt pushed to the buyer. Same layout as the bot's own panels."""
     key = granted.get("key") or ""
-    balance = int(granted.get("balance_micro") or 0)
-    head = (f"✅ <b>Pembayaran diterima</b>\n\n"
-            f"Order <code>{order_id}</code> · paket <b>{row['sku']}</b>\n"
-            f"Saldo: <b>Rp{balance/1_000_000:,.0f}</b> · limit <b>{row['rpm_limit']} req/menit</b>\n\n")
+    lines = [
+        "✓ <b>Pembayaran diterima</b>",
+        f"<code>{html.escape(order_id)}</code>",
+        "",
+        f"Paket   : {html.escape(str(row.get('package') or row['sku']))}",
+        f"Kredit  : +{_rupiah(int(row['credits_micro'] or 0))}",
+        f"Saldo   : <b>{_rupiah(int(granted.get('balance_micro') or 0))}</b>",
+    ]
+    if row.get("key_rpm"):
+        lines.append(f"Batas   : {int(row['key_rpm'])} request/menit")
+    lines.append("")
     if key:
-        text = head + (f"<b>API key</b>\n<code>{key}</code>\n\n"
-                       "Simpan sekarang — key hanya ditampilkan sekali di chat ini.")
+        lines += [
+            "<b>API key kamu</b>",
+            f"<code>{html.escape(key)}</code>",
+            "",
+            "Simpan sekarang. Key lengkap hanya dikirim sekali; kalau hilang, "
+            "buat key baru lewat menu API Key.",
+        ]
     else:
         # one wallet = one key: a repeat purchase tops up, it does not mint a credential
-        text = head + (f"Saldo ditambahkan ke akun yang sudah ada.\n"
-                       f"Key kamu tetap: <code>{granted.get('key_prefix') or ''}…</code>\n\n"
-                       "Pakai key yang sama — tidak ada key baru yang dibuat.")
-    kb = {"inline_keyboard": [[{"text": "🌐 Buka portal", "url": "https://router.aethink.ai.id/portal"}]]}
+        lines.append(f"Saldo masuk ke akun yang sama. Key kamu tetap "
+                     f"<code>{html.escape(str(granted.get('key_prefix') or ''))}…</code>, "
+                     "tidak ada key baru.")
+    return "\n".join(lines)
+
+
+async def notify_buyer(order_id: str, granted: dict[str, Any]) -> None:
+    """Tell the buyer a payment landed — new key or top-up. The bot may be offline; the token is the same."""
+    token = portal._bot_token()
+    if not token:
+        print(f"[pay] no bot token, receipt for {order_id} not delivered", flush=True)
+        return
+    row = await db.pool().fetchrow(
+        """SELECT o.sku, o.credits_micro, b.tg_id, p.name AS package, k.rpm_limit AS key_rpm
+             FROM orders o
+             JOIN buyers b ON b.id = o.buyer_id
+             LEFT JOIN packages p ON p.sku = o.sku
+             LEFT JOIN api_keys k ON k.id = o.key_id
+            WHERE o.id = $1""", order_id)
+    if row is None or not row["tg_id"]:
+        return
+    portal_url = (os.environ.get("PORTAL_URL") or "https://router.aethink.ai.id").rstrip("/")
+    kb = {"inline_keyboard": [
+        [{"text": "API Key", "callback_data": "ui:gw:keys"},
+         {"text": "Menu Utama", "callback_data": "ui:home"}],
+        [{"text": "Dashboard  ↗", "url": f"{portal_url}/portal"}],
+    ]}
     try:
         async with httpx.AsyncClient(timeout=20) as c:
             await c.post(f"https://api.telegram.org/bot{token}/sendMessage",
-                         json={"chat_id": row["tg_id"], "text": text,
+                         json={"chat_id": row["tg_id"], "text": notify_text(order_id, dict(row), granted),
                                "parse_mode": "HTML", "reply_markup": kb,
                                "disable_web_page_preview": True})
     except Exception as exc:
