@@ -61,6 +61,7 @@ export default function MiniAppPage() {
   const [usage, setUsage] = useState<Usage | null>(null);
   const [usage30, setUsage30] = useState<Usage | null>(null);
   const [used, setUsed] = useState<ModelUse[]>([]);
+  const [used7, setUsed7] = useState<ModelUse[]>([]);
   const [catalog, setCatalog] = useState<CatalogModel[]>([]);
   const [packages, setPackages] = useState<Pkg[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -69,10 +70,10 @@ export default function MiniAppPage() {
   const [detail, setDetail] = useState<CatalogModel | null>(null);
 
   const load = useCallback(async (t: string) => {
-    const [m, u7, u30, mu, cat, pk, ord] = await Promise.all([
-      getMe(t), getUsage(t, 7), getUsage(t, 30), getModelsUsed(t, 30), getCatalog(), getPackages(), getOrders(t),
+    const [m, u7, u30, mu7, mu, cat, pk, ord] = await Promise.all([
+      getMe(t), getUsage(t, 7), getUsage(t, 30), getModelsUsed(t, 7), getModelsUsed(t, 30), getCatalog(), getPackages(), getOrders(t),
     ]);
-    setMe(m); setUsage(u7); setUsage30(u30); setUsed(mu.models); setCatalog(cat.data); setPackages(pk.packages); setOrders(ord.orders);
+    setMe(m); setUsage(u7); setUsage30(u30); setUsed7(mu7.models); setUsed(mu.models); setCatalog(cat.data); setPackages(pk.packages); setOrders(ord.orders);
   }, []);
 
   useEffect(() => {
@@ -179,7 +180,7 @@ export default function MiniAppPage() {
 
         {tab === "models" ? <ModelsScreen catalog={catalog} used={used} onModel={setDetail} /> : null}
 
-        {tab === "usage" ? <UsageScreen usage={usage} usage30={usage30} used={used} spend={spend} /> : null}
+        {tab === "usage" ? <UsageScreen usage={usage} usage30={usage30} used7={used7} used30={used} spend={spend} /> : null}
 
         {tab === "account" ? (
           <AccountScreen
@@ -393,7 +394,7 @@ function ModelsScreen({ catalog, used, onModel }: { catalog: CatalogModel[]; use
               <button type="button" onClick={() => onModel(m)} className="w-full px-4 py-3.5 text-left active:bg-white/[0.04]">
                 <div className="flex items-baseline justify-between gap-3">
                   <p className="min-w-0 truncate text-[14.5px] font-medium">{m.display_name}</p>
-                  {reqs ? <span className="num shrink-0 text-[12px] text-ash">{compact(reqs)} req</span> : null}
+                  {reqs ? <span className="num shrink-0 text-[12px] text-ash">{compact(reqs)} req · 30 hari</span> : null}
                 </div>
                 <p className="mt-0.5 truncate text-[12.5px] text-ash">{[m.provider, ...caps].join(" · ")}</p>
                 <div className="num mt-2.5 flex gap-5 text-[13px]">
@@ -412,9 +413,12 @@ function ModelsScreen({ catalog, used, onModel }: { catalog: CatalogModel[]; use
 
 /* ------------------------------------------------------------------ usage */
 
-function UsageScreen({ usage, usage30, used, spend }: { usage: Usage | null; usage30: Usage | null; used: ModelUse[]; spend: number }) {
+function UsageScreen({ usage, usage30, used7, used30, spend }: {
+  usage: Usage | null; usage30: Usage | null; used7: ModelUse[]; used30: ModelUse[]; spend: number;
+}) {
   const [days, setDays] = useState<7 | 30>(7);
   const data = days === 7 ? usage : usage30;
+  const used = days === 7 ? used7 : used30;
   const totals = data?.totals;
   const maxCost = Math.max(1, ...used.map((x) => x.cost_micro));
 
