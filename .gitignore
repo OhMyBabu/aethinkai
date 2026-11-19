@@ -14,6 +14,7 @@ __pycache__/
 .devkey
 /data/
 /gateway/data/
+/bot/data/
 *.bak-*
 
 # OS noise
