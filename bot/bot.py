@@ -24,6 +24,7 @@ import time
 import traceback
 from collections import defaultdict, deque
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Any
 
@@ -115,6 +116,19 @@ def idr(micro: int) -> str:
 
 def amount(pkg_idr: int) -> str:
     return "Rp" + f"{pkg_idr:,}".replace(",", ".")
+
+
+def wib(iso: str | None) -> str:
+    """Provider timestamps are UTC; buyers read WIB (UTC+7)."""
+    if not iso:
+        return "—"
+    try:
+        then = datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
+        if then.tzinfo is None:
+            then = then.replace(tzinfo=timezone.utc)
+        return then.astimezone(ZoneInfo("Asia/Jakarta")).strftime("%d %b %Y %H:%M WIB")
+    except Exception:
+        return "—"
 
 
 def ago(iso: str | None) -> str:
@@ -212,6 +226,14 @@ def send_reply_keyboard(chat_id: int) -> dict:
                 [{"text": "Account"}, {"text": "Support"}]]
     return tg("sendMessage", chat_id=chat_id, text="Shortcut menu aktif di bawah.",
               reply_markup={"keyboard": keyboard, "resize_keyboard": True, "is_persistent": True})
+
+
+def send_photo(chat_id: int, photo: str, caption: str, keyboard: list | None = None) -> dict:
+    params: dict[str, Any] = {"chat_id": chat_id, "photo": photo, "caption": caption,
+                              "parse_mode": "HTML"}
+    if keyboard:
+        params["reply_markup"] = {"inline_keyboard": keyboard}
+    return tg("sendPhoto", **params)
 
 
 def send(chat_id: int, text: str, keyboard: list | None = None) -> dict:
@@ -864,10 +886,10 @@ def invoice_text(order_id: str, pkg: dict, pay: dict | None = None) -> str:
     if pay:
         total = int(pay.get("total_bayar") or pkg["idr"])
         fee = int(pay.get("fee_idr") or 0)
-        exp = (pay.get("expires_at") or "").replace("T", " ")[:16]
+        exp = wib(pay.get("expires_at"))
         body = (f"\nBayar: <b>{rupiah(total)}</b>"
                 + (f" <i>(termasuk biaya QRIS {rupiah(fee)})</i>" if fee else "")
-                + f"\nBerlaku sampai: <b>{exp} WIB</b>\n\n"
+                + f"\nBerlaku sampai: <b>{exp}</b>\n\n"
                 "Scan QR dan bayar sesuai nominal tepat. Kredit masuk otomatis setelah "
                 "pembayaran terkonfirmasi.")
         if pay.get("trx_reference"):
@@ -1110,10 +1132,10 @@ def do_grant(order_id: str) -> tuple[bool, str]:
                 "Tidak ada key baru — satu akun Telegram = satu key.")
         kb = [[url_btn("🌐 Buka portal", f"{portal_url()}/portal"), btn("🔑 Key Saya", "m:keys")],
               [btn("⬅️ Menu", "m:home")]]
-        if panel:
-            edit(chat_id, panel, text, kb)
-        else:
-            send(chat_id, text, kb)
+        if panel and buyer_tg:
+            edit(int(buyer_tg), int(panel), text, kb)
+        elif buyer_tg:
+            send(int(buyer_tg), text, kb)
     elif buyer_tg and key:
         deliver_key(int(buyer_tg), order_id, pkg_name, key,
                     int(data.get("balance_micro", 0) or 0), int(data.get("rpm_limit", 60) or 60),
@@ -1191,6 +1213,10 @@ def handle_message(msg: dict) -> None:
                 installed[str(uid)] = today
                 save_state({"reply_kb": installed})
         show_home(chat_id, uid, user)
+        return
+    personal = {"/saldo", "/rotate", "/gateway", "/portal", "/store", "/pending", "/grant", "/menu"}
+    if cmd in personal and (msg.get("chat") or {}).get("type") != "private":
+        send(chat_id, "Perintah ini hanya tersedia di chat pribadi bot.")
         return
     if cmd == "/store":
         text, kb = store_home()
@@ -1378,7 +1404,7 @@ def handle_callback(cb: dict) -> None:
         edit(chat_id, mid, body, kb)
         return
 
-    if data == "m:keys":
+    if data in ("m:keys", "ui:gw:keys"):
         ack(cb_id)
         body, kb = keys_view(uid)
         edit(chat_id, mid, body, kb)
@@ -1442,8 +1468,14 @@ def handle_callback(cb: dict) -> None:
             return
         pay = create_payment(order_id)
         # The invoice is its own traceable message: navigating the panels later must
-        # never overwrite the only payment proof.
-        send(chat_id, invoice_text(order_id, pkg, pay), invoice_keyboard(order_id, pay))
+        # never overwrite the only payment proof. With a QR image it goes out as a
+        # photo card, so the code and the amount live in one saved message.
+        caption = invoice_text(order_id, pkg, pay)
+        kb = invoice_keyboard(order_id, pay)
+        if pay and pay.get("qr_image"):
+            send_photo(chat_id, str(pay["qr_image"]), caption, kb)
+        else:
+            send(chat_id, caption, kb)
         if pay:
             return   # automated payment: no admin ping, the gateway grants on settle
         notify = (f"🧾 <b>Order baru</b> <code>{order_id}</code>\n"
