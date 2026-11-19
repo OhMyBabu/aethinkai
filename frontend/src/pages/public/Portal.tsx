@@ -1,3 +1,4 @@
+import { formatCompact } from "@/lib/format";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
@@ -71,12 +72,7 @@ const rpDate = (iso: string | null | undefined) => {
   if (Number.isNaN(date.getTime())) return "n/a";
   return date.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
 };
-const compact = (n: number) => {
-  const v = Number(n || 0);
-  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `${(v / 1_000).toFixed(1)}k`;
-  return String(v);
-};
+const compact = (n: number) => formatCompact(Number(n || 0));
 const when = (iso: string | null) => {
   if (!iso) return "n/a";
   const diff = Date.now() - new Date(iso).getTime();

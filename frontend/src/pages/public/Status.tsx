@@ -1,3 +1,4 @@
+import { formatCompact } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Activity, ArrowLeft, CircleDot, Gauge, Server, Timer } from "lucide-react";
@@ -18,11 +19,7 @@ function when(iso: string | null): string {
   return `${Math.round(h / 24)} hari lalu`;
 }
 
-function compact(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
-}
+const compact = (n: number) => formatCompact(n || 0);
 
 export default function StatusPage() {
   const [status, setStatus] = useState<LandingStatus | null>(null);

@@ -1,3 +1,4 @@
+import { formatCompact } from "@/lib/format";
 /** Telegram Mini App client: initData session + portal reads. No secrets in localStorage. */
 
 export type Buyer = { id: string; tg_id: number | null; username: string | null; name: string | null; status: string };
@@ -78,21 +79,17 @@ export function idr(micro: number): string {
   return "Rp " + rp.toLocaleString("id-ID");
 }
 
-/** per-1M price -> "Rp 96.5K" so a phone row never wraps the number. */
+/** per-1M price -> "Rp 96,5K" so a phone row never wraps the number. */
 export function price1m(v: number): string {
   const n = Math.round(v ?? 0);
   if (n >= 1000) {
-    const text = (n / 1000).toFixed(1).replace(/\.0$/, "");
-    return `Rp ${text}K`;
+    return `Rp ${formatCompact(n)}`;
   }
   return `Rp ${n}`;
 }
 
 export function compact(n: number): string {
-  if (!n) return "0";
-  if (n < 1000) return String(n);
-  if (n < 1_000_000) return `${(n / 1000).toFixed(n < 10_000 ? 1 : 0)}k`;
-  return `${(n / 1_000_000).toFixed(1)}M`;
+  return formatCompact(n || 0);
 }
 
 export function when(iso: string | null): string {
