@@ -601,9 +601,13 @@ def gateway_home(uid: int) -> tuple[str, list]:
         "cek harga model, dan lihat panduan integrasi.\n\n"
         f"<b>Akun</b>\n{account}"
     )
-    kb = [
-        [btn("Beli Kredit API", "ui:gw:credits")],
-        [url_btn("Dashboard AethinkAI", f"{portal_url()}/portal")],
+    mini = miniapp_link()
+    kb = [[btn("Beli Kredit API", "ui:gw:credits")]]
+    if mini:
+        kb.append([web_app_btn("Mini App", mini), url_btn("Dashboard", f"{portal_url()}/portal")])
+    else:
+        kb.append([url_btn("Dashboard AethinkAI", f"{portal_url()}/portal")])
+    kb += [
         [btn("Model & Harga", "ui:gw:models:0"), url_btn("Panduan API", f"{portal_url()}/panduan")],
         [btn("‹ Menu Utama", "ui:home")],
     ]
@@ -722,8 +726,11 @@ def activity_home() -> tuple[str, list]:
     kb = [
         [btn("Pesanan Digital Store", "ui:activity:st:0")],
         [btn("Transaksi Kredit Gateway", "ui:activity:gw:0")],
-        [btn("‹ Menu Utama", "ui:home")],
     ]
+    mini = miniapp_link()
+    if mini:
+        kb.append([web_app_btn("Buka Mini App", mini)])
+    kb.append([btn("‹ Menu Utama", "ui:home")])
     return text, kb
 
 
