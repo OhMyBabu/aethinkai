@@ -1587,9 +1587,9 @@ async def internal_grant_order(order_id: str, request: Request):
                 raise _bad("not_found", "Buyer hilang", 404)
             user_id = await _ensure_user(con, buyer["tg_id"], order["sku"], buyer["name"])
             label = order["sku"]
-            rpm = await con.fetchval(
-                "SELECT coalesce(max(rpm_limit), 60) FROM api_keys WHERE buyer_id = $1", order["buyer_id"]
-            )
+            # same rule as the paid-webhook path (grant_order): the package decides the RPM;
+            # _key_for_grant only ever raises an existing key, and respects admin overrides
+            rpm = order["rpm_limit"] or 60
             key_id, raw_key, prefix, reused = await _key_for_grant(
                 con, user_id, order["buyer_id"], label, int(rpm or 60))
             await con.execute("UPDATE orders SET status='granted', key_id=$2, granted_at=now() WHERE id=$1",
