@@ -80,8 +80,8 @@ export function passwordScore(password: string): number {
   return Object.values(checks).filter(Boolean).length;
 }
 
-/** Seed accounts ship with pre-computed PBKDF2 digests (salt:Aethink#2026). */
-export const SEED_PASSWORDS: Record<string, { salt: string; hash: string }> = {
-  "admin@aethink.ai": { salt: "3b8d5e1f2a9c", hash: "36e622e91fcc8043b9f0471ae455f6119d5616665ff8d48a226fdd055f1ccb93" },
-  "alya@aethink.ai": { salt: "9f2c1a7b4e6d", hash: "c5d1fec25c0444b77a6112226c4444ae8572316d13167f04b0677a9b355411c1" },
+/** UI-only seed rows. Auth is server-side; no password material ships in the bundle. */
+export const SEED_ACCOUNTS = {
+  admin: { salt: "unused", hash: "unused" },
+  buyer: { salt: "unused", hash: "unused" },
 };

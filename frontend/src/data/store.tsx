@@ -7,7 +7,7 @@ import {
   useReducer,
   type ReactNode,
 } from "react";
-import { SEED_PASSWORDS } from "@/lib/auth";
+import { SEED_ACCOUNTS } from "@/lib/auth";
 import type { ActivityEntry, AppState, Preferences, Role, User } from "@/types";
 
 /**
@@ -22,8 +22,8 @@ const VERSION = 2;
 const DEFAULT_PREFS: Preferences = { reducedMotion: false, language: "id", compactTables: false };
 
 function seedUsers(): User[] {
-  const admin = SEED_PASSWORDS["admin@aethink.ai"];
-  const buyer = SEED_PASSWORDS["alya@aethink.ai"];
+  const admin = SEED_ACCOUNTS.admin;
+  const buyer = SEED_ACCOUNTS.buyer;
   return [
     {
       id: "usr_admin",
