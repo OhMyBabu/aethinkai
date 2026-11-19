@@ -1141,7 +1141,7 @@ export default function PortalPage() {
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/8 px-4 py-3">
             <div>
               <h2 className="text-[15px] font-semibold text-warm">Riwayat Request</h2>
-              <p className="mt-0.5 text-[12px] text-ash">40 permintaan API terbaru.</p>
+              <p className="mt-0.5 text-[12px] text-ash">Hingga 40 permintaan terbaru.</p>
             </div>
             <Link to="/panduan" className="text-[12px] text-ash transition hover:text-warm">Panduan API</Link>
           </div>
